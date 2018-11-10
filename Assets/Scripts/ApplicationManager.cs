@@ -11,44 +11,48 @@ namespace Diploma {
 
     public class ApplicationManager : MonoBehaviour {
 
-        static ApplicationManager instance = null;
+		static ApplicationManager instance = null;
 
-        ButtonClicked buttonClick;
+		ButtonClicked buttonClick;
 
 		List<Client> clients;
 		List<Host> hosts;
 
 		void Awake () {
 
-            if (instance == null) {
-                instance = this;
-            } else if (instance == this) {
-                Destroy(gameObject);
-            }
-            DontDestroyOnLoad(gameObject);
+			if (instance == null) {
+				instance = this;
 
-			// subsystems
-			gameObject.AddComponent<EventManager>();
-			gameObject.AddComponent<SceneManager>();
-            gameObject.AddComponent<NetworkManager>();
-            gameObject.AddComponent<MultiplayerManager>();
+				// subsystems
+				gameObject.AddComponent<EventManager>();
+				gameObject.AddComponent<SceneManager>();
+				gameObject.AddComponent<NetworkManager>();
+				gameObject.AddComponent<MultiplayerManager>();
 
-        }
+				clients = new List<Client>();
+				hosts = new List<Host>();
 
-        public ApplicationManager GetInstance () {
-            return instance;
-        }
+			} else if (instance == this) {
+				Destroy(gameObject);
+			}
+			DontDestroyOnLoad(gameObject);
+		}
 
-        void Start () {
-            buttonClick = EventManager.GetInstance().GetEvent<ButtonClicked>();
-            buttonClick.Subscribe(OnButtonClick);
+		public ApplicationManager GetInstance () {
+		    return instance;
+		}
 
-            SceneManager.GetInstance().LoadScene("MainMenu");
-        }
+		void Start () {
+		    buttonClick = EventManager.GetInstance().GetEvent<ButtonClicked>();
+		    buttonClick.Subscribe(OnButtonClick);
+
+		    SceneManager.GetInstance().LoadScene("MainMenu");
+		}
 
 		void OnButtonClick (Button button) {
-            if (button.name == "Quit")
-                Application.Quit();
+
+            	if (button.name == "Quit")
+                	Application.Quit();
 
 			if (button.name == "Host")
 				hosts.Add(new Host());

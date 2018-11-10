@@ -8,13 +8,17 @@ namespace Diploma.Network {
         public int Id { get { return id; } }
 
         int id;
-        Socket socket;
-        bool opened = false;
+		bool opened = false;
+		Socket socket;
 		ConnectionConfiguration config;
 
-		public Connection(ConnectionConfiguration config) {
+		public Connection(ConnectionConfiguration cc) {
             byte error;
-            id = NetworkTransport.Connect(socket.Id, config.ip, config.port, config.exceptionConnectionId, out error);
+
+			Debug.Log(cc);
+
+			config = cc;
+			id = NetworkTransport.Connect(socket.Id, config.ip, config.port, config.exceptionConnectionId, out error);
             socket.RegisterConnection(this);
             Debug.Log(string.Format("Opened connection: {0}", id));
         }
