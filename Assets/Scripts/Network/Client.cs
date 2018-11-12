@@ -47,7 +47,7 @@ namespace Diploma.Network {
         }
 
         public void Send () {
-
+            connection.Send(new byte[1024], 1024);
         }
 
         public void Shutdown () {

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -45,6 +45,14 @@ namespace Diploma.Network {
             hostTopology = new HostTopology(connectionConfig, maxConnections);
         }
 
+        public void Subscribe (ISocketSubscriber subscriber) {
+            subscribers.Add(subscriber);
+        }
+
+        public void Unsubscribe (ISocketSubscriber subscriber) {
+            subscribers.Remove(subscriber);
+        }
+
         public void Open() {
             id = NetworkTransport.AddHost(hostTopology, port);
             NetworkManager.Instance.RegisterSocket(this);
@@ -64,7 +72,6 @@ namespace Diploma.Network {
             };
             connection = new Connection(cc);
             connections.Add(connection.Id, connection);
-            Debug.Log(string.Format("Client {1} Connected to socket: {0}", id, connection.Id));
         }
 
         public void RegisterConnection (Connection connection) {
@@ -115,7 +122,8 @@ namespace Diploma.Network {
                 switch (networkEvent) {
 
                     case NetworkEventType.ConnectEvent:
-                        if (!connections.ContainsKey(connectionId)) {
+                        Debug.Log(string.Format("connectionId {0}", connectionId));
+                        if (connections.ContainsKey(connectionId)) {
                             RegisterIncomingConnection(out connection, connectionId);
                             foreach (ISocketSubscriber subscriber in subscribers) {
                                 subscriber.OnConnectEvent(connection);

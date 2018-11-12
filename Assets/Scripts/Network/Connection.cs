@@ -18,7 +18,7 @@ namespace Diploma.Network {
 
         public Connection(ConnectionConfiguration cc) {
 
-            opened                  = false;
+            opened                  = true;
             id                      = cc.id;
             ip                      = cc.ip;
             port                    = cc.port;
