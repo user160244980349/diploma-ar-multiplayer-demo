@@ -15,7 +15,7 @@ namespace Diploma.Network {
             };
 
             socket = new Socket(sc);
-            NetworkManager.GetInstance().RegisterSocket(socket);
+            socket.Open();
 
         }
 

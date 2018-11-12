@@ -16,28 +16,25 @@ namespace Diploma.Network {
         int maxConnections;
         int bufferSize;
         byte[] buffer;
-
-        ConnectionConfig connectionConfig;
         HostTopology hostTopology;
 
         List<ISocketSubscriber> subscribers;
         Dictionary<int, Channel> channels;
         Dictionary<int, Connection> connections;
 
-        public Socket (SocketConfiguration config) {
+        public Socket (SocketConfiguration sc) {
 
-            port = config.port;
-            maxConnections = config.maxConnections;
-            bufferSize = config.bufferSize;
+            port            = sc.port;
+            maxConnections  = sc.maxConnections;
+            bufferSize      = sc.bufferSize;
 
-            buffer = new byte[bufferSize];
-
+            buffer      = new byte[bufferSize];
             subscribers = new List<ISocketSubscriber>();
-            channels = new Dictionary<int, Channel>();
+            channels    = new Dictionary<int, Channel>();
             connections = new Dictionary<int, Connection>();
 
-            connectionConfig = new ConnectionConfig();
-            foreach (QosType qos in config.channels) {
+            ConnectionConfig connectionConfig = new ConnectionConfig();
+            foreach (QosType qos in sc.channels) {
                 Channel channel = new Channel {
                     id = connectionConfig.AddChannel(qos)
                 };
@@ -46,20 +43,24 @@ namespace Diploma.Network {
             }
 
             hostTopology = new HostTopology(connectionConfig, maxConnections);
+        }
 
+        public void Open() {
             id = NetworkTransport.AddHost(hostTopology, port);
+            NetworkManager.Instance.RegisterSocket(this);
             Debug.Log(string.Format("Opened socket: {0}", id));
         }
 
-        ~Socket () {
+        public void Close () {
+            NetworkManager.Instance.UnregisterSocket(this);
             NetworkTransport.RemoveHost(id);
-            NetworkManager.GetInstance().UnregisterSocket(this);
+            Debug.Log(string.Format("Closed socket: {0}", id));
         }
 
         public void RegisterIncomingConnection (out Connection connection, int connectionId) {
             ConnectionConfiguration cc = new ConnectionConfiguration {
+                id = connectionId,
                 socket = this,
-
             };
             connection = new Connection(cc);
             connections.Add(connection.Id, connection);
@@ -105,15 +106,20 @@ namespace Diploma.Network {
                 out error
             );
 
+            if ((NetworkError)error != NetworkError.Ok)
+                Debug.LogError(string.Format("NetworkError {0}", (NetworkError)error));
+
             Connection connection;
             do {
 
                 switch (networkEvent) {
 
                     case NetworkEventType.ConnectEvent:
-                        RegisterIncomingConnection(out connection, connectionId);
-                        foreach (ISocketSubscriber subscriber in subscribers) {
-                            subscriber.OnConnectEvent(connection);
+                        if (!connections.ContainsKey(connectionId)) {
+                            RegisterIncomingConnection(out connection, connectionId);
+                            foreach (ISocketSubscriber subscriber in subscribers) {
+                                subscriber.OnConnectEvent(connection);
+                            }
                         }
                         break;
 

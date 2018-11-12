@@ -6,15 +6,11 @@ namespace Diploma.Network {
 
     public class NetworkManager : MonoBehaviour {
 
+        public static NetworkManager Instance { get { return instance; } }
         static NetworkManager instance = null;
-
-        GlobalConfig config;
+        
         Dictionary<int, Socket> sockets;
-
-        public static NetworkManager GetInstance() {
-            return instance;
-        }
-
+        
         void Awake () {
    
             if (instance == null) {
@@ -24,8 +20,7 @@ namespace Diploma.Network {
             }
 
             sockets = new Dictionary<int, Socket>();
-            config = new GlobalConfig
-            {
+            GlobalConfig config = new GlobalConfig {
                 ConnectionReadyForSend = OnConnectionReady,
                 NetworkEventAvailable = OnNetworkEvent
             };

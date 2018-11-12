@@ -15,15 +15,14 @@ namespace Diploma.Network {
                 channels = new QosType[] { QosType.Reliable },
                 port = 8001
             };
-
             socket = new Socket(sc);
-            NetworkManager.GetInstance().RegisterSocket(socket);
+            socket.Open();
 
             ConnectionConfiguration cc = new ConnectionConfiguration {
                 socket = socket
             };
-
             connection = new Connection(cc);
+            connection.Open();
 
         }
 
