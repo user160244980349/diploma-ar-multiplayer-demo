@@ -15,9 +15,8 @@ namespace Diploma.Network {
             };
 
             socket = new Socket(sc);
-            socket.Open();
-
             socket.Subscribe(this);
+            socket.Open();
 
         }
 
@@ -30,14 +29,17 @@ namespace Diploma.Network {
         }
 
         public void OnConnectEvent (Connection connection) {
+
             Debug.Log(string.Format("Client {0} connected to socket {1}", connection.Id, socket.Id));
         }
 
         public void OnDataEvent (Connection connection, byte[] data, int dataSize) {
-            Debug.Log(string.Format("Recieved data from client {0} connected to socket {1}", connection.Id, socket.Id));
+
+            Debug.Log(string.Format("Recieved {2} from client {0} connected to socket {1}", connection.Id, socket.Id, System.Text.Encoding.UTF8.GetString(data, 0, dataSize)));
         }
 
         public void OnDisconnectEvent (Connection connection) {
+
             Debug.Log(string.Format("Client {0} disconnected from socket {1}", connection.Id, socket.Id));
         }
 
@@ -46,7 +48,7 @@ namespace Diploma.Network {
         }
 
         public void Shutdown () {
-
+            socket.Close();
         }
 
     }

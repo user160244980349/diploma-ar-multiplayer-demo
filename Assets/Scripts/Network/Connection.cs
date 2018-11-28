@@ -30,12 +30,11 @@ namespace Diploma.Network {
         public void Open () {
             byte error;
             id = NetworkTransport.Connect(socket.Id, ip, port, exceptionConnectionId, out error);
-            socket.RegisterConnection(this);
 
             if ((NetworkError)error != NetworkError.Ok)
                 Debug.LogError(string.Format("NetworkError {0}", (NetworkError)error));
 
-            Debug.Log(string.Format("Opened connection: {0}", id));
+            // Debug.Log(string.Format("Opened connection: {0}", id));
         }
 
         public void Close () {
@@ -46,7 +45,7 @@ namespace Diploma.Network {
             if ((NetworkError)error != NetworkError.Ok)
                 Debug.LogError(string.Format("NetworkError {0}", (NetworkError)error));
 
-            Debug.Log(string.Format("Closed connection: {0}", id));
+            // Debug.Log(string.Format("Closed connection: {0}", id));
         }
 
         public void Send (byte[] buffer, int size) {

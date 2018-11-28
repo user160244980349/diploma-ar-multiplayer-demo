@@ -51,8 +51,8 @@ namespace Diploma {
 
 		void OnButtonClick (Button button) {
 
-            	if (button.name == "Quit")
-                	Application.Quit();
+            if (button.name == "Quit")
+                Application.Quit();
 
 			if (button.name == "Host")
 				hosts.AddLast(new Host());
@@ -62,6 +62,11 @@ namespace Diploma {
 
             if (button.name == "Send")
                 clients.First.Value.Send();
+
+            if (button.name == "Disconnect") {
+                // hosts.First.Value.Shutdown();
+                clients.First.Value.Shutdown();
+            }
 
         }
 

@@ -56,13 +56,18 @@ namespace Diploma.Network {
         public void Open() {
             id = NetworkTransport.AddHost(hostTopology, port);
             NetworkManager.Instance.RegisterSocket(this);
-            Debug.Log(string.Format("Opened socket: {0}", id));
+            // Debug.Log(string.Format("Opened socket: {0}", id));
         }
 
         public void Close () {
+
+            foreach (Connection connection in connections.Values) {
+                connection.Close();
+            }
+
             NetworkManager.Instance.UnregisterSocket(this);
             NetworkTransport.RemoveHost(id);
-            Debug.Log(string.Format("Closed socket: {0}", id));
+            // Debug.Log(string.Format("Closed socket: {0}", id));
         }
 
         public void RegisterIncomingConnection (out Connection connection, int connectionId) {
@@ -103,27 +108,28 @@ namespace Diploma.Network {
             int dataSize;
             byte error;
 
-            NetworkEventType networkEvent = NetworkTransport.ReceiveFromHost(
-                id,
-                out connectionId,
-                out channelId,
-                buffer,
-                bufferSize,
-                out dataSize,
-                out error
-            );
-
-            if ((NetworkError)error != NetworkError.Ok)
-                Debug.LogError(string.Format("NetworkError {0}", (NetworkError)error));
-
+            NetworkEventType networkEvent;
             Connection connection;
+
             do {
+
+                networkEvent = NetworkTransport.ReceiveFromHost(
+                    id,
+                    out connectionId,
+                    out channelId,
+                    buffer,
+                    bufferSize,
+                    out dataSize,
+                    out error
+                );
+
+                if ((NetworkError)error != NetworkError.Ok)
+                    Debug.LogError(string.Format("NetworkError {0}", (NetworkError)error));
 
                 switch (networkEvent) {
 
                     case NetworkEventType.ConnectEvent:
-                        Debug.Log(string.Format("connectionId {0}", connectionId));
-                        if (connections.ContainsKey(connectionId)) {
+                        if (!connections.ContainsKey(connectionId)) {
                             RegisterIncomingConnection(out connection, connectionId);
                             foreach (ISocketSubscriber subscriber in subscribers) {
                                 subscriber.OnConnectEvent(connection);
@@ -132,25 +138,31 @@ namespace Diploma.Network {
                         break;
 
                     case NetworkEventType.DataEvent:
-                        connections.TryGetValue(connectionId, out connection);
-                        foreach (ISocketSubscriber subscriber in subscribers) {
-                            subscriber.OnDataEvent(connection, buffer, dataSize);
+                        if (connections.ContainsKey(connectionId)) {
+                            connections.TryGetValue(connectionId, out connection);
+                            foreach (ISocketSubscriber subscriber in subscribers) {
+                                subscriber.OnDataEvent(connection, buffer, dataSize);
+                            }
                         }
                         break;
 
                     case NetworkEventType.BroadcastEvent:
-                        connections.TryGetValue(connectionId, out connection);
-                        foreach (ISocketSubscriber subscriber in subscribers) {
-                            subscriber.OnBroadcastEvent(connection);
+                        if (connections.ContainsKey(connectionId)) {
+                            connections.TryGetValue(connectionId, out connection);
+                            foreach (ISocketSubscriber subscriber in subscribers) {
+                                subscriber.OnBroadcastEvent(connection);
+                            }
                         }
                         break;
 
                     case NetworkEventType.DisconnectEvent:
-                        connections.TryGetValue(connectionId, out connection);
-                        UnregisterConnection(connection);
-                        connections.Remove(connection.Id);
-                        foreach (ISocketSubscriber subscriber in subscribers){
-                            subscriber.OnDisconnectEvent(connection);
+                        if (connections.ContainsKey(connectionId)) {
+                            connections.TryGetValue(connectionId, out connection);
+                            UnregisterConnection(connection);
+                            connections.Remove(connection.Id);
+                            foreach (ISocketSubscriber subscriber in subscribers) {
+                                subscriber.OnDisconnectEvent(connection);
+                            }
                         }
                         break;
 
