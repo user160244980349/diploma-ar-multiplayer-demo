@@ -16,6 +16,7 @@ namespace Diploma.Network {
                 port = 8001
             };
             socket = new Socket(sc);
+            socket.Subscribe(this);
             socket.Open();
 
             ConnectionConfiguration cc = new ConnectionConfiguration {
@@ -36,22 +37,25 @@ namespace Diploma.Network {
 
         public void OnConnectEvent (Connection connection) {
 
+            Debug.Log(string.Format("Connected to host"));
         }
 
         public void OnDataEvent (Connection connection, byte[] data, int dataSize) {
 
+            Debug.Log(string.Format("Recieved data from host"));
         }
 
         public void OnDisconnectEvent (Connection connection) {
 
+            Debug.Log(string.Format("Disconnected from host"));
         }
 
         public void Send () {
-
+            connection.Send(System.Text.Encoding.UTF8.GetBytes("xyu"), 1024);
         }
 
         public void Shutdown () {
-
+            socket.Close();
         }
 
     }

@@ -15,8 +15,8 @@ namespace Diploma {
 
 		ButtonClicked buttonClick;
 
-		List<Client> clients;
-		List<Host> hosts;
+		LinkedList<Client> clients;
+        LinkedList<Host> hosts;
 
 		void Awake () {
 
@@ -29,8 +29,8 @@ namespace Diploma {
 				gameObject.AddComponent<NetworkManager>();
 				gameObject.AddComponent<MultiplayerManager>();
 
-				clients = new List<Client>();
-				hosts = new List<Host>();
+				clients = new LinkedList<Client>();
+				hosts = new LinkedList<Host>();
 
 			} else if (instance == this) {
 				Destroy(gameObject);
@@ -51,16 +51,24 @@ namespace Diploma {
 
 		void OnButtonClick (Button button) {
 
-            	if (button.name == "Quit")
-                	Application.Quit();
+            if (button.name == "Quit")
+                Application.Quit();
 
 			if (button.name == "Host")
-				hosts.Add(new Host());
+				hosts.AddLast(new Host());
 
 			if (button.name == "Connect")
-				clients.Add(new Client());
+				clients.AddLast(new Client());
 
-		}
+            if (button.name == "Send")
+                clients.First.Value.Send();
+
+            if (button.name == "Disconnect") {
+                // hosts.First.Value.Shutdown();
+                clients.First.Value.Shutdown();
+            }
+
+        }
 
     }
 
