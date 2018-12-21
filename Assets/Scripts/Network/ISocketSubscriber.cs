@@ -6,10 +6,10 @@ namespace Diploma.Network {
         void Boot ();
         void Shutdown ();
         void Send ();
-        void OnConnectEvent (Connection connection);
-        void OnDataEvent (Connection connection, byte[] data, int dataSize);
-        void OnBroadcastEvent (Connection connection);
-        void OnDisconnectEvent (Connection connection);
+        void OnConnectEvent (int connection);
+        void OnDataEvent (int connection, byte[] data, int dataSize);
+        void OnBroadcastEvent (int connection);
+        void OnDisconnectEvent (int connection);
 
     }
 

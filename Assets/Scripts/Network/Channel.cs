@@ -2,11 +2,11 @@
 
 namespace Diploma.Network {
 
-    public class Channel {
-
+    public struct Channel
+    {
+        public bool inUse;
         public int id;
-        public QosType qos;
-
-    }
+        public QosType type;
+    };
 
 }

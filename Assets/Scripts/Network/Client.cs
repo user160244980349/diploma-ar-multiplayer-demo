@@ -42,7 +42,7 @@ namespace Diploma.Network {
 
         public void OnDataEvent (Connection connection, byte[] data, int dataSize) {
 
-            Debug.Log(string.Format("Recieved data from host"));
+            Debug.Log(string.Format("Recieved data from host {0} connected to socket {1}", connection.Id, socket.Id));
         }
 
         public void OnDisconnectEvent (Connection connection) {
