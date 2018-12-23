@@ -3,59 +3,69 @@ using UnityEngine.Networking;
 
 namespace Diploma.Network {
 
-    public class Client : ISocketSubscriber {
+    public class Client {
 
-        Socket socket;
-        Connection connection;
+        int socketId;
+        int connectionId;
 
         public Client () {
-
-            SocketConfiguration sc = new SocketConfiguration {
-                bufferSize = 1024,
-                channels = new QosType[] { QosType.Reliable },
-                port = 8001
-            };
-            socket = new Socket(sc);
-            socket.Subscribe(this);
-            socket.Open();
-
-            ConnectionConfiguration cc = new ConnectionConfiguration {
-                socket = socket
-            };
-            connection = new Connection(cc);
-            connection.Open();
 
         }
 
         public void Boot () {
 
+            SocketConfiguration sc = new SocketConfiguration {
+                channels = new QosType[2] { QosType.Reliable, QosType.Reliable },
+                port = 8001,
+
+                onConnectEvent = OnConnectEvent,
+                onDataEvent = OnDataEvent,
+                onBroadcastEvent = OnBroadcastEvent,
+                onDisconnectEvent = OnDisconnectEvent,
+            };
+            socketId = NetworkManager.Instance.OpenSocket(sc);
+
         }
 
-        public void OnBroadcastEvent (Connection connection) {
+        public void Connect() {
+
+            ConnectionConfiguration cc = new ConnectionConfiguration {
+                ip = "127.0.0.1",
+                port = 8000,
+                notificationLevel = 1,
+                exceptionConnectionId = 0,
+            };
+            NetworkManager.Instance.OpenConnection(socketId, cc);
 
         }
 
-        public void OnConnectEvent (Connection connection) {
-
-            Debug.Log(string.Format("Connected to host"));
+        public void Disconnect () {
+            NetworkManager.Instance.CloseConnection(socketId, connectionId);
         }
 
-        public void OnDataEvent (Connection connection, byte[] data, int dataSize) {
+        public void OnBroadcastEvent (int connection) {
 
-            Debug.Log(string.Format("Recieved data from host {0} connected to socket {1}", connection.Id, socket.Id));
         }
 
-        public void OnDisconnectEvent (Connection connection) {
+        public void OnConnectEvent (int connection) {
+            connectionId = connection;
+            Debug.Log(string.Format("CLIENT::Connected to host"));
+        }
 
-            Debug.Log(string.Format("Disconnected from host"));
+        public void OnDataEvent (int connection, byte[] data, int dataSize) {
+            Debug.Log(string.Format("CLIENT::Recieved data from host {0} connected to socket {1}", connection, socketId));
+        }
+
+        public void OnDisconnectEvent (int connection) {
+            Debug.Log(string.Format("CLIENT::Disconnected from host"));
         }
 
         public void Send () {
-            connection.Send(System.Text.Encoding.UTF8.GetBytes("xyu"), 1024);
+            NetworkManager.Instance.Send(socketId, connectionId, System.Text.Encoding.UTF8.GetBytes("xyu"), 1024);
         }
 
         public void Shutdown () {
-            socket.Close();
+            NetworkManager.Instance.CloseSocket(socketId);
         }
 
     }

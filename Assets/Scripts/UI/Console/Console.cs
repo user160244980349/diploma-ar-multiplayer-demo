@@ -15,7 +15,7 @@ namespace Diploma.UI {
         void Start () {
 
             messages = new LinkedList<GameObject>();
-            
+
         }
 
         public void SendMessage (string text, Color color) {

@@ -9,7 +9,7 @@ namespace Diploma.Events {
         static EventManager instance = null;
         List<IGameEvent> events = null;
 
-        void Awake() {
+        void Awake () {
 
             if (instance == null) {
                 instance = this;

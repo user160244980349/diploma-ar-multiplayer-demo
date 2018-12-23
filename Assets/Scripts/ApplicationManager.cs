@@ -11,61 +11,67 @@ namespace Diploma {
 
     public class ApplicationManager : MonoBehaviour {
 
-		static ApplicationManager instance = null;
+        static ApplicationManager instance = null;
 
-		ButtonClicked buttonClick;
+        ButtonClicked buttonClick;
 
-		LinkedList<Client> clients;
-        LinkedList<Host> hosts;
+        Client client;
+        Host host;
 
-		void Awake () {
+        void Awake () {
 
-			if (instance == null) {
-				instance = this;
+            if (instance == null) {
+                instance = this;
 
-				// subsystems
-				gameObject.AddComponent<EventManager>();
-				gameObject.AddComponent<SceneManager>();
-				gameObject.AddComponent<NetworkManager>();
-				gameObject.AddComponent<MultiplayerManager>();
+                // subsystems
+                gameObject.AddComponent<EventManager>();
+                gameObject.AddComponent<SceneManager>();
+                gameObject.AddComponent<NetworkManager>();
+                gameObject.AddComponent<MultiplayerManager>();
 
-				clients = new LinkedList<Client>();
-				hosts = new LinkedList<Host>();
+                client = new Client();
+                host = new Host();
 
-			} else if (instance == this) {
-				Destroy(gameObject);
-			}
-			DontDestroyOnLoad(gameObject);
-		}
+                client.Boot();
 
-		public ApplicationManager GetInstance () {
-		    return instance;
-		}
+            } else if (instance == this) {
+                Destroy(gameObject);
+            }
+            DontDestroyOnLoad(gameObject);
+        }
 
-		void Start () {
-		    buttonClick = EventManager.GetInstance().GetEvent<ButtonClicked>();
-		    buttonClick.Subscribe(OnButtonClick);
+        public ApplicationManager GetInstance () {
+            return instance;
+        }
 
-		    SceneManager.GetInstance().LoadScene("MainMenu");
-		}
+        void Start () {
+            buttonClick = EventManager.GetInstance().GetEvent<ButtonClicked>();
+            buttonClick.Subscribe(OnButtonClick);
 
-		void OnButtonClick (Button button) {
+            SceneManager.GetInstance().LoadScene("MainMenu");
+        }
+
+        void OnButtonClick (Button button) {
 
             if (button.name == "Quit")
                 Application.Quit();
 
-			if (button.name == "Host")
-				hosts.AddLast(new Host());
+            if (button.name == "Host") {
+                Debug.Log("Booting host");
+                host.Boot();
+            }
 
-			if (button.name == "Connect")
-				clients.AddLast(new Client());
-
-            if (button.name == "Send")
-                clients.First.Value.Send();
+            if (button.name == "Connect") {
+                Debug.Log("Booting client");
+                client.Connect();
+            }
 
             if (button.name == "Disconnect") {
-                // hosts.First.Value.Shutdown();
-                clients.First.Value.Shutdown();
+                client.Disconnect();
+            }
+
+            if (button.name == "Send") {
+                client.Send();
             }
 
         }
