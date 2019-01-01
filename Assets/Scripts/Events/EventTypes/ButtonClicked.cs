@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine.UI;
 
-namespace Diploma.Events.GameEvents {
+namespace Events.EventTypes {
 
     public class ButtonClicked : IGameEvent {
 

@@ -1,12 +1,12 @@
 ﻿using UnityEngine;
 
-namespace Diploma.Multiplayer {
+namespace Multiplayer {
 
     public class MultiplayerManager : MonoBehaviour {
 
         static MultiplayerManager instance = null;
 
-        void Awake () {
+        private void Awake () {
 
             if (instance == null) {
                 instance = this;

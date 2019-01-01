@@ -1,7 +1,4 @@
-﻿using UnityEngine;
-using System.Collections;
-
-namespace Diploma.Network {
+﻿namespace Network {
 
     public struct ConnectionConfiguration {
         public string ip;

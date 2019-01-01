@@ -1,19 +1,21 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.Networking;
 
-namespace Diploma.Network {
+namespace Network {
 
     public class Host {
 
-        int socketId;
-
+        private int _socketId;
+        private List<int> _clients; 
+            
         public Host () {
-
+            _clients = new List<int>();
         }
 
         public void Boot () {
 
-            SocketConfiguration sc = new SocketConfiguration {
+            var sc = new SocketConfiguration {
                 channels = new QosType[2] { QosType.Reliable, QosType.Reliable },
                 port = 8000,
                 
@@ -22,7 +24,7 @@ namespace Diploma.Network {
                 onBroadcastEvent = OnBroadcastEvent,
                 onDisconnectEvent = OnDisconnectEvent,
             };
-            socketId = NetworkManager.Instance.OpenSocket(sc);
+            _socketId = NetworkManager.Instance.OpenSocket(sc);
 
         }
 
@@ -31,16 +33,21 @@ namespace Diploma.Network {
         }
 
         public void OnConnectEvent (int connection) {
-            Debug.Log(string.Format("HOST::Client {0} connected to socket {1}", connection, socketId));
+            Debug.Log(string.Format("HOST::Client {0} connected to socket {1}", connection, _socketId));
+            _clients.Add(connection);
         }
 
         public void OnDataEvent (int connection, byte[] data, int dataSize) {
-            Debug.Log(string.Format("HOST::Recieved data from client {0} connected to socket {1}", connection, socketId));
-            NetworkManager.Instance.Send(socketId, connection, System.Text.Encoding.UTF8.GetBytes("xyu"), 1024);
+            Debug.Log(string.Format("HOST::Recieved data from client {0} connected to socket {1}", connection, _socketId));
+            foreach (var client in _clients) {
+                if (client == connection) continue;
+                NetworkManager.Instance.Send(_socketId, connection, System.Text.Encoding.UTF8.GetBytes("xyu"), 1024);
+            }
         }
 
         public void OnDisconnectEvent (int connection) {
-            Debug.Log(string.Format("HOST::Client {0} disconnected from socket {1}", connection, socketId));
+            Debug.Log(string.Format("HOST::Client {0} disconnected from socket {1}", connection, _socketId));
+            _clients.Remove(connection);
         }
 
         public void Send () {

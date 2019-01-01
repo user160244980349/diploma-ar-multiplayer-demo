@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Diploma.Scenes {
+namespace Scenes {
 
     public class SceneManager : MonoBehaviour {
 

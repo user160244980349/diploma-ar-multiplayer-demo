@@ -1,8 +1,4 @@
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Networking;
-
-namespace Diploma.Network {
+namespace Network {
     
     public struct Socket {
         public bool inUse;

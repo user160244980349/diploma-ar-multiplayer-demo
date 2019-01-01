@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Diploma.UI {
+namespace UI.Console {
 
     public class Console : MonoBehaviour {
 

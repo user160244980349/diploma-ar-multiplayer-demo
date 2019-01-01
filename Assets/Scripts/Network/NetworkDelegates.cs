@@ -1,7 +1,4 @@
-﻿using UnityEngine;
-using System.Collections;
-
-namespace Diploma.Network.Delegates {
+﻿namespace Network {
 
     public delegate void Shutdown ();
     public delegate void Send ();

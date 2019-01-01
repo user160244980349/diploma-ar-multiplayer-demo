@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
+using Events.EventTypes;
 
-namespace Diploma.Events.GameEvents {
+namespace Events {
 
     public class EventsBootstrapper {
 

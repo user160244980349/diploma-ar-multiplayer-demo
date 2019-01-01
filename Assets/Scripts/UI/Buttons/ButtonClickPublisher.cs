@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Events;
+using Events.EventTypes;
 using UnityEngine;
 using UnityEngine.UI;
-using Diploma.Events;
-using Diploma.Events.GameEvents;
 
-namespace Diploma.UI {
+namespace UI.Buttons {
 
     public class ButtonClickPublisher : MonoBehaviour {
 

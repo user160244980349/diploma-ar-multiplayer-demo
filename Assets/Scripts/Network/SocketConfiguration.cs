@@ -1,19 +1,17 @@
-﻿using System.Collections;
-using UnityEngine;
-using UnityEngine.Networking;
+﻿using UnityEngine.Networking;
 
-namespace Diploma.Network {
+namespace Network {
 
     public struct SocketConfiguration {
         public QosType[] channels;
         public int port;
 
-        public Delegates.Shutdown shutdown;
-        public Delegates.Send send;
-        public Delegates.OnConnectEvent onConnectEvent;
-        public Delegates.OnDataEvent onDataEvent;
-        public Delegates.OnBroadcastEvent onBroadcastEvent;
-        public Delegates.OnDisconnectEvent onDisconnectEvent;
+        public Shutdown shutdown;
+        public Send send;
+        public OnConnectEvent onConnectEvent;
+        public OnDataEvent onDataEvent;
+        public OnBroadcastEvent onBroadcastEvent;
+        public OnDisconnectEvent onDisconnectEvent;
     }
 
 }

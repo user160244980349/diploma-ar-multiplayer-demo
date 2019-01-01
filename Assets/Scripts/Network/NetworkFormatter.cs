@@ -1,5 +1,5 @@
 ﻿
-namespace Diploma.Network {
+namespace Network {
 
     public class EventFormatter {
 

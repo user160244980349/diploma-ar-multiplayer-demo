@@ -1,8 +1,8 @@
-﻿using UnityEngine;
-using System.Collections.Generic;
-using Diploma.Events.GameEvents;
+﻿using System.Collections.Generic;
+using Events.EventTypes;
+using UnityEngine;
 
-namespace Diploma.Events {
+namespace Events {
 
     public class EventManager : MonoBehaviour {
 

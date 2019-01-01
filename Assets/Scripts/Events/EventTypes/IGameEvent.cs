@@ -1,5 +1,5 @@
 ﻿
-namespace Diploma.Events.GameEvents {
+namespace Events.EventTypes {
 
     public interface IGameEvent {
 

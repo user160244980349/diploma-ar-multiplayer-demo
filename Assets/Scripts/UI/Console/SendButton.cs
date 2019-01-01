@@ -1,11 +1,7 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
-using Diploma.Events;
-using Diploma.Events.GameEvents;
 
-namespace Diploma.UI {
+namespace UI.Console {
 
     public class SendButton : MonoBehaviour {
 

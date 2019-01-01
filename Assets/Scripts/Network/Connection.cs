@@ -1,8 +1,4 @@
-﻿using System.Net.Sockets;
-using UnityEngine;
-using UnityEngine.Networking;
-
-namespace Diploma.Network {
+﻿namespace Network {
 
     public struct Connection {
         public bool inUse;

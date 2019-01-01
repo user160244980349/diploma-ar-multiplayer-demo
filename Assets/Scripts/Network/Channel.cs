@@ -1,6 +1,6 @@
 ﻿using UnityEngine.Networking;
 
-namespace Diploma.Network {
+namespace Network {
 
     public struct Channel {
         public bool inUse;

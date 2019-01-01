@@ -1,71 +1,71 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Networking;
 
-namespace Diploma.Network {
+namespace Network {
 
     public class NetworkManager : MonoBehaviour {
 
-        public static NetworkManager Instance { get { return instance; } }
-        static NetworkManager instance = null;
+        public static NetworkManager Instance { get; private set; }
 
-        int activeSockets;
-        const int maxSockets = 16;
-        const int maxConnections = 16;
-        const int maxChannels = 16;
-        const int bufferSize = 1024;
+        private const int MaxSockets = 16;
+        private const int MaxConnections = 16;
+        private const int MaxChannels = 16;
+        private const int BufferSize = 1024;
 
-        byte[] buffer;
-        Socket[] sockets;
+        private byte[] _buffer;
+        private Socket[] _sockets;
 
-        void Awake () {
+        static NetworkManager() {
+            Instance = null;
+        }
 
-            if (instance == null) {
-                instance = this;
+        private void Awake () {
+
+            if (Instance == null) {
+                Instance = this;
             } else {
                 Destroy(this);
             }
             
-            sockets = new Socket[maxSockets];
-            for (int i = 0; i < maxSockets; i++) {
-                sockets[i].inUse = false;
+            _sockets = new Socket[MaxSockets];
+            for (var i = 0; i < MaxSockets; i++) {
+                _sockets[i].inUse = false;
 
-                sockets[i].connections = new Connection[maxConnections];
-                for (int j = 0; j < maxSockets; j++) {
-                    sockets[i].connections[j].inUse = false;
+                _sockets[i].connections = new Connection[MaxConnections];
+                for (var j = 0; j < MaxSockets; j++) {
+                    _sockets[i].connections[j].inUse = false;
                 }
 
-                sockets[i].channels = new Channel[maxChannels];
-                for (int j = 0; j < maxSockets; j++) {
-                    sockets[i].channels[j].inUse = false;
+                _sockets[i].channels = new Channel[MaxChannels];
+                for (var j = 0; j < MaxSockets; j++) {
+                    _sockets[i].channels[j].inUse = false;
                 }
             }
 
-            buffer = new byte[bufferSize];
+            _buffer = new byte[BufferSize];
 
-            GlobalConfig config = new GlobalConfig {
+            var config = new GlobalConfig {
                 ConnectionReadyForSend = OnConnectionReady,
                 NetworkEventAvailable = OnNetworkEvent
             };
             NetworkTransport.Init(config);
         }
 
-        void Update () {
-
-            int socketId;
-            int connectionId;
-            int channelId;
-            int dataSize;
-            byte error;
+        private void Update () {
             NetworkEventType networkEvent;
-
             do {
+                int socketId;
+                int connectionId;
+                int channelId;
+                int dataSize;
+                byte error;
+                
                 networkEvent = NetworkTransport.Receive(
                     out socketId,
                     out connectionId,
                     out channelId,
-                    buffer,
-                    bufferSize,
+                    _buffer,
+                    BufferSize,
                     out dataSize,
                     out error
                 );
@@ -75,63 +75,61 @@ namespace Diploma.Network {
 
                 switch (networkEvent) {
                     case NetworkEventType.ConnectEvent:
-                        sockets[socketId].c.onConnectEvent(connectionId);
+                        _sockets[socketId].c.onConnectEvent(connectionId);
                         break;
 
                     case NetworkEventType.DataEvent:
-                        sockets[socketId].c.onDataEvent(connectionId, buffer, dataSize);
+                        _sockets[socketId].c.onDataEvent(connectionId, _buffer, dataSize);
                         break;
 
                     case NetworkEventType.BroadcastEvent:
-                        sockets[socketId].c.onBroadcastEvent(connectionId);
+                        _sockets[socketId].c.onBroadcastEvent(connectionId);
                         break;
 
                     case NetworkEventType.DisconnectEvent:
-                        sockets[socketId].c.onDisconnectEvent(connectionId);
+                        _sockets[socketId].c.onDisconnectEvent(connectionId);
                         break;
-
+                    
+                    case NetworkEventType.Nothing:
+                        break;
+                    
+                    default:
+                        break;
                 }
             } while (networkEvent != NetworkEventType.Nothing);
-
         }
 
-        void OnDestroy () {
+        private void OnDestroy () {
             NetworkTransport.Shutdown();
         }
 
         // ======================================================================================== sockets part
 
         public int OpenSocket (SocketConfiguration sc) {
-
-            ConnectionConfig connectionConfig = new ConnectionConfig();
-
-            int channelIndex = 0;
-            Channel[] channels = new Channel[sc.channels.Length];
-            foreach (QosType qos in sc.channels) {
-                Channel channel = new Channel {
+            var connectionConfig = new ConnectionConfig();
+            var channelIndex = 0;
+            var channels = new Channel[sc.channels.Length];
+            foreach (var qos in sc.channels) {
+                var channel = new Channel {
                     id = connectionConfig.AddChannel(qos),
                     type = qos,
                 };
                 channels[channelIndex] = channel;
                 channelIndex++;
             }
-
-            HostTopology hostTopology = new HostTopology(connectionConfig, maxConnections);
-
-            int freshSocketId = NetworkTransport.AddHost(
+            var hostTopology = new HostTopology(connectionConfig, MaxConnections);
+            var freshSocketId = NetworkTransport.AddHost(
                 hostTopology,
                 sc.port);
-
-            sockets[freshSocketId].inUse = true;
-            sockets[freshSocketId].c = sc;
-            sockets[freshSocketId].channels = channels;
-            sockets[freshSocketId].eventsAvaliable = false;
-
+            _sockets[freshSocketId].inUse = true;
+            _sockets[freshSocketId].c = sc;
+            _sockets[freshSocketId].channels = channels;
+            _sockets[freshSocketId].eventsAvaliable = false;
             return freshSocketId;
         }
 
         public void OnNetworkEvent (int socketId) {
-            sockets[socketId].eventsAvaliable = true;
+            _sockets[socketId].eventsAvaliable = true;
         }
 
         public void CloseSocket (int socketId) {
@@ -139,12 +137,12 @@ namespace Diploma.Network {
             NetworkTransport.RemoveHost(socketId);
         }
 
-        public void SocketNotUsing (int socketId) {
-            sockets[socketId].inUse = false;
-            for (int i = 0; i < sockets[socketId].activeConnections; i++) {
+        private void SocketNotUsing (int socketId) {
+            _sockets[socketId].inUse = false;
+            for (var i = 0; i < _sockets[socketId].activeConnections; i++) {
                 ConnectionNotUsing(socketId, i);
             }
-            for (int i = 0; i < sockets[socketId].activeChannels; i++) {
+            for (var i = 0; i < _sockets[socketId].activeChannels; i++) {
                 ChannelNotUsing(socketId, i);
             }
         }
@@ -152,22 +150,19 @@ namespace Diploma.Network {
         // ======================================================================================== connections part
 
         public void OnConnectionReady (int socketId, int connectionId) {
-            sockets[socketId].connections[connectionId].ready = true;
+            _sockets[socketId].connections[connectionId].ready = true;
         }
 
         public void OpenConnection (int socketId, ConnectionConfiguration cc) {
             byte error;
-
-            int connectionId = NetworkTransport.Connect(
+            var connectionId = NetworkTransport.Connect(
                 socketId,
                 cc.ip,
                 cc.port,
                 cc.exceptionConnectionId,
                 out error);
-
-            sockets[socketId].connections[connectionId].c = cc;
-            sockets[socketId].connections[connectionId].ready = false;
-
+            _sockets[socketId].connections[connectionId].c = cc;
+            _sockets[socketId].connections[connectionId].ready = false;
             if ((NetworkError)error != NetworkError.Ok)
                 Debug.LogError(string.Format("NetworkError {0}", (NetworkError)error));
         }
@@ -175,47 +170,42 @@ namespace Diploma.Network {
         public void Send (int socketId, int connectionId, byte[] buffer, int size) {
             byte error;
             
-            if (sockets[socketId].connections[connectionId].ready || true) {
-                if (!NetworkTransport.Send(socketId, connectionId, 0, buffer, size, out error)) {
+            if (!NetworkTransport.Send(socketId, connectionId, 0, buffer, size, out error)) {
 
-                    if ((NetworkError)error != NetworkError.Ok)
-                        Debug.LogError(string.Format("NetworkError {0}", (NetworkError)error));
+                if ((NetworkError)error != NetworkError.Ok)
+                    Debug.LogError(string.Format("NetworkError {0}", (NetworkError)error));
 
-                    sockets[socketId].connections[connectionId].ready = false;
-                    NetworkTransport.NotifyWhenConnectionReadyForSend(
-                        socketId,
-                        connectionId,
-                        sockets[socketId].connections[connectionId].c.notificationLevel,
-                        out error);
-
-                    if ((NetworkError)error != NetworkError.Ok)
-                        Debug.LogError(string.Format("NetworkError {0}", (NetworkError)error));
-                }
+                _sockets[socketId].connections[connectionId].ready = false;
+                NetworkTransport.NotifyWhenConnectionReadyForSend(
+                    socketId,
+                    connectionId,
+                    _sockets[socketId].connections[connectionId].c.notificationLevel,
+                    out error);
 
                 if ((NetworkError)error != NetworkError.Ok)
                     Debug.LogError(string.Format("NetworkError {0}", (NetworkError)error));
             }
-        }
-
-        public void CloseConnection (int socketId, int connectionId) {
-
-            ConnectionNotUsing(socketId, connectionId);
-
-            byte error;
-            NetworkTransport.Disconnect(socketId, connectionId, out error);
 
             if ((NetworkError)error != NetworkError.Ok)
                 Debug.LogError(string.Format("NetworkError {0}", (NetworkError)error));
         }
 
-        public void ConnectionNotUsing (int socketId, int connectionId) {
-            sockets[socketId].connections[connectionId].inUse = false;
+        public void CloseConnection (int socketId, int connectionId) {
+            ConnectionNotUsing(socketId, connectionId);
+            byte error;
+            NetworkTransport.Disconnect(socketId, connectionId, out error);
+            if ((NetworkError)error != NetworkError.Ok)
+                Debug.LogError(string.Format("NetworkError {0}", (NetworkError)error));
+        }
+
+        private void ConnectionNotUsing (int socketId, int connectionId) {
+            _sockets[socketId].connections[connectionId].inUse = false;
         }
 
         // ======================================================================================== channels part
 
-        public void ChannelNotUsing (int socketId, int channelId) {
-            sockets[socketId].channels[channelId].inUse = false;
+        private void ChannelNotUsing (int socketId, int channelId) {
+            _sockets[socketId].channels[channelId].inUse = false;
         }
 
     }
