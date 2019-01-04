@@ -1,8 +1,9 @@
 ﻿using UnityEngine.Networking;
 
-namespace Network {
-
-    public struct SocketConfiguration {
+namespace Network
+{
+    public struct SocketConfiguration
+    {
         public QosType[] channels;
         public int port;
 
@@ -13,6 +14,4 @@ namespace Network {
         public OnBroadcastEvent onBroadcastEvent;
         public OnDisconnectEvent onDisconnectEvent;
     }
-
 }
-

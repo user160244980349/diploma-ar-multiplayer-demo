@@ -1,77 +1,49 @@
-﻿using System.Collections.Generic;
-using Events;
+﻿using Events;
 using Events.EventTypes;
 using Multiplayer;
 using Network;
-using Scenes;
+using UI.Console;
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
-public class ApplicationManager : MonoBehaviour {
+public class ApplicationManager : MonoBehaviour
+{
+    private ButtonClicked buttonClick;
+    private Client client;
+    private Host host;
 
-    static ApplicationManager instance = null;
+    public static ApplicationManager Instance { get; private set; }
 
-    ButtonClicked buttonClick;
-
-    Client client;
-    Host host;
-
-    void Awake () {
-
-        if (instance == null) {
-            instance = this;
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
 
             // subsystems
             gameObject.AddComponent<EventManager>();
-            gameObject.AddComponent<SceneManager>();
             gameObject.AddComponent<NetworkManager>();
+            gameObject.AddComponent<Host>();
+            gameObject.AddComponent<Client>();
             gameObject.AddComponent<MultiplayerManager>();
-
-            client = new Client();
-            host = new Host();
-
-            client.Boot();
-
-        } else if (instance == this) {
+            gameObject.AddComponent<ConsoleManager>();
+        }
+        else if (Instance == this)
+        {
             Destroy(gameObject);
         }
+
         DontDestroyOnLoad(gameObject);
     }
 
-    public ApplicationManager GetInstance () {
-        return instance;
+    private void Start()
+    {
+        LoadScene("MainMenu");
     }
 
-    void Start () {
-        buttonClick = EventManager.GetInstance().GetEvent<ButtonClicked>();
-        buttonClick.Subscribe(OnButtonClick);
-
-        SceneManager.GetInstance().LoadScene("MainMenu");
+    public void LoadScene(string name)
+    {
+        SceneManager
+            .LoadScene(name, LoadSceneMode.Single);
     }
-
-    void OnButtonClick (Button button) {
-
-        if (button.name == "Quit")
-            Application.Quit();
-
-        if (button.name == "Host") {
-            Debug.Log("Booting host");
-            host.Boot();
-        }
-
-        if (button.name == "Connect") {
-            Debug.Log("Booting client");
-            client.Connect();
-        }
-
-        if (button.name == "Disconnect") {
-            client.Disconnect();
-        }
-
-        if (button.name == "Send") {
-            client.Send();
-        }
-
-    }
-
 }

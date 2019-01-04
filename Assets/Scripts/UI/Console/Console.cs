@@ -2,39 +2,36 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace UI.Console {
+namespace UI.Console
+{
+    public class Console : MonoBehaviour
+    {
+        public GameObject consolePanel;
+        public int MaxMessages = 100;
+        public GameObject MessageObject;
 
-    public class Console : MonoBehaviour {
+        private LinkedList<GameObject> messages;
 
-        public GameObject   MessageObject;
-        public int          MaxMessages = 100;
-        public GameObject   consolePanel;
-
-        LinkedList<GameObject>  messages;
-
-        void Start () {
-
+        private void Start()
+        {
             messages = new LinkedList<GameObject>();
-
         }
 
-        public void SendMessage (string text, Color color) {
-
-            if (messages.Count >= MaxMessages) {
+        public void SendMessage(string text, Color color)
+        {
+            if (messages.Count >= MaxMessages)
+            {
                 Destroy(messages.First.Value);
                 messages.Remove(messages.First);
             }
 
-            GameObject newMessageInstance   = Instantiate(MessageObject, consolePanel.transform);
-            Text newMessageText             = newMessageInstance.GetComponent<Text>();
+            var newMessageInstance = Instantiate(MessageObject, consolePanel.transform);
+            var newMessageText = newMessageInstance.GetComponent<Text>();
 
             newMessageText.color = color;
             newMessageText.text = text;
 
             messages.AddLast(newMessageInstance);
-
         }
-
     }
-
 }

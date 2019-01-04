@@ -2,31 +2,27 @@
 using Events.EventTypes;
 using UnityEngine;
 
-namespace Events {
+namespace Events
+{
+    public class EventManager : MonoBehaviour
+    {
+        private List<IGameEvent> _events;
 
-    public class EventManager : MonoBehaviour {
+        public static EventManager Instance { get; private set; }
 
-        static EventManager instance = null;
-        List<IGameEvent> events = null;
-
-        void Awake () {
-
-            if (instance == null) {
-                instance = this;
-            } else {
+        private void Awake()
+        {
+            if (Instance == null)
+                Instance = this;
+            else
                 Destroy(this);
-            }
-            EventsBootstrapper.LoadEvents(out events);
+
+            EventsBootstrapper.LoadEvents(out _events);
         }
 
-        public static EventManager GetInstance () {
-            return instance;
+        public T GetEvent<T>()
+        {
+            return (T) _events.Find(e => e is T);
         }
-
-        public T GetEvent<T> () {
-            return (T)(events.Find(e => e is T));
-        }
-
     }
-
 }

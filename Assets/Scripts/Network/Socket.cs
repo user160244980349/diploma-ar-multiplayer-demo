@@ -1,6 +1,7 @@
-namespace Network {
-    
-    public struct Socket {
+namespace Network
+{
+    public struct Socket
+    {
         public bool inUse;
         public bool eventsAvaliable;
         public int activeConnections;
@@ -8,6 +9,5 @@ namespace Network {
         public SocketConfiguration c;
         public Connection[] connections;
         public Channel[] channels;
-    };
-
+    }
 }

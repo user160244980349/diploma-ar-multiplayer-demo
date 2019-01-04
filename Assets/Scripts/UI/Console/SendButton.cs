@@ -1,29 +1,22 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 
-namespace UI.Console {
+namespace UI.Console
+{
+    public class SendButton : MonoBehaviour
+    {
+        public Console console;
+        public InputField input;
 
-    public class SendButton : MonoBehaviour {
-
-        public Console          console;
-        public InputField       input;
-        public Network.Client   client;
-
-        void Start () {
-
-            console = GetComponentInParent<Console>();
-
-            Button button = GetComponent<Button>();
+        private void Start()
+        {
+            var button = GetComponent<Button>();
             button.onClick.AddListener(Click);
-
         }
 
-        public void Click () {
-
+        private void Click()
+        {
             console.SendMessage(input.text, Color.green);
-
         }
-
     }
-
 }

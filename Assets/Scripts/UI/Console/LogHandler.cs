@@ -1,52 +1,49 @@
 ﻿using UnityEngine;
 
-namespace UI.Console {
-
-    public class LogHandler : MonoBehaviour {
-
-        public bool WithStackTrace = false;
+namespace UI.Console
+{
+    public class LogHandler : MonoBehaviour
+    {
         public Console console;
+        public bool WithStackTrace;
 
-        void OnEnable () {
+        private void OnEnable()
+        {
             Application.logMessageReceivedThreaded += SendLog;
         }
 
-        void OnDisable () {
+        private void OnDisable()
+        {
             Application.logMessageReceivedThreaded -= SendLog;
         }
 
-        void SendLog (string condition, string stackTrace, UnityEngine.LogType type) {
-
-            if (WithStackTrace && type != LogType.Log) {
+        private void SendLog(string condition, string stackTrace, LogType type)
+        {
+            if (WithStackTrace && type != LogType.Log)
                 condition = string.Format("Message: {0}\nStackTrace: {1}", condition, stackTrace);
-            }
 
-            switch (type) {
-
-                case UnityEngine.LogType.Log:
+            switch (type)
+            {
+                case LogType.Log:
                     console.SendMessage(condition, Color.white);
                     break;
 
-                case UnityEngine.LogType.Warning:
+                case LogType.Warning:
                     console.SendMessage(condition, Color.yellow);
                     break;
 
-                case UnityEngine.LogType.Error:
+                case LogType.Error:
                     console.SendMessage(condition, Color.red);
                     break;
 
-                case UnityEngine.LogType.Exception:
+                case LogType.Exception:
                     console.SendMessage(condition, Color.red);
                     break;
 
-                case UnityEngine.LogType.Assert:
+                case LogType.Assert:
                     console.SendMessage(condition, Color.red);
                     break;
-
             }
-
         }
-
     }
-
 }

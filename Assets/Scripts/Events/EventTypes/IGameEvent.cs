@@ -1,9 +1,6 @@
-﻿
-namespace Events.EventTypes {
-
-    public interface IGameEvent {
-
+﻿namespace Events.EventTypes
+{
+    public interface IGameEvent
+    {
     }
-
 }
-

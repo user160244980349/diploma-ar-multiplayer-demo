@@ -1,25 +1,17 @@
 ﻿using UnityEngine;
 
-namespace Multiplayer {
+namespace Multiplayer
+{
+    public class MultiplayerManager : MonoBehaviour
+    {
+        public static MultiplayerManager Instance { get; private set; }
 
-    public class MultiplayerManager : MonoBehaviour {
-
-        static MultiplayerManager instance = null;
-
-        private void Awake () {
-
-            if (instance == null) {
-                instance = this;
-            } else {
+        private void Awake()
+        {
+            if (Instance == null)
+                Instance = this;
+            else
                 Destroy(this);
-            }
-
         }
-
-        public static MultiplayerManager GetInstance () {
-            return instance;
-        }
-
     }
-
 }

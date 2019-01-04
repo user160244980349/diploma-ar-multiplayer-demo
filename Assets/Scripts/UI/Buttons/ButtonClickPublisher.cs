@@ -3,24 +3,24 @@ using Events.EventTypes;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace UI.Buttons {
+namespace UI.Buttons
+{
+    public class ButtonClickPublisher : MonoBehaviour
+    {
+        private Button _button;
+        private ButtonClicked _click;
 
-    public class ButtonClickPublisher : MonoBehaviour {
+        private void Start()
+        {
+            _button = GetComponent<Button>();
 
-        Button button;
-        ButtonClicked click;
-
-        void Start () {
-            button = GetComponent<Button>();
-
-            button.onClick.AddListener(Click);
-            click = EventManager.GetInstance().GetEvent<ButtonClicked>();
+            _button.onClick.AddListener(Click);
+            _click = EventManager.Instance.GetEvent<ButtonClicked>();
         }
 
-        void Click () {
-            click.Publish(button);
+        private void Click()
+        {
+            _click.Publish(_button);
         }
-
     }
-
 }
