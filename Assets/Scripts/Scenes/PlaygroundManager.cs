@@ -10,18 +10,17 @@ namespace Scenes
 {
     public class PlaygroundManager : MonoBehaviour
     {
-        public static PlaygroundManager Instance { get; private set; }
-
+        private static PlaygroundManager _instance;
         private ButtonClicked _buttonClick;
         private GameObject _menu;
 
         private void Awake()
         {
-            if (Instance == null)
+            if (_instance == null)
             {
-                Instance = this;
+                _instance = this;
             }
-            else if (Instance == this)
+            else if (_instance == this)
             {
                 Destroy(gameObject);
             }
@@ -29,12 +28,12 @@ namespace Scenes
 
         private void Start()
         {
-            ConsoleManager.Instance.InstantiateOnScene();
+            ConsoleManager.GetInstance().InstantiateOnScene();
 
             _menu = GameObject.Find("Menu");
             _menu.SetActive(false);
 
-            _buttonClick = EventManager.Instance.GetEvent<ButtonClicked>();
+            _buttonClick = EventManager.GetInstance().GetEvent<ButtonClicked>();
             _buttonClick.Subscribe(OnButtonClick);
         }
 
@@ -61,14 +60,19 @@ namespace Scenes
             _buttonClick.Unsubscribe(OnButtonClick);
         }
 
+        public static PlaygroundManager GetInstance()
+        {
+            return _instance;
+        }
+
         private void Leave()
         {
-            Client.Instance.Disconnect();
-            if (Host.Instance.GetState() == HostState.Up)
+            Client.GetInstance().Disconnect();
+            if (Host.GetInstance().GetState() == HostState.Up)
             {
-                Host.Instance.Shutdown();
+                Host.GetInstance().Shutdown();
             }
-            ApplicationManager.Instance.LoadScene("Loading");
+            ApplicationManager.GetInstance().LoadScene("Loading");
         }
     }
 }

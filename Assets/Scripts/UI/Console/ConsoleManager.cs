@@ -5,20 +5,20 @@ namespace UI.Console
 {
     public class ConsoleManager : MonoBehaviour
     {
-        public static ConsoleManager Instance { get; private set; }
         public bool WithStackTrace;
 
+        private static ConsoleManager _instance;
         private Console console;
         private int _maxMessages = 200;
         private LinkedList<ConsoleMessage> _messages;
 
         private void Awake()
         {
-            if (Instance == null)
+            if (_instance == null)
             {
-                Instance = this;
+                _instance = this;
             }
-            else if (Instance == this)
+            else if (_instance == this)
             {
                 Destroy(gameObject);
             }
@@ -35,6 +35,11 @@ namespace UI.Console
         private void OnDisable()
         {
             Application.logMessageReceivedThreaded -= SendLog;
+        }
+
+        public static ConsoleManager GetInstance()
+        {
+            return _instance;
         }
 
         private void SendLog(string condition, string stackTrace, LogType type)

@@ -15,7 +15,7 @@ namespace UI.Buttons
             _button = GetComponent<Button>();
 
             _button.onClick.AddListener(Click);
-            _click = EventManager.Instance.GetEvent<ButtonClicked>();
+            _click = EventManager.GetInstance().GetEvent<ButtonClicked>();
         }
 
         private void Click()

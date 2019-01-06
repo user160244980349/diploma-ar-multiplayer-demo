@@ -9,19 +9,18 @@ namespace Scenes
 {
     public class MenuManager : MonoBehaviour
     {
-        public static MenuManager Instance { get; private set; }
-
+        private static MenuManager _instance;
         private ButtonClicked _buttonClick;
         private Text _ip;
         private Text _port;
 
         private void Awake()
         {
-            if (Instance == null)
+            if (_instance == null)
             {
-                Instance = this;
+                _instance = this;
             }
-            else if (Instance == this)
+            else if (_instance == this)
             {
                 Destroy(gameObject);
             }
@@ -29,12 +28,12 @@ namespace Scenes
 
         private void Start()
         {
-            ConsoleManager.Instance.InstantiateOnScene();
+            ConsoleManager.GetInstance().InstantiateOnScene();
 
             _ip = GameObject.Find("Ip").GetComponentInChildren<Text>();
             _port = GameObject.Find("Port").GetComponentInChildren<Text>();
 
-            _buttonClick = EventManager.Instance.GetEvent<ButtonClicked>();
+            _buttonClick = EventManager.GetInstance().GetEvent<ButtonClicked>();
             _buttonClick.Subscribe(OnButtonClick);
         }
 
@@ -53,7 +52,7 @@ namespace Scenes
                 case "Connect":
                     Connecting();
                     break;
-                    
+
                 default:
                     break;
             }
@@ -64,16 +63,21 @@ namespace Scenes
             _buttonClick.Unsubscribe(OnButtonClick);
         }
 
+        public static MenuManager GetInstance()
+        {
+            return _instance;
+        }
+
         private void Quitting()
         {
-            if (Client.Instance.GetState() == ClientState.Ready) Client.Instance.Shutdown();
-            if (Host.Instance.GetState() == HostState.Up) Host.Instance.Shutdown();
+            if (Client.GetInstance().GetState() == ClientState.Ready) Client.GetInstance().Shutdown();
+            if (Host.GetInstance().GetState() == HostState.Up) Host.GetInstance().Shutdown();
             Application.Quit();
         }
 
         private void Hosting()
         {
-            if (Host.Instance.GetState() == HostState.Down) Host.Instance.Boot();
+            if (Host.GetInstance().GetState() == HostState.Down) Host.GetInstance().Boot();
             var cc = new ConnectionConfiguration
             {
                 ip = "127.0.0.1",
@@ -81,9 +85,9 @@ namespace Scenes
                 notificationLevel = 1,
                 exceptionConnectionId = 0
             };
-            if (Client.Instance.GetState() == ClientState.Down) Client.Instance.Boot();
-            if (Client.Instance.GetState() == ClientState.Ready) Client.Instance.Connect(cc);
-            ApplicationManager.Instance.LoadScene("Loading");
+            if (Client.GetInstance().GetState() == ClientState.Down) Client.GetInstance().Boot();
+            if (Client.GetInstance().GetState() == ClientState.Ready) Client.GetInstance().Connect(cc);
+            ApplicationManager.GetInstance().LoadScene("Loading");
         }
 
         private void Connecting()
@@ -95,9 +99,9 @@ namespace Scenes
                 notificationLevel = 1,
                 exceptionConnectionId = 0
             };
-            if (Client.Instance.GetState() == ClientState.Down) Client.Instance.Boot();
-            if (Client.Instance.GetState() == ClientState.Ready) Client.Instance.Connect(cc);
-            ApplicationManager.Instance.LoadScene("Loading");
+            if (Client.GetInstance().GetState() == ClientState.Down) Client.GetInstance().Boot();
+            if (Client.GetInstance().GetState() == ClientState.Ready) Client.GetInstance().Connect(cc);
+            ApplicationManager.GetInstance().LoadScene("Loading");
         }
     }
 }

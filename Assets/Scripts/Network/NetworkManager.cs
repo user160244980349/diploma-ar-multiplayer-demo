@@ -5,8 +5,7 @@ namespace Network
 {
     public class NetworkManager : MonoBehaviour
     {
-        public static NetworkManager Instance { get; private set; }
-
+        private static NetworkManager _instance;
         private const int MaxSockets = 16;
         private const int MaxConnections = 16;
         private const int MaxChannels = 16;
@@ -16,11 +15,11 @@ namespace Network
 
         private void Awake()
         {
-            if (Instance == null)
+            if (_instance == null)
             {
-                Instance = this;
+                _instance = this;
             }
-            else if (Instance == this)
+            else if (_instance == this)
             {
                 Destroy(gameObject);
             }
@@ -95,6 +94,11 @@ namespace Network
         private void OnDestroy()
         {
             NetworkTransport.Shutdown();
+        }
+
+        public static NetworkManager GetInstance()
+        {
+            return _instance;
         }
 
         // ======================================================================================== sockets part

@@ -5,17 +5,16 @@ namespace Events
 {
     public class EventManager : MonoBehaviour
     {
-        public static EventManager Instance { get; private set; }
-
+        private static EventManager _instance;
         private List<object> _events;
 
         private void Awake()
         {
-            if (Instance == null)
+            if (_instance == null)
             {
-                Instance = this;
+                _instance = this;
             }
-            else if (Instance == this)
+            else if (_instance == this)
             {
                 Destroy(gameObject);
             }
@@ -32,6 +31,11 @@ namespace Events
         private void Update()
         {
 
+        }
+
+        public static EventManager GetInstance()
+        {
+            return _instance;
         }
 
         public T GetEvent<T>()

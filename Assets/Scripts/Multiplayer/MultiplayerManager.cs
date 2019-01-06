@@ -6,15 +6,15 @@ namespace Multiplayer
 {
     public class MultiplayerManager : MonoBehaviour
     {
-        public static MultiplayerManager Instance { get; private set; }
+        private static MultiplayerManager _instance;
 
         private void Awake()
         {
-            if (Instance == null)
+            if (_instance == null)
             {
-                Instance = this;
+                _instance = this;
             }
-            else if (Instance == this)
+            else if (_instance == this)
             {
                 Destroy(gameObject);
             }
@@ -23,19 +23,24 @@ namespace Multiplayer
 
         private void Start()
         {
-            
+
         }
 
         private void Update()
         {
-            //if (Client.Instance.GetState() == ClientState.Connected)
+            //if (Client.GetInstance().GetState() == ClientState.Connected)
             //{
             //    NetworkMessage m;
             //    m.type = NetworkMessageType.Service;
             //    m.data = Encoding.ASCII.GetBytes("Boop");
             //    m.length = m.data.Length;
-            //    Client.Instance.Send(m);
+            //    Client.GetInstance().Send(m);
             //}
+        }
+
+        public static MultiplayerManager GetInstance()
+        {
+            return _instance;
         }
     }
 }

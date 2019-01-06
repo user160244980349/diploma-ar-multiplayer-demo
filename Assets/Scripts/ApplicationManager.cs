@@ -8,19 +8,18 @@ using UnityEngine.SceneManagement;
 
 public class ApplicationManager : MonoBehaviour
 {
-    public static ApplicationManager Instance { get; private set; }
-
+    private static ApplicationManager _instance;
     private ButtonClicked buttonClick;
     private Client client;
     private Host host;
 
     private void Awake()
     {
-        if (Instance == null)
+        if (_instance == null)
         {
-            Instance = this;
+            _instance = this;
         }
-        else if (Instance == this)
+        else if (_instance == this)
         {
             Destroy(gameObject);
         }
@@ -30,6 +29,11 @@ public class ApplicationManager : MonoBehaviour
     private void Start()
     {
         LoadScene("MainMenu");
+    }
+
+    public static ApplicationManager GetInstance()
+    {
+        return _instance;
     }
 
     public void LoadScene(string name)

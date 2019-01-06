@@ -5,19 +5,18 @@ namespace Network
 {
     public class Client : MonoBehaviour
     {
-        public static Client Instance { get; private set; }
-
+        private static Client _instance;
         private ClientState _state;
         private int _socketId;
         private int _connectionId;
 
         private void Awake()
         {
-            if (Instance == null)
+            if (_instance == null)
             {
-                Instance = this;
+                _instance = this;
             }
-            else if (Instance == this)
+            else if (_instance == this)
             {
                 Destroy(gameObject);
             }
@@ -33,7 +32,12 @@ namespace Network
 
         private void Update()
         {
-            
+
+        }
+
+        public static Client GetInstance()
+        {
+            return _instance;
         }
 
         public ClientState GetState()
@@ -53,19 +57,19 @@ namespace Network
                 onBroadcastEvent = OnBroadcastEvent,
                 onDisconnectEvent = OnDisconnectEvent
             };
-            _socketId = NetworkManager.Instance.OpenSocket(sc);
+            _socketId = NetworkManager.GetInstance().OpenSocket(sc);
         }
 
         public void Connect(ConnectionConfiguration cc)
         {
             _state = ClientState.Connecting;
-            NetworkManager.Instance.OpenConnection(_socketId, cc);
+            NetworkManager.GetInstance().OpenConnection(_socketId, cc);
         }
 
         public void Disconnect()
         {
             _state = ClientState.Disconnecting;
-            NetworkManager.Instance.CloseConnection(_socketId, _connectionId);
+            NetworkManager.GetInstance().CloseConnection(_socketId, _connectionId);
         }
 
         private void OnBroadcastEvent(int connection)
@@ -78,7 +82,7 @@ namespace Network
             Debug.Log("CLIENT::Connected to host");
             _state = ClientState.Connected;
             _connectionId = connection;
-            ApplicationManager.Instance.LoadScene("Playground");
+            ApplicationManager.GetInstance().LoadScene("Playground");
         }
 
         private void OnDataEvent(int connection, byte[] data, int dataSize)
@@ -90,20 +94,20 @@ namespace Network
         {
             Debug.Log("CLIENT::Disconnected from host");
             _state = ClientState.Ready;
-            ApplicationManager.Instance.LoadScene("MainMenu");
+            ApplicationManager.GetInstance().LoadScene("MainMenu");
         }
 
         public void Send(NetworkMessage m)
         {
             Debug.Log("CLIENT::Sending data");
-            NetworkManager.Instance.Send(_socketId, _connectionId, Formatter.Serialize(m), m.length);
+            NetworkManager.GetInstance().Send(_socketId, _connectionId, Formatter.Serialize(m), m.length);
         }
 
         public void Shutdown()
         {
             Debug.Log("CLIENT::Shutdown");
             _state = ClientState.Down;
-            NetworkManager.Instance.CloseSocket(_socketId);
+            NetworkManager.GetInstance().CloseSocket(_socketId);
         }
     }
 }

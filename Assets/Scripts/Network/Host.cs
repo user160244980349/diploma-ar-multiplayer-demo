@@ -7,19 +7,18 @@ namespace Network
 {
     public class Host : MonoBehaviour
     {
-        public static Host Instance { get; private set; }
-
+        private static Host _instance;
         private HostState _state;
         private List<int> _clients;
         private int _socketId;
 
         private void Awake()
         {
-            if (Instance == null)
+            if (_instance == null)
             {
-                Instance = this;
+                _instance = this;
             }
-            else if (Instance == this)
+            else if (_instance == this)
             {
                 Destroy(gameObject);
             }
@@ -35,7 +34,12 @@ namespace Network
 
         private void Update()
         {
-            
+
+        }
+
+        public static Host GetInstance()
+        {
+            return _instance;
         }
 
         public HostState GetState()
@@ -56,7 +60,7 @@ namespace Network
                 onBroadcastEvent = OnBroadcastEvent,
                 onDisconnectEvent = OnDisconnectEvent
             };
-            _socketId = NetworkManager.Instance.OpenSocket(sc);
+            _socketId = NetworkManager.GetInstance().OpenSocket(sc);
         }
 
         public void OnBroadcastEvent(int connection)
@@ -76,7 +80,7 @@ namespace Network
             for (var i = 0; i < _clients.Count; i++)
             {
                 if (_clients[i] == connection) continue;
-                NetworkManager.Instance.Send(_socketId, _clients[i], data, dataSize);
+                NetworkManager.GetInstance().Send(_socketId, _clients[i], data, dataSize);
             }
         }
 
@@ -88,7 +92,7 @@ namespace Network
             if (_state == HostState.Shuttingdown && _clients.Count == 0)
             {
                 _state = HostState.Down;
-                NetworkManager.Instance.CloseSocket(_socketId);
+                NetworkManager.GetInstance().CloseSocket(_socketId);
             }
         }
 
@@ -103,7 +107,7 @@ namespace Network
             _state = HostState.Shuttingdown;
             for (var i = 0; i < _clients.Count; i++)
             {
-                NetworkManager.Instance.CloseConnection(_socketId, _clients[i]);
+                NetworkManager.GetInstance().CloseConnection(_socketId, _clients[i]);
             }
         }
     }
