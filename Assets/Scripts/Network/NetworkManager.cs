@@ -5,22 +5,26 @@ namespace Network
 {
     public class NetworkManager : MonoBehaviour
     {
+        public static NetworkManager Instance { get; private set; }
+
         private const int MaxSockets = 16;
         private const int MaxConnections = 16;
         private const int MaxChannels = 16;
         private const int BufferSize = 1024;
-
         private byte[] _buffer;
         private Socket[] _sockets;
-
-        public static NetworkManager Instance { get; private set; }
 
         private void Awake()
         {
             if (Instance == null)
+            {
                 Instance = this;
-            else
-                Destroy(this);
+            }
+            else if (Instance == this)
+            {
+                Destroy(gameObject);
+            }
+            DontDestroyOnLoad(gameObject);
 
             _sockets = new Socket[MaxSockets];
             for (var i = 0; i < MaxSockets; i++)
@@ -36,11 +40,7 @@ namespace Network
 
             _buffer = new byte[BufferSize];
 
-            var config = new GlobalConfig
-            {
-                ConnectionReadyForSend = OnConnectionReady,
-                NetworkEventAvailable = OnNetworkEvent
-            };
+            var config = new GlobalConfig();
             NetworkTransport.Init(config);
         }
 
@@ -65,8 +65,8 @@ namespace Network
                     out error
                 );
 
-                if ((NetworkError) error != NetworkError.Ok)
-                    Debug.LogError(string.Format("NetworkError {0}", (NetworkError) error));
+                if ((NetworkError)error != NetworkError.Ok)
+                    Debug.LogError(string.Format("NetworkError {0}", (NetworkError)error));
 
                 switch (networkEvent)
                 {
@@ -126,15 +126,10 @@ namespace Network
             return freshSocketId;
         }
 
-        public void OnNetworkEvent(int socketId)
-        {
-            _sockets[socketId].eventsAvaliable = true;
-        }
-
         public void CloseSocket(int socketId)
         {
-            SocketNotUsing(socketId);
             NetworkTransport.RemoveHost(socketId);
+            SocketNotUsing(socketId);
         }
 
         private void SocketNotUsing(int socketId)
@@ -145,11 +140,6 @@ namespace Network
         }
 
         // ======================================================================================== connections part
-
-        public void OnConnectionReady(int socketId, int connectionId)
-        {
-            _sockets[socketId].connections[connectionId].ready = true;
-        }
 
         public void OpenConnection(int socketId, ConnectionConfiguration cc)
         {
@@ -169,34 +159,18 @@ namespace Network
         public void Send(int socketId, int connectionId, byte[] buffer, int size)
         {
             byte error;
-
-            if (!NetworkTransport.Send(socketId, connectionId, 0, buffer, size, out error))
-            {
-                if ((NetworkError) error != NetworkError.Ok)
-                    Debug.LogError(string.Format("NetworkError {0}", (NetworkError) error));
-
-                _sockets[socketId].connections[connectionId].ready = false;
-                NetworkTransport.NotifyWhenConnectionReadyForSend(
-                    socketId,
-                    connectionId,
-                    _sockets[socketId].connections[connectionId].c.notificationLevel,
-                    out error);
-
-                if ((NetworkError) error != NetworkError.Ok)
-                    Debug.LogError(string.Format("NetworkError {0}", (NetworkError) error));
-            }
-
+            NetworkTransport.Send(socketId, connectionId, 0, buffer, size, out error);
             if ((NetworkError) error != NetworkError.Ok)
                 Debug.LogError(string.Format("NetworkError {0}", (NetworkError) error));
         }
 
         public void CloseConnection(int socketId, int connectionId)
         {
-            ConnectionNotUsing(socketId, connectionId);
             byte error;
             NetworkTransport.Disconnect(socketId, connectionId, out error);
             if ((NetworkError) error != NetworkError.Ok)
                 Debug.LogError(string.Format("NetworkError {0}", (NetworkError) error));
+            ConnectionNotUsing(socketId, connectionId);
         }
 
         private void ConnectionNotUsing(int socketId, int connectionId)

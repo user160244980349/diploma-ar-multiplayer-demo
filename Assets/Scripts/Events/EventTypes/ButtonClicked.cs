@@ -4,33 +4,24 @@ using UnityEngine.UI;
 
 namespace Events.EventTypes
 {
-    public class ButtonClicked : IGameEvent
+    public class ButtonClicked
     {
-        private readonly List<Action<Button>> callbacks;
+        public delegate void Callback(Button b);
+        private Callback _c;
 
-        public ButtonClicked()
+        public void Subscribe(Callback c)
         {
-            callbacks = new List<Action<Button>>();
+            _c += c;
         }
 
-        ~ButtonClicked()
+        public void Unsubscribe(Callback c)
         {
-            foreach (var callback in callbacks) callbacks.Remove(callback);
+            _c -= c;
         }
 
-        public void Subscribe(Action<Button> callback)
+        public void Publish(Button b)
         {
-            callbacks.Add(callback);
-        }
-
-        public void Unsubscribe(Action<Button> callback)
-        {
-            callbacks.Remove(callback);
-        }
-
-        public void Publish(Button button)
-        {
-            foreach (var callback in callbacks) callback(button);
+            _c(b);
         }
     }
 }

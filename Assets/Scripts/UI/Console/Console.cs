@@ -6,30 +6,37 @@ namespace UI.Console
 {
     public class Console : MonoBehaviour
     {
-        public GameObject consolePanel;
-        public int MaxMessages = 100;
-        public GameObject MessageObject;
-
-        private LinkedList<GameObject> messages;
+        public int maxMessages;
+        public GameObject consoleSurface;
+        public LinkedList<ConsoleMessage> previousMessages;
+        public LinkedList<GameObject> messages;
 
         private void Start()
         {
             messages = new LinkedList<GameObject>();
+
+            if (previousMessages != null)
+            {
+                foreach (var m in previousMessages)
+                {
+                    WriteMessage(m);
+                }
+            }
         }
 
-        public void SendMessage(string text, Color color)
+        public void WriteMessage(ConsoleMessage m)
         {
-            if (messages.Count >= MaxMessages)
+            if (messages.Count >= maxMessages)
             {
                 Destroy(messages.First.Value);
                 messages.Remove(messages.First);
             }
 
-            var newMessageInstance = Instantiate(MessageObject, consolePanel.transform);
+            var newMessageInstance = Instantiate(Resources.Load("UI/Console/Message") as GameObject, consoleSurface.transform);
             var newMessageText = newMessageInstance.GetComponent<Text>();
 
-            newMessageText.color = color;
-            newMessageText.text = text;
+            newMessageText.text = m.text;
+            newMessageText.color = m.color;
 
             messages.AddLast(newMessageInstance);
         }

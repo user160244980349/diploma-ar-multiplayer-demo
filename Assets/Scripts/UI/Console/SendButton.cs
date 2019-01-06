@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using Events;
+using Events.EventTypes;
+using UnityEngine;
 using UnityEngine.UI;
 
 namespace UI.Console
@@ -16,7 +18,10 @@ namespace UI.Console
 
         private void Click()
         {
-            console.SendMessage(input.text, Color.green);
+            ConsoleMessage m;
+            m.text = input.text;
+            m.color = Color.green;
+            ConsoleManager.Instance.SendMessage(m);
         }
     }
 }

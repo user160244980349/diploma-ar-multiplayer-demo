@@ -7,19 +7,46 @@ namespace Network
 {
     public class Host : MonoBehaviour
     {
+        public static Host Instance { get; private set; }
+
+        private HostState _state;
         private List<int> _clients;
         private int _socketId;
-        public bool Booted { get; private set; }
-        public bool ShuttingDown { get; private set; }
+
+        private void Awake()
+        {
+            if (Instance == null)
+            {
+                Instance = this;
+            }
+            else if (Instance == this)
+            {
+                Destroy(gameObject);
+            }
+            DontDestroyOnLoad(gameObject);
+
+            _state = HostState.Down;
+        }
 
         private void Start()
         {
             _clients = new List<int>();
         }
 
+        private void Update()
+        {
+            
+        }
+
+        public HostState GetState()
+        {
+            return _state;
+        }
+
         public void Boot()
         {
-            Booted = true;
+            Debug.Log(string.Format("HOST::Boot"));
+            _state = HostState.Up;
             var sc = new SocketConfiguration
             {
                 channels = new QosType[2] {QosType.Reliable, QosType.Reliable},
@@ -34,6 +61,7 @@ namespace Network
 
         public void OnBroadcastEvent(int connection)
         {
+
         }
 
         public void OnConnectEvent(int connection)
@@ -44,36 +72,39 @@ namespace Network
 
         public void OnDataEvent(int connection, byte[] data, int dataSize)
         {
-            Debug.Log(string.Format("HOST::Received data from client {0} connected to socket {1}", connection,
-                _socketId));
-            foreach (var client in _clients)
+            Debug.Log(string.Format("HOST::Received data from client {0} connected to socket {1}", connection, _socketId));
+            for (var i = 0; i < _clients.Count; i++)
             {
-                if (client == connection) continue;
-                NetworkManager.Instance.Send(_socketId, connection, Encoding.UTF8.GetBytes("xyu"), 1024);
+                if (_clients[i] == connection) continue;
+                NetworkManager.Instance.Send(_socketId, _clients[i], data, dataSize);
             }
         }
 
         public void OnDisconnectEvent(int connection)
         {
-            if (ShuttingDown && _clients.Count == 0)
-            {
-                ShuttingDown = false;
-                NetworkManager.Instance.CloseSocket(_socketId);
-            }
-
             Debug.Log(string.Format("HOST::Client {0} disconnected from socket {1}", connection, _socketId));
             _clients.Remove(connection);
+
+            if (_state == HostState.Shuttingdown && _clients.Count == 0)
+            {
+                _state = HostState.Down;
+                NetworkManager.Instance.CloseSocket(_socketId);
+            }
         }
 
         public void Send()
         {
+
         }
 
         public void Shutdown()
         {
-            Booted = false;
-            ShuttingDown = true;
-            foreach (var client in _clients) NetworkManager.Instance.CloseConnection(_socketId, client);
+            Debug.Log(string.Format("HOST::Shutdown"));
+            _state = HostState.Shuttingdown;
+            for (var i = 0; i < _clients.Count; i++)
+            {
+                NetworkManager.Instance.CloseConnection(_socketId, _clients[i]);
+            }
         }
     }
 }

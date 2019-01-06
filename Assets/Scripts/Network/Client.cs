@@ -1,23 +1,50 @@
-﻿using System.Text;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Networking;
 
 namespace Network
 {
     public class Client : MonoBehaviour
     {
-        private int _connectionId;
+        public static Client Instance { get; private set; }
+
+        private ClientState _state;
         private int _socketId;
-        public bool Booted { get; private set; }
-        public bool Connected { get; private set; }
+        private int _connectionId;
+
+        private void Awake()
+        {
+            if (Instance == null)
+            {
+                Instance = this;
+            }
+            else if (Instance == this)
+            {
+                Destroy(gameObject);
+            }
+            DontDestroyOnLoad(gameObject);
+
+            _state = ClientState.Down;
+        }
 
         private void Start()
         {
+
+        }
+
+        private void Update()
+        {
+            
+        }
+
+        public ClientState GetState()
+        {
+            return _state;
         }
 
         public void Boot()
         {
-            Booted = true;
+            Debug.Log("CLIENT::Boot");
+            _state = ClientState.Ready;
             var sc = new SocketConfiguration
             {
                 channels = new QosType[2] {QosType.Reliable, QosType.Reliable},
@@ -31,48 +58,51 @@ namespace Network
 
         public void Connect(ConnectionConfiguration cc)
         {
-            Connected = true;
+            _state = ClientState.Connecting;
             NetworkManager.Instance.OpenConnection(_socketId, cc);
         }
 
         public void Disconnect()
         {
-            Connected = false;
+            _state = ClientState.Disconnecting;
             NetworkManager.Instance.CloseConnection(_socketId, _connectionId);
         }
 
         private void OnBroadcastEvent(int connection)
         {
+
         }
 
         private void OnConnectEvent(int connection)
         {
-            ApplicationManager.Instance.LoadScene("Playground");
-            _connectionId = connection;
             Debug.Log("CLIENT::Connected to host");
+            _state = ClientState.Connected;
+            _connectionId = connection;
+            ApplicationManager.Instance.LoadScene("Playground");
         }
 
         private void OnDataEvent(int connection, byte[] data, int dataSize)
         {
-            Debug.Log(string.Format("CLIENT::Received data from host {0} connected to socket {1}", connection,
-                _socketId));
+            Debug.Log(string.Format("CLIENT::Received data from host {0} connected to socket {1}", connection, _socketId));
         }
 
         private void OnDisconnectEvent(int connection)
         {
-            Connected = false;
-            ApplicationManager.Instance.LoadScene("MainMenu");
             Debug.Log("CLIENT::Disconnected from host");
+            _state = ClientState.Ready;
+            ApplicationManager.Instance.LoadScene("MainMenu");
         }
 
-        public void Send()
+        public void Send(NetworkMessage m)
         {
-            NetworkManager.Instance.Send(_socketId, _connectionId, Encoding.UTF8.GetBytes("xyu"), 1024);
+            Debug.Log("CLIENT::Sending data");
+            NetworkManager.Instance.Send(_socketId, _connectionId, Formatter.Serialize(m), m.length);
         }
 
         public void Shutdown()
         {
-            Booted = false;
+            Debug.Log("CLIENT::Shutdown");
+            _state = ClientState.Down;
             NetworkManager.Instance.CloseSocket(_socketId);
         }
     }

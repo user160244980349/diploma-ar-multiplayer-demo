@@ -6,7 +6,6 @@ namespace Network
     {
         public QosType[] channels;
         public int port;
-
         public Shutdown shutdown;
         public Send send;
         public OnConnectEvent onConnectEvent;

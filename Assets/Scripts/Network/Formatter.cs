@@ -5,7 +5,7 @@ namespace Network
 {
     public static class Formatter
     {
-        public static byte[] Serialize(Message data)
+        public static byte[] Serialize(NetworkMessage data)
         {
             var formatter = new BinaryFormatter();
             var stream = new MemoryStream();
@@ -13,11 +13,11 @@ namespace Network
             return stream.ToArray();
         }
 
-        public static Message Deserialize(byte[] array)
+        public static NetworkMessage Deserialize(byte[] array)
         {
             var stream = new MemoryStream(array);
             var formatter = new BinaryFormatter();
-            return (Message) formatter.Deserialize(stream);
+            return (NetworkMessage) formatter.Deserialize(stream);
         }
     }
 }

@@ -1,6 +1,6 @@
 namespace Network
 {
-    public enum MessageType
+    public enum NetworkMessageType
     {
         Service,
         Game

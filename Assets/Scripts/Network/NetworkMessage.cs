@@ -1,11 +1,11 @@
 using System;
 
-namespace Multiplayer
+namespace Network
 {
     [Serializable]
-    public struct MultiplayerMessage
+    public struct NetworkMessage
     {
-        public MultiplayerMessageType type;
+        public NetworkMessageType type;
         public int length;
         public byte[] data;
     }

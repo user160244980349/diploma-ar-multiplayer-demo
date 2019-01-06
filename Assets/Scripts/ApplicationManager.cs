@@ -8,31 +8,22 @@ using UnityEngine.SceneManagement;
 
 public class ApplicationManager : MonoBehaviour
 {
+    public static ApplicationManager Instance { get; private set; }
+
     private ButtonClicked buttonClick;
     private Client client;
     private Host host;
-
-    public static ApplicationManager Instance { get; private set; }
 
     private void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
-
-            // subsystems
-            gameObject.AddComponent<EventManager>();
-            gameObject.AddComponent<NetworkManager>();
-            gameObject.AddComponent<Host>();
-            gameObject.AddComponent<Client>();
-            gameObject.AddComponent<MultiplayerManager>();
-            gameObject.AddComponent<ConsoleManager>();
         }
         else if (Instance == this)
         {
             Destroy(gameObject);
         }
-
         DontDestroyOnLoad(gameObject);
     }
 
@@ -43,7 +34,6 @@ public class ApplicationManager : MonoBehaviour
 
     public void LoadScene(string name)
     {
-        SceneManager
-            .LoadScene(name, LoadSceneMode.Single);
+        SceneManager.LoadScene(name, LoadSceneMode.Single);
     }
 }
