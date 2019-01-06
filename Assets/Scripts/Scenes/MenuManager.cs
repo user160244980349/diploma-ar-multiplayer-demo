@@ -10,10 +10,12 @@ namespace Scenes
     public class MenuManager : MonoBehaviour
     {
         private static MenuManager _instance;
+
         private ButtonClicked _buttonClick;
         private Text _ip;
         private Text _port;
 
+        #region MonoBehaviour
         private void Awake()
         {
             if (_instance == null)
@@ -25,7 +27,6 @@ namespace Scenes
                 Destroy(gameObject);
             }
         }
-
         private void Start()
         {
             ConsoleManager.GetInstance().InstantiateOnScene();
@@ -36,7 +37,18 @@ namespace Scenes
             _buttonClick = EventManager.GetInstance().GetEvent<ButtonClicked>();
             _buttonClick.Subscribe(OnButtonClick);
         }
+        private void OnDestroy()
+        {
+            _buttonClick.Unsubscribe(OnButtonClick);
+        }
+        #endregion
 
+        public static MenuManager GetInstance()
+        {
+            return _instance;
+        }
+
+        #region Button events
         private void OnButtonClick(Button button)
         {
             switch (button.name)
@@ -57,24 +69,12 @@ namespace Scenes
                     break;
             }
         }
-
-        private void OnDestroy()
-        {
-            _buttonClick.Unsubscribe(OnButtonClick);
-        }
-
-        public static MenuManager GetInstance()
-        {
-            return _instance;
-        }
-
         private void Quitting()
         {
             if (Client.GetInstance().GetState() == ClientState.Ready) Client.GetInstance().Shutdown();
             if (Host.GetInstance().GetState() == HostState.Up) Host.GetInstance().Shutdown();
             Application.Quit();
         }
-
         private void Hosting()
         {
             if (Host.GetInstance().GetState() == HostState.Down) Host.GetInstance().Boot();
@@ -89,7 +89,6 @@ namespace Scenes
             if (Client.GetInstance().GetState() == ClientState.Ready) Client.GetInstance().Connect(cc);
             ApplicationManager.GetInstance().LoadScene("Loading");
         }
-
         private void Connecting()
         {
             var cc = new ConnectionConfiguration
@@ -103,5 +102,6 @@ namespace Scenes
             if (Client.GetInstance().GetState() == ClientState.Ready) Client.GetInstance().Connect(cc);
             ApplicationManager.GetInstance().LoadScene("Loading");
         }
+        #endregion
     }
 }

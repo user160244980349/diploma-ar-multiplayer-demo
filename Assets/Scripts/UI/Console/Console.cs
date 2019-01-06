@@ -9,11 +9,13 @@ namespace UI.Console
         public int maxMessages;
         public GameObject consoleSurface;
         public LinkedList<ConsoleMessage> previousMessages;
-        public LinkedList<GameObject> messages;
 
+        private LinkedList<GameObject> _messages;
+
+        #region MonoBehaviour
         private void Start()
         {
-            messages = new LinkedList<GameObject>();
+            _messages = new LinkedList<GameObject>();
 
             if (previousMessages != null)
             {
@@ -23,13 +25,14 @@ namespace UI.Console
                 }
             }
         }
+        #endregion
 
         public void WriteMessage(ConsoleMessage m)
         {
-            if (messages.Count >= maxMessages)
+            if (_messages.Count >= maxMessages)
             {
-                Destroy(messages.First.Value);
-                messages.Remove(messages.First);
+                Destroy(_messages.First.Value);
+                _messages.Remove(_messages.First);
             }
 
             var newMessageInstance = Instantiate(Resources.Load("UI/Console/Message") as GameObject, consoleSurface.transform);
@@ -38,7 +41,7 @@ namespace UI.Console
             newMessageText.text = m.text;
             newMessageText.color = m.color;
 
-            messages.AddLast(newMessageInstance);
+            _messages.AddLast(newMessageInstance);
         }
     }
 }

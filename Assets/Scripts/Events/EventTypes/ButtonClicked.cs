@@ -13,12 +13,10 @@ namespace Events.EventTypes
         {
             _c += c;
         }
-
         public void Unsubscribe(Callback c)
         {
             _c -= c;
         }
-
         public void Publish(Button b)
         {
             _c(b);

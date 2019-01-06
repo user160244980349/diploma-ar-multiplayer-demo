@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using Network.Messages;
+using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.Networking;
 
 namespace Network
@@ -6,13 +8,17 @@ namespace Network
     public class NetworkManager : MonoBehaviour
     {
         private static NetworkManager _instance;
+
         private const int MaxSockets = 16;
         private const int MaxConnections = 16;
         private const int MaxChannels = 16;
         private const int BufferSize = 1024;
+
         private byte[] _buffer;
+        private byte error;
         private Socket[] _sockets;
 
+        #region MonoBehaviour
         private void Awake()
         {
             if (_instance == null)
@@ -32,9 +38,6 @@ namespace Network
 
                 _sockets[i].connections = new Connection[MaxConnections];
                 for (var j = 0; j < MaxSockets; j++) _sockets[i].connections[j].inUse = false;
-
-                _sockets[i].channels = new Channel[MaxChannels];
-                for (var j = 0; j < MaxSockets; j++) _sockets[i].channels[j].inUse = false;
             }
 
             _buffer = new byte[BufferSize];
@@ -42,8 +45,22 @@ namespace Network
             var config = new GlobalConfig();
             NetworkTransport.Init(config);
         }
-
         private void Update()
+        {
+            Receive();
+        }
+        private void OnDestroy()
+        {
+            NetworkTransport.Shutdown();
+        }
+        #endregion
+
+        public static NetworkManager GetInstance()
+        {
+            return _instance;
+        }
+
+        private void Receive()
         {
             NetworkEventType networkEvent;
             do
@@ -52,7 +69,6 @@ namespace Network
                 int connectionId;
                 int channelId;
                 int dataSize;
-                byte error;
 
                 networkEvent = NetworkTransport.Receive(
                     out socketId,
@@ -70,19 +86,21 @@ namespace Network
                 switch (networkEvent)
                 {
                     case NetworkEventType.ConnectEvent:
-                        _sockets[socketId].c.onConnectEvent(connectionId);
+                        ConnectionUsing(socketId, connectionId);
+                        _sockets[socketId].onConnectEvent(connectionId);
                         break;
 
                     case NetworkEventType.DataEvent:
-                        _sockets[socketId].c.onDataEvent(connectionId, _buffer, dataSize);
+                        _sockets[socketId].onDataEvent(connectionId, Formatter.Deserialize(_buffer));
                         break;
 
                     case NetworkEventType.BroadcastEvent:
-                        _sockets[socketId].c.onBroadcastEvent(connectionId);
+                        _sockets[socketId].onBroadcastEvent(connectionId);
                         break;
 
                     case NetworkEventType.DisconnectEvent:
-                        _sockets[socketId].c.onDisconnectEvent(connectionId);
+                        _sockets[socketId].onDisconnectEvent(connectionId);
+                        ConnectionNotUsing(socketId, connectionId);
                         break;
 
                     case NetworkEventType.Nothing:
@@ -91,102 +109,90 @@ namespace Network
             } while (networkEvent != NetworkEventType.Nothing);
         }
 
-        private void OnDestroy()
-        {
-            NetworkTransport.Shutdown();
-        }
-
-        public static NetworkManager GetInstance()
-        {
-            return _instance;
-        }
-
-        // ======================================================================================== sockets part
-
+        #region Sockets
         public int OpenSocket(SocketConfiguration sc)
         {
             var connectionConfig = new ConnectionConfig();
-            var channelIndex = 0;
-            var channels = new Channel[sc.channels.Length];
-            foreach (var qos in sc.channels)
-            {
-                var channel = new Channel
-                {
-                    id = connectionConfig.AddChannel(qos),
-                    type = qos
-                };
-                channels[channelIndex] = channel;
-                channelIndex++;
-            }
-
             var hostTopology = new HostTopology(connectionConfig, MaxConnections);
             var freshSocketId = NetworkTransport.AddHost(
                 hostTopology,
                 sc.port);
-            _sockets[freshSocketId].inUse = true;
-            _sockets[freshSocketId].c = sc;
-            _sockets[freshSocketId].channels = channels;
-            _sockets[freshSocketId].eventsAvaliable = false;
+            for (var i = 0; i < sc.channels.Length; i++)
+            {
+                connectionConfig.AddChannel(sc.channels[i]);
+            }
+            SocketUsing(freshSocketId, hostTopology, connectionConfig, sc);
             return freshSocketId;
         }
-
         public void CloseSocket(int socketId)
         {
-            NetworkTransport.RemoveHost(socketId);
+            if (!_sockets[socketId].inUse) return;
+            for (var i = 0; i < MaxConnections; i++)
+            {
+                if (!_sockets[socketId].connections[i].inUse) continue;
+                ConnectionNotUsing(socketId, i);
+            }
             SocketNotUsing(socketId);
+            NetworkTransport.RemoveHost(socketId);
         }
 
+        private void SocketUsing(int socketId, HostTopology t, ConnectionConfig cc, SocketConfiguration sc)
+        {
+            for (var i = 0; i < MaxConnections; i++) ConnectionNotUsing(socketId, i);
+
+            _sockets[socketId].inUse = true;
+            _sockets[socketId].topology = t;
+            _sockets[socketId].config = cc;
+            _sockets[socketId].onBroadcastEvent = sc.onBroadcastEvent;
+            _sockets[socketId].onConnectEvent = sc.onConnectEvent;
+            _sockets[socketId].onDataEvent = sc.onDataEvent;
+            _sockets[socketId].onDisconnectEvent = sc.onDisconnectEvent;
+        }
         private void SocketNotUsing(int socketId)
         {
             _sockets[socketId].inUse = false;
-            for (var i = 0; i < _sockets[socketId].activeConnections; i++) ConnectionNotUsing(socketId, i);
-            for (var i = 0; i < _sockets[socketId].activeChannels; i++) ChannelNotUsing(socketId, i);
         }
+        #endregion
 
-        // ======================================================================================== connections part
-
+        #region Connections
+        public void Send(int socketId, int connectionId, int channelId, ANetworkMessage message)
+        {
+            if (!_sockets[socketId].inUse) return;
+            if (!_sockets[socketId].connections[connectionId].inUse) return;
+            var binaryMessage = Formatter.Serialize(message);
+            NetworkTransport.Send(socketId, connectionId, channelId, binaryMessage, binaryMessage.Length, out error);
+            if ((NetworkError)error != NetworkError.Ok)
+                Debug.LogError(string.Format("NetworkError {0}", (NetworkError)error));
+        }
         public void OpenConnection(int socketId, ConnectionConfiguration cc)
         {
-            byte error;
             var connectionId = NetworkTransport.Connect(
                 socketId,
                 cc.ip,
                 cc.port,
                 cc.exceptionConnectionId,
                 out error);
-            _sockets[socketId].connections[connectionId].c = cc;
-            _sockets[socketId].connections[connectionId].ready = false;
-            if ((NetworkError) error != NetworkError.Ok)
-                Debug.LogError(string.Format("NetworkError {0}", (NetworkError) error));
+            ConnectionUsing(socketId, connectionId);
+            if ((NetworkError)error != NetworkError.Ok)
+                Debug.LogError(string.Format("NetworkError {0}", (NetworkError)error));
         }
-
-        public void Send(int socketId, int connectionId, byte[] buffer, int size)
-        {
-            byte error;
-            NetworkTransport.Send(socketId, connectionId, 0, buffer, size, out error);
-            if ((NetworkError) error != NetworkError.Ok)
-                Debug.LogError(string.Format("NetworkError {0}", (NetworkError) error));
-        }
-
         public void CloseConnection(int socketId, int connectionId)
         {
-            byte error;
+            if (!_sockets[socketId].inUse) return;
+            if (!_sockets[socketId].connections[connectionId].inUse) return;
             NetworkTransport.Disconnect(socketId, connectionId, out error);
-            if ((NetworkError) error != NetworkError.Ok)
-                Debug.LogError(string.Format("NetworkError {0}", (NetworkError) error));
-            ConnectionNotUsing(socketId, connectionId);
+            if ((NetworkError)error != NetworkError.Ok)
+                Debug.LogError(string.Format("NetworkError {0}", (NetworkError)error));
         }
 
+        private void ConnectionUsing(int socketId, int connectionId)
+        {
+            _sockets[socketId].connections[connectionId].inUse = true;
+        }
         private void ConnectionNotUsing(int socketId, int connectionId)
         {
             _sockets[socketId].connections[connectionId].inUse = false;
         }
-
-        // ======================================================================================== channels part
-
-        private void ChannelNotUsing(int socketId, int channelId)
-        {
-            _sockets[socketId].channels[channelId].inUse = false;
-        }
+        #endregion
     }
 }

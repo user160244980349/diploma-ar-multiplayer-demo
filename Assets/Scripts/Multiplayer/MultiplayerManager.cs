@@ -8,6 +8,7 @@ namespace Multiplayer
     {
         private static MultiplayerManager _instance;
 
+        #region MonoBehaviour
         private void Awake()
         {
             if (_instance == null)
@@ -20,12 +21,10 @@ namespace Multiplayer
             }
             DontDestroyOnLoad(gameObject);
         }
-
         private void Start()
         {
 
         }
-
         private void Update()
         {
             //if (Client.GetInstance().GetState() == ClientState.Connected)
@@ -37,6 +36,7 @@ namespace Multiplayer
             //    Client.GetInstance().Send(m);
             //}
         }
+        #endregion
 
         public static MultiplayerManager GetInstance()
         {

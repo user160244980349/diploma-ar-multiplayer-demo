@@ -10,6 +10,7 @@ namespace UI.Buttons
         private Button _button;
         private ButtonClicked _click;
 
+        #region MonoBehaviour
         private void Start()
         {
             _button = GetComponent<Button>();
@@ -17,6 +18,7 @@ namespace UI.Buttons
             _button.onClick.AddListener(Click);
             _click = EventManager.GetInstance().GetEvent<ButtonClicked>();
         }
+        #endregion
 
         private void Click()
         {

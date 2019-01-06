@@ -1,7 +1,7 @@
 using Events;
 using Events.EventTypes;
 using Network;
-using System.Text;
+using Network.Messages;
 using UI.Console;
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,9 +11,11 @@ namespace Scenes
     public class PlaygroundManager : MonoBehaviour
     {
         private static PlaygroundManager _instance;
+
         private ButtonClicked _buttonClick;
         private GameObject _menu;
 
+        #region MonoBehaviour
         private void Awake()
         {
             if (_instance == null)
@@ -25,7 +27,6 @@ namespace Scenes
                 Destroy(gameObject);
             }
         }
-
         private void Start()
         {
             ConsoleManager.GetInstance().InstantiateOnScene();
@@ -36,7 +37,25 @@ namespace Scenes
             _buttonClick = EventManager.GetInstance().GetEvent<ButtonClicked>();
             _buttonClick.Subscribe(OnButtonClick);
         }
+        private void Update()
+        {
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+                Client.GetInstance().Send(new Beep("qq"));
+            } 
+        }
+        private void OnDestroy()
+        {
+            _buttonClick.Unsubscribe(OnButtonClick);
+        }
+        #endregion
 
+        public static PlaygroundManager GetInstance()
+        {
+            return _instance;
+        }
+
+        #region Button events
         private void OnButtonClick(Button button)
         {
             switch (button.name)
@@ -54,17 +73,6 @@ namespace Scenes
                     break;
             }
         }
-
-        private void OnDestroy()
-        {
-            _buttonClick.Unsubscribe(OnButtonClick);
-        }
-
-        public static PlaygroundManager GetInstance()
-        {
-            return _instance;
-        }
-
         private void Leave()
         {
             Client.GetInstance().Disconnect();
@@ -74,5 +82,6 @@ namespace Scenes
             }
             ApplicationManager.GetInstance().LoadScene("Loading");
         }
+        #endregion
     }
 }

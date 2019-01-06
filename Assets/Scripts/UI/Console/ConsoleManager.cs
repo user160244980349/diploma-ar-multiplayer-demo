@@ -8,10 +8,12 @@ namespace UI.Console
         public bool WithStackTrace;
 
         private static ConsoleManager _instance;
-        private Console console;
+
         private int _maxMessages = 200;
+        private Console console;
         private LinkedList<ConsoleMessage> _messages;
 
+        #region MonoBehaviour
         private void Awake()
         {
             if (_instance == null)
@@ -26,20 +28,39 @@ namespace UI.Console
 
             _messages = new LinkedList<ConsoleMessage>();
         }
-
         private void OnEnable()
         {
             Application.logMessageReceivedThreaded += SendLog;
         }
-
         private void OnDisable()
         {
             Application.logMessageReceivedThreaded -= SendLog;
         }
+        #endregion
 
         public static ConsoleManager GetInstance()
         {
             return _instance;
+        }
+        public void InstantiateOnScene()
+        {
+            var canvas = GameObject.Find("Canvas");
+            var consolePanel = Instantiate(Resources.Load("UI/Console/Console") as GameObject, canvas.transform);
+
+            console = consolePanel.GetComponent<Console>();
+            console.previousMessages = _messages;
+            console.maxMessages = _maxMessages;
+        }
+        public void SendMessage(ConsoleMessage message)
+        {
+            if (_messages.Count >= _maxMessages)
+            {
+                _messages.Remove(_messages.First);
+            }
+            _messages.AddLast(message);
+
+            if (console)
+                console.WriteMessage(message);
         }
 
         private void SendLog(string condition, string stackTrace, LogType type)
@@ -79,28 +100,6 @@ namespace UI.Console
             }
 
             SendMessage(message);
-        }
-
-        public void SendMessage(ConsoleMessage message)
-        {
-            if (_messages.Count >= _maxMessages)
-            {
-                _messages.Remove(_messages.First);
-            }
-            _messages.AddLast(message);
-
-            if (console)
-                console.WriteMessage(message);
-        }
-
-        public void InstantiateOnScene()
-        {
-            var canvas = GameObject.Find("Canvas");
-            var consolePanel = Instantiate (Resources.Load("UI/Console/Console") as GameObject, canvas.transform);
-
-            console = consolePanel.GetComponent<Console>();
-            console.previousMessages = _messages;
-            console.maxMessages = _maxMessages;
         }
     }
 }

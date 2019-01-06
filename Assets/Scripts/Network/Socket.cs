@@ -1,13 +1,16 @@
+using UnityEngine.Networking;
+
 namespace Network
 {
     public struct Socket
     {
         public bool inUse;
-        public bool eventsAvaliable;
-        public int activeConnections;
-        public int activeChannels;
-        public SocketConfiguration c;
+        public HostTopology topology;
+        public ConnectionConfig config;
         public Connection[] connections;
-        public Channel[] channels;
+        public Delegates.OnConnectEvent onConnectEvent;
+        public Delegates.OnDataEvent onDataEvent;
+        public Delegates.OnBroadcastEvent onBroadcastEvent;
+        public Delegates.OnDisconnectEvent onDisconnectEvent;
     }
 }

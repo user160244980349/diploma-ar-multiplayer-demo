@@ -3,8 +3,9 @@
     public struct Connection
     {
         public bool inUse;
-        public int id;
-        public ConnectionConfiguration c;
-        public bool ready;
+        public string ip;
+        public int port;
+        public int exceptionConnectionId;
+        public int notificationLevel;
     }
 }

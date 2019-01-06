@@ -1,8 +1,10 @@
 ﻿using UnityEngine;
-using System.Collections;
 
-public struct ConsoleMessage
+namespace UI.Console
 {
-    public string text;
-    public Color color;
+    public struct ConsoleMessage
+    {
+        public string text;
+        public Color color;
+    }
 }

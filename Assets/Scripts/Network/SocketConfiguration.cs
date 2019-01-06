@@ -1,4 +1,5 @@
-﻿using UnityEngine.Networking;
+﻿using Network.Delegates;
+using UnityEngine.Networking;
 
 namespace Network
 {
@@ -6,8 +7,6 @@ namespace Network
     {
         public QosType[] channels;
         public int port;
-        public Shutdown shutdown;
-        public Send send;
         public OnConnectEvent onConnectEvent;
         public OnDataEvent onDataEvent;
         public OnBroadcastEvent onBroadcastEvent;

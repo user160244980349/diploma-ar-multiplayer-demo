@@ -7,6 +7,5 @@ namespace Network
     {
         Down,
         Up,
-        Shuttingdown
     }
 }
