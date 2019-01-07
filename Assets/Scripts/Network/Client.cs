@@ -1,5 +1,4 @@
 ﻿using Network.Messages;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 

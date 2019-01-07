@@ -7,9 +7,9 @@ using UnityEngine.SceneManagement;
 public class ApplicationManager : MonoBehaviour
 {
     private static ApplicationManager _instance;
-    private ButtonClicked buttonClick;
-    private Client client;
-    private Host host;
+    private ButtonClicked _buttonClick;
+    private Client _client;
+    private Host _host;
 
     #region MonoBehaviour
     private void Awake()

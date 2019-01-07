@@ -1,7 +1,4 @@
-﻿using UnityEngine;
-using System.Collections;
-
-namespace Network
+﻿namespace Network
 {
     public enum HostState
     {

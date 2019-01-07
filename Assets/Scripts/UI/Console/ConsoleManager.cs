@@ -10,7 +10,7 @@ namespace UI.Console
         private static ConsoleManager _instance;
 
         private int _maxMessages = 200;
-        private Console console;
+        private Console _console;
         private LinkedList<ConsoleMessage> _messages;
 
         #region MonoBehaviour
@@ -47,9 +47,9 @@ namespace UI.Console
             var canvas = GameObject.Find("Canvas");
             var consolePanel = Instantiate(Resources.Load("UI/Console/Console") as GameObject, canvas.transform);
 
-            console = consolePanel.GetComponent<Console>();
-            console.previousMessages = _messages;
-            console.maxMessages = _maxMessages;
+            _console = consolePanel.GetComponent<Console>();
+            _console.previousMessages = _messages;
+            _console.maxMessages = _maxMessages;
         }
         public void SendMessage(ConsoleMessage message)
         {
@@ -59,8 +59,8 @@ namespace UI.Console
             }
             _messages.AddLast(message);
 
-            if (console)
-                console.WriteMessage(message);
+            if (_console)
+                _console.WriteMessage(message);
         }
 
         private void SendLog(string condition, string stackTrace, LogType type)
