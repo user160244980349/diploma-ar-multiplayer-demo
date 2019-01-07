@@ -1,10 +1,12 @@
-﻿using UnityEngine.UI;
+﻿using Multiplayer.Messages;
+using Network.Messages;
+using UnityEngine.UI;
 
 namespace Events.EventTypes
 {
-    public class ButtonClicked
+    public class ReceivedMultiplayerMessage
     {
-        public delegate void Callback(Button b);
+        public delegate void Callback(AMultiplayerMessage b);
         private Callback _c;
 
         public void Subscribe(Callback c)
@@ -15,9 +17,9 @@ namespace Events.EventTypes
         {
             _c -= c;
         }
-        public void Publish(Button b)
+        public void Publish(ANetworkMessage b)
         {
-            _c(b);
+            _c((AMultiplayerMessage)b);
         }
     }
 }

@@ -88,11 +88,11 @@ namespace Network
             switch (message.networkMessageType)
             {
                 case NetworkMessageType.Beep:
-                    Debug.Log(string.Format(" > {0}", ((Beep)message).boop));
+                    Debug.Log(" > Boop from network layer");
                     for (var i = 0; i < _clients.Count; i++)
                     {
                         if (_clients[i] == connection) continue;
-                        NetworkManager.GetInstance().Send(_socketId, _clients[i], 0, message);
+                        NetworkManager.GetInstance().Send(_socketId, _clients[i], 1, message);
                     }
                     break;
 
@@ -104,7 +104,7 @@ namespace Network
                     for (var i = 0; i < _clients.Count; i++)
                     {
                         if (_clients[i] == connection) continue;
-                        NetworkManager.GetInstance().Send(_socketId, _clients[i], 0, message);
+                        NetworkManager.GetInstance().Send(_socketId, _clients[i], 1, message);
                     }
                     break;
 

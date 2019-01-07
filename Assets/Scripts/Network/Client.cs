@@ -1,4 +1,6 @@
-﻿using Multiplayer;
+﻿using Events;
+using Events.EventTypes;
+using Multiplayer;
 using Multiplayer.Messages;
 using Network.Messages;
 using UnityEngine;
@@ -13,6 +15,9 @@ namespace Network
         private ClientState _state;
         private int _socketId;
         private int _connectionId;
+
+        private MultiplayerMessageReady _mmr;
+        private ReceivedMultiplayerMessage _rmm;
 
         #region MonoBehaviour
         private void Awake()
@@ -31,7 +36,9 @@ namespace Network
         }
         private void Start()
         {
-
+            _mmr = EventManager.GetInstance().GetEvent<MultiplayerMessageReady>();
+            _rmm = EventManager.GetInstance().GetEvent<ReceivedMultiplayerMessage>();
+            _mmr.Subscribe(Send);
         }
         private void Update()
         {
@@ -101,7 +108,7 @@ namespace Network
             switch (message.networkMessageType)
             {
                 case NetworkMessageType.Beep:
-                    Debug.Log(string.Format(" > {0}", ((Beep)message).boop));
+                    Debug.Log(" > Boop from network layer");
                     break;
 
                 case NetworkMessageType.Service:
@@ -109,7 +116,7 @@ namespace Network
                     break;
 
                 case NetworkMessageType.Higher:
-                    MultiplayerManager.GetInstance().PullMessage((AMultiplayerMessage)message);
+                    _rmm.Publish(message);
                     break;
 
                 default:

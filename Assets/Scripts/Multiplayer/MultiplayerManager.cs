@@ -1,14 +1,17 @@
 ﻿using Network;
 using Multiplayer.Messages;
 using UnityEngine;
-using Network.Messages;
-using System;
+using Events.EventTypes;
+using Events;
 
 namespace Multiplayer
 {
     public class MultiplayerManager : MonoBehaviour
     {
         private static MultiplayerManager _instance;
+
+        private MultiplayerMessageReady _mmr;
+        private ReceivedMultiplayerMessage _rmm;
 
         #region MonoBehaviour
         private void Awake()
@@ -25,14 +28,12 @@ namespace Multiplayer
         }
         private void Start()
         {
-
+            _mmr = EventManager.GetInstance().GetEvent<MultiplayerMessageReady>();
+            _rmm = EventManager.GetInstance().GetEvent<ReceivedMultiplayerMessage>();
+            _rmm.Subscribe(PullMessage);
         }
         private void Update()
         {
-            if (Input.GetKeyDown(KeyCode.Space))
-            {
-                Client.GetInstance().Send(new Boop("Boop from multiplayer layer"));
-            }
         }
         #endregion
 
@@ -43,20 +44,27 @@ namespace Multiplayer
 
         public void DeployMessage(AMultiplayerMessage message)
         {
-            Client.GetInstance().Send(message);
+            _mmr.Publish(message);
         }
         public void PullMessage(AMultiplayerMessage message)
         {
-            switch(message.multiplayerMessageType)
+            var player = GameObject.Find("Player");
+            player = GameObject.Find("Player");
+
+            switch (message.multiplayerMessageType)
             {
                 case MultiplayerMessageType.Beep:
-                    Debug.Log(string.Format(" > {0}", ((Boop)message).boop));
+                    Debug.Log(" > Boop from multiplayer layer");
                     break;
 
                 case MultiplayerMessageType.Move:
-                    var player = GameObject.Find("Player");
                     var rb = player.GetComponent<Rigidbody>();
-                    rb.AddForce(((Move)message).x, ((Move)message).y, ((Move)message).z);
+                    rb.AddForce(((Move)message).GetMove());
+                    break;
+
+                case MultiplayerMessageType.TransformSynchronization:
+                    var p = player.GetComponent<Player>();
+                    p.UpdateTransform((TransformSynchronization)message);
                     break;
 
                 default:

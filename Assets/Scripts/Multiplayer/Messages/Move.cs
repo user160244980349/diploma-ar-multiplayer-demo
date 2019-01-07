@@ -17,5 +17,9 @@ namespace Multiplayer.Messages
             y = v.y;
             z = v.z;
         }
+        public Vector3 GetMove()
+        {
+            return new Vector3(x, y, z);
+        }
     }
 }

@@ -4,5 +4,6 @@ namespace Multiplayer.Messages
     {
         Beep,
         Move,
+        TransformSynchronization,
     }
 }
