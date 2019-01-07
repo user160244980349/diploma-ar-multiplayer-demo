@@ -1,6 +1,8 @@
 ﻿using Network;
-using System.Text;
+using Multiplayer.Messages;
 using UnityEngine;
+using Network.Messages;
+using System;
 
 namespace Multiplayer
 {
@@ -27,20 +29,39 @@ namespace Multiplayer
         }
         private void Update()
         {
-            //if (Client.GetInstance().GetState() == ClientState.Connected)
-            //{
-            //    NetworkMessage m;
-            //    m.type = NetworkMessageType.Service;
-            //    m.data = Encoding.ASCII.GetBytes("Boop");
-            //    m.length = m.data.Length;
-            //    Client.GetInstance().Send(m);
-            //}
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+                Client.GetInstance().Send(new Boop("Boop from multiplayer layer"));
+            }
         }
         #endregion
 
         public static MultiplayerManager GetInstance()
         {
             return _instance;
+        }
+
+        public void DeployMessage(AMultiplayerMessage message)
+        {
+            Client.GetInstance().Send(message);
+        }
+        public void PullMessage(AMultiplayerMessage message)
+        {
+            switch(message.multiplayerMessageType)
+            {
+                case MultiplayerMessageType.Beep:
+                    Debug.Log(string.Format(" > {0}", ((Boop)message).boop));
+                    break;
+
+                case MultiplayerMessageType.Move:
+                    var player = GameObject.Find("Player");
+                    var rb = player.GetComponent<Rigidbody>();
+                    rb.AddForce(((Move)message).x, ((Move)message).y, ((Move)message).z);
+                    break;
+
+                default:
+                    break;
+            }
         }
     }
 }

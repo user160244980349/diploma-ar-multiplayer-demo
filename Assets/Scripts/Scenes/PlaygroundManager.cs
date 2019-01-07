@@ -39,10 +39,7 @@ namespace Scenes
         }
         private void Update()
         {
-            if (Input.GetKeyDown(KeyCode.Space))
-            {
-                Client.GetInstance().Send(new Beep("qq"));
-            } 
+
         }
         private void OnDestroy()
         {

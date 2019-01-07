@@ -9,7 +9,7 @@ namespace Network.Messages
 
         public Beep(string s)
         {
-            type = NetworkMessageType.Beep;
+            networkMessageType = NetworkMessageType.Beep;
             boop = s;
         }
     }

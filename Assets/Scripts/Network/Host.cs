@@ -85,10 +85,31 @@ namespace Network
         public void OnDataEvent(int connection, ANetworkMessage message)
         {
             Debug.Log(string.Format("HOST::Received data from client {0} connected to socket {1}", connection, _socketId));
-            for (var i = 0; i < _clients.Count; i++)
+            switch (message.networkMessageType)
             {
-                if (_clients[i] == connection) continue;
-                NetworkManager.GetInstance().Send(_socketId, _clients[i], 0, message);
+                case NetworkMessageType.Beep:
+                    Debug.Log(string.Format(" > {0}", ((Beep)message).boop));
+                    for (var i = 0; i < _clients.Count; i++)
+                    {
+                        if (_clients[i] == connection) continue;
+                        NetworkManager.GetInstance().Send(_socketId, _clients[i], 0, message);
+                    }
+                    break;
+
+                case NetworkMessageType.Service:
+
+                    break;
+
+                case NetworkMessageType.Higher:
+                    for (var i = 0; i < _clients.Count; i++)
+                    {
+                        if (_clients[i] == connection) continue;
+                        NetworkManager.GetInstance().Send(_socketId, _clients[i], 0, message);
+                    }
+                    break;
+
+                default:
+                    break;
             }
         }
         public void OnDisconnectEvent(int connection)

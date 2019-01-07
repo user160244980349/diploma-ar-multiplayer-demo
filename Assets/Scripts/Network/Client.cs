@@ -1,4 +1,6 @@
-﻿using Network.Messages;
+﻿using Multiplayer;
+using Multiplayer.Messages;
+using Network.Messages;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -96,9 +98,22 @@ namespace Network
         private void OnDataEvent(int connection, ANetworkMessage message)
         {
             Debug.Log(string.Format("CLIENT::Received data from host {0} connected to socket {1}", connection, _socketId));
-            if (message.type == NetworkMessageType.Beep)
+            switch (message.networkMessageType)
             {
-                Debug.Log(string.Format(" > {0}", ((Beep)message).boop));
+                case NetworkMessageType.Beep:
+                    Debug.Log(string.Format(" > {0}", ((Beep)message).boop));
+                    break;
+
+                case NetworkMessageType.Service:
+
+                    break;
+
+                case NetworkMessageType.Higher:
+                    MultiplayerManager.GetInstance().PullMessage((AMultiplayerMessage)message);
+                    break;
+
+                default:
+                    break;
             }
         }
         private void OnDisconnectEvent(int connection)
