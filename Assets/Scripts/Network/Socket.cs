@@ -1,3 +1,4 @@
+using Network.Delegates;
 using UnityEngine.Networking;
 
 namespace Network
@@ -8,9 +9,9 @@ namespace Network
         public HostTopology topology;
         public ConnectionConfig config;
         public Connection[] connections;
-        public Delegates.OnConnectEvent onConnectEvent;
-        public Delegates.OnDataEvent onDataEvent;
-        public Delegates.OnBroadcastEvent onBroadcastEvent;
-        public Delegates.OnDisconnectEvent onDisconnectEvent;
+        public OnConnectEvent onConnectEvent;
+        public OnDataEvent onDataEvent;
+        public OnBroadcastEvent onBroadcastEvent;
+        public OnDisconnectEvent onDisconnectEvent;
     }
 }

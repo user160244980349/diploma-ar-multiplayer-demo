@@ -1,7 +1,4 @@
-﻿using UnityEngine;
-using UnityEditor;
-
-namespace Network
+﻿namespace Network
 {
     public enum ClientState
     {
@@ -9,6 +6,6 @@ namespace Network
         Ready,
         Connecting,
         Connected,
-        Disconnecting,
+        Disconnecting
     }
 }

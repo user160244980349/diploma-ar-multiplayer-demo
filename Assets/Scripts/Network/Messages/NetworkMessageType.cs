@@ -4,6 +4,6 @@ namespace Network.Messages
     {
         Beep,
         Service,
-        Higher,
+        Higher
     }
 }

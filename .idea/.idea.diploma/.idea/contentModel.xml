@@ -13,25 +13,35 @@
             <e p="EventsBootstrapper.cs" t="Include" />
             <e p="EventTypes" t="Include">
               <e p="ButtonClicked.cs" t="Include" />
-              <e p="IGameEvent.cs" t="Include" />
+              <e p="MultiplayerMessageReady.cs" t="Include" />
+              <e p="ReceivedMultiplayerMessage.cs" t="Include" />
             </e>
           </e>
           <e p="Multiplayer" t="Include">
-            <e p="Formatter.cs" t="Include" />
+            <e p="Messages" t="Include">
+              <e p="AMultiplayerMessage.cs" t="Include" />
+              <e p="Beep.cs" t="Include" />
+              <e p="Move.cs" t="Include" />
+              <e p="MultiplayerMessageType.cs" t="Include" />
+              <e p="RigidbodySyncronization.cs" t="Include" />
+            </e>
             <e p="MultiplayerManager.cs" t="Include" />
-            <e p="MultiplayerMessage.cs" t="Include" />
-            <e p="MultiplayerMessageType.cs" t="Include" />
+            <e p="Player.cs" t="Include" />
           </e>
           <e p="Network" t="Include">
-            <e p="Channel.cs" t="Include" />
             <e p="Client.cs" t="Include" />
+            <e p="ClientState.cs" t="Include" />
             <e p="Connection.cs" t="Include" />
             <e p="ConnectionConfiguration.cs" t="Include" />
             <e p="Delegates.cs" t="Include" />
             <e p="Formatter.cs" t="Include" />
             <e p="Host.cs" t="Include" />
-            <e p="Message.cs" t="Include" />
-            <e p="MessageType.cs" t="Include" />
+            <e p="HostState.cs" t="Include" />
+            <e p="Messages" t="Include">
+              <e p="ANetworkMessage.cs" t="Include" />
+              <e p="Beep.cs" t="Include" />
+              <e p="NetworkMessageType.cs" t="Include" />
+            </e>
             <e p="NetworkManager.cs" t="Include" />
             <e p="Socket.cs" t="Include" />
             <e p="SocketConfiguration.cs" t="Include" />
@@ -47,7 +57,7 @@
             <e p="Console" t="Include">
               <e p="Console.cs" t="Include" />
               <e p="ConsoleManager.cs" t="Include" />
-              <e p="LogHandler.cs" t="Include" />
+              <e p="ConsoleMessage.cs" t="Include" />
               <e p="SendButton.cs" t="Include" />
               <e p="ShowButton.cs" t="Include" />
             </e>

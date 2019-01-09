@@ -1,43 +1,15 @@
-﻿using Events.EventTypes;
+﻿using System.Collections;
+using Events.EventTypes;
 using Network;
-using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class ApplicationManager : MonoBehaviour
 {
-    private static ApplicationManager _instance;
     private ButtonClicked _buttonClick;
     private Client _client;
     private Host _host;
-
-    #region MonoBehaviour
-    private void Awake()
-    {
-        if (_instance == null)
-        {
-            _instance = this;
-        }
-        else if (_instance == this)
-        {
-            Destroy(gameObject);
-        }
-        DontDestroyOnLoad(gameObject);
-    }
-    private void Start()
-    {
-        LoadScene("Loading");
-        DelayedLoadScene("MainMenu", 0.5f);
-    }
-    private void Update()
-    {
-    }
-    #endregion
-
-    public static ApplicationManager GetInstance()
-    {
-        return _instance;
-    }
+    public static ApplicationManager Singleton { get; private set; }
     public void LoadScene(string name)
     {
         SceneManager.LoadScene(name, LoadSceneMode.Single);
@@ -51,4 +23,20 @@ public class ApplicationManager : MonoBehaviour
         yield return new WaitForSeconds(time);
         LoadScene(name);
     }
+
+    #region MonoBehaviour
+    private void Awake()
+    {
+        if (Singleton == null)
+            Singleton = this;
+        else if (Singleton == this) Destroy(gameObject);
+
+        DontDestroyOnLoad(gameObject);
+    }
+    private void Start()
+    {
+        LoadScene("Loading");
+        DelayedLoadScene("MainMenu", 0.25f);
+    }
+    #endregion
 }

@@ -11,7 +11,7 @@ namespace Events
             {
                 new ButtonClicked(),
                 new MultiplayerMessageReady(),
-                new ReceivedMultiplayerMessage(),
+                new ReceivedMultiplayerMessage()
             };
         }
     }

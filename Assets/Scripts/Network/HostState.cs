@@ -3,6 +3,6 @@
     public enum HostState
     {
         Down,
-        Up,
+        Up
     }
 }

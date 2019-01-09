@@ -1,6 +1,6 @@
-using Network.Messages;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using Network.Messages;
 
 namespace Network
 {

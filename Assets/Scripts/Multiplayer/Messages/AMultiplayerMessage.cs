@@ -1,5 +1,5 @@
-﻿using Network.Messages;
-using System;
+﻿using System;
+using Network.Messages;
 
 namespace Multiplayer.Messages
 {
@@ -7,7 +7,6 @@ namespace Multiplayer.Messages
     public abstract class AMultiplayerMessage : ANetworkMessage
     {
         public MultiplayerMessageType multiplayerMessageType;
-
         public AMultiplayerMessage()
         {
             networkMessageType = NetworkMessageType.Higher;

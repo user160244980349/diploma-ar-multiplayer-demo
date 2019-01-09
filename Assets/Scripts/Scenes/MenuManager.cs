@@ -1,5 +1,6 @@
 ﻿using Events;
 using Events.EventTypes;
+using Multiplayer;
 using Network;
 using UI.Console;
 using UnityEngine;
@@ -9,32 +10,26 @@ namespace Scenes
 {
     public class MenuManager : MonoBehaviour
     {
-        private static MenuManager _instance;
-
         private ButtonClicked _buttonClick;
         private Text _ip;
         private Text _port;
+        public static MenuManager Singleton { get; private set; }
 
         #region MonoBehaviour
         private void Awake()
         {
-            if (_instance == null)
-            {
-                _instance = this;
-            }
-            else if (_instance == this)
-            {
-                Destroy(gameObject);
-            }
+            if (Singleton == null)
+                Singleton = this;
+            else if (Singleton == this) Destroy(gameObject);
         }
         private void Start()
         {
-            ConsoleManager.GetInstance().InstantiateOnScene();
+            ConsoleManager.Singleton.InstantiateConsole();
 
             _ip = GameObject.Find("Ip").GetComponentInChildren<Text>();
             _port = GameObject.Find("Port").GetComponentInChildren<Text>();
 
-            _buttonClick = EventManager.GetInstance().GetEvent<ButtonClicked>();
+            _buttonClick = EventManager.Singleton.GetEvent<ButtonClicked>();
             _buttonClick.Subscribe(OnButtonClick);
         }
         private void OnDestroy()
@@ -42,11 +37,6 @@ namespace Scenes
             _buttonClick.Unsubscribe(OnButtonClick);
         }
         #endregion
-
-        public static MenuManager GetInstance()
-        {
-            return _instance;
-        }
 
         #region Button events
         private void OnButtonClick(Button button)
@@ -64,33 +54,27 @@ namespace Scenes
                 case "Connect":
                     Connecting();
                     break;
-
-                default:
-                    break;
             }
         }
         private void Quitting()
         {
-            if (Client.GetInstance().GetState() == ClientState.Ready) Client.GetInstance().Shutdown();
-            if (Host.GetInstance().GetState() == HostState.Up) Host.GetInstance().Shutdown();
+            if (Client.Singleton.State == ClientState.Ready) Client.Singleton.Shutdown();
+            if (Host.Singleton.State == HostState.Up) Host.Singleton.Shutdown();
+            MultiplayerManager.Singleton.Hosting = false;
             Application.Quit();
         }
         private void Hosting()
         {
-            if (Host.GetInstance().GetState() == HostState.Down) Host.GetInstance().Boot();
-            var cc = new ConnectionConfiguration
-            {
-                ip = "127.0.0.1",
-                port = 8000,
-                notificationLevel = 1,
-                exceptionConnectionId = 0
-            };
-            if (Client.GetInstance().GetState() == ClientState.Down) Client.GetInstance().Boot();
-            if (Client.GetInstance().GetState() == ClientState.Ready) Client.GetInstance().Connect(cc);
-            ApplicationManager.GetInstance().LoadScene("Loading");
+            MultiplayerManager.Singleton.Hosting = true;
+            ApplicationManager.Singleton.LoadScene("Loading");
+            
+            if (Host.Singleton.State == HostState.Down) Host.Singleton.Boot();
         }
         private void Connecting()
         {
+            MultiplayerManager.Singleton.Hosting = false;
+            ApplicationManager.Singleton.LoadScene("Loading");
+            
             var cc = new ConnectionConfiguration
             {
                 ip = "127.0.0.1",
@@ -98,9 +82,9 @@ namespace Scenes
                 notificationLevel = 1,
                 exceptionConnectionId = 0
             };
-            if (Client.GetInstance().GetState() == ClientState.Down) Client.GetInstance().Boot();
-            if (Client.GetInstance().GetState() == ClientState.Ready) Client.GetInstance().Connect(cc);
-            ApplicationManager.GetInstance().LoadScene("Loading");
+
+            if (Client.Singleton.State == ClientState.Down) Client.Singleton.Boot();
+            if (Client.Singleton.State == ClientState.Ready) Client.Singleton.Connect(cc);
         }
         #endregion
     }

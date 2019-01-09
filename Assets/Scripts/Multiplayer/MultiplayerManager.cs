@@ -1,50 +1,40 @@
-﻿using Network;
+﻿using Events;
+using Events.EventTypes;
 using Multiplayer.Messages;
 using UnityEngine;
-using Events.EventTypes;
-using Events;
 
 namespace Multiplayer
 {
     public class MultiplayerManager : MonoBehaviour
     {
-        private static MultiplayerManager _instance;
-
         private MultiplayerMessageReady _mmr;
         private ReceivedMultiplayerMessage _rmm;
 
-        #region MonoBehaviour
-        private void Awake()
-        {
-            if (_instance == null)
-            {
-                _instance = this;
-            }
-            else if (_instance == this)
-            {
-                Destroy(gameObject);
-            }
-            DontDestroyOnLoad(gameObject);
-        }
-        private void Start()
-        {
-            _mmr = EventManager.GetInstance().GetEvent<MultiplayerMessageReady>();
-            _rmm = EventManager.GetInstance().GetEvent<ReceivedMultiplayerMessage>();
-            _rmm.Subscribe(PullMessage);
-        }
-        private void Update()
-        {
-        }
-        #endregion
-
-        public static MultiplayerManager GetInstance()
-        {
-            return _instance;
-        }
-
+        public static MultiplayerManager Singleton { get; private set; }
+        public bool Hosting { get; set; }
         public void DeployMessage(AMultiplayerMessage message)
         {
-            _mmr.Publish(message);
+            var player = GameObject.Find("Player");
+            var p = player.GetComponent<Player>();
+            var rb = player.GetComponent<Rigidbody>();
+
+            if (Hosting)
+            {
+                rb.isKinematic = false;
+                if(message.multiplayerMessageType != MultiplayerMessageType.RigidbodySynchronization)
+                    PullMessage(message);
+
+                if (message.multiplayerMessageType == MultiplayerMessageType.RigidbodySynchronization)
+                {
+                    _mmr.Publish(message);
+                }
+            }
+            else
+            {
+                if(message.multiplayerMessageType != MultiplayerMessageType.RigidbodySynchronization)
+                    _mmr.Publish(message);
+            }
+            
         }
         public void PullMessage(AMultiplayerMessage message)
         {
@@ -58,18 +48,40 @@ namespace Multiplayer
                     break;
 
                 case MultiplayerMessageType.Move:
-                    var rb = player.GetComponent<Rigidbody>();
-                    rb.AddForce(((Move)message).GetMove());
+                    if (Hosting)
+                    {
+                        var rb = player.GetComponent<Rigidbody>();
+                        var move = (Move) message;
+                        rb.AddForce(move.Vector);
+                    }
                     break;
 
-                case MultiplayerMessageType.TransformSynchronization:
-                    var p = player.GetComponent<Player>();
-                    p.UpdateTransform((TransformSynchronization)message);
-                    break;
-
-                default:
+                case MultiplayerMessageType.RigidbodySynchronization:
+                    if (!Hosting)
+                    {
+                        var p = player.GetComponent<Player>();
+                        var rigidbodySynchronization = (RigidbodySynchronization) message;
+                        p.SynchronizeRigidbody(rigidbodySynchronization);
+                    }
                     break;
             }
         }
+
+        #region MonoBehaviour
+        private void Awake()
+        {
+            if (Singleton == null)
+                Singleton = this;
+            else if (Singleton == this) Destroy(gameObject);
+
+            DontDestroyOnLoad(gameObject);
+        }
+        private void Start()
+        {
+            _mmr = EventManager.Singleton.GetEvent<MultiplayerMessageReady>();
+            _rmm = EventManager.Singleton.GetEvent<ReceivedMultiplayerMessage>();
+            _rmm.Subscribe(PullMessage);
+        }
+        #endregion
     }
 }
