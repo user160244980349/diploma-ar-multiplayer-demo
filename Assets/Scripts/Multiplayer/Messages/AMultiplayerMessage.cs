@@ -7,6 +7,7 @@ namespace Multiplayer.Messages
     public abstract class AMultiplayerMessage : ANetworkMessage
     {
         public MultiplayerMessageType multiplayerMessageType;
+
         public AMultiplayerMessage()
         {
             networkMessageType = NetworkMessageType.Higher;

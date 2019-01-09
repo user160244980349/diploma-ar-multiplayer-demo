@@ -16,7 +16,7 @@ namespace Network
 
         public static Host Singleton { get; private set; }
         public HostState State { get; private set; }
-        
+
         public void Boot()
         {
             Debug.Log("HOST::Boot");

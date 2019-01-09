@@ -6,6 +6,7 @@ namespace Events
     public class EventManager : MonoBehaviour
     {
         private List<object> _events;
+
         public static EventManager Singleton { get; private set; }
 
         #region MonoBehaviour

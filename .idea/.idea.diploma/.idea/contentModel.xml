@@ -20,7 +20,8 @@
           <e p="Multiplayer" t="Include">
             <e p="Messages" t="Include">
               <e p="AMultiplayerMessage.cs" t="Include" />
-              <e p="Beep.cs" t="Include" />
+              <e p="Boop.cs" t="Include" />
+              <e p="Connect.cs" t="Include" />
               <e p="Move.cs" t="Include" />
               <e p="MultiplayerMessageType.cs" t="Include" />
               <e p="RigidbodySyncronization.cs" t="Include" />

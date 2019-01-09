@@ -11,6 +11,7 @@ namespace Scenes
     {
         private ButtonClicked _buttonClick;
         private GameObject _menu;
+
         public static PlaygroundManager Singleton { get; private set; }
 
         #region MonoBehaviour
@@ -56,7 +57,6 @@ namespace Scenes
         }
         private void Leave()
         {
-            
             Debug.Log("Leaving");
             ApplicationManager.Singleton.LoadScene("Loading");
 

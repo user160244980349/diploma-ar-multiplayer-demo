@@ -5,7 +5,7 @@ namespace Network.Messages
     [Serializable]
     public class Beep : ANetworkMessage
     {
-        public Beep(string s)
+        public Beep()
         {
             networkMessageType = NetworkMessageType.Beep;
         }

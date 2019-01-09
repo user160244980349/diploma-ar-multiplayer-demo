@@ -12,9 +12,9 @@ namespace Network
         private byte[] _buffer;
         private byte _error;
         private Socket[] _sockets;
-        
+
         public static NetworkManager Singleton { get; private set; }
-        
+
         private void Receive()
         {
             NetworkEventType networkEvent;
@@ -37,7 +37,7 @@ namespace Network
                 );
 
                 if ((NetworkError) _error != NetworkError.Ok)
-                    Debug.LogError(string.Format("NetworkError {0}", (NetworkError) _error));
+                    Debug.LogErrorFormat("NetworkError {0}", (NetworkError) _error);
 
                 switch (networkEvent)
                 {
@@ -48,9 +48,14 @@ namespace Network
 
                     case NetworkEventType.DataEvent:
                         var message = Formatter.Deserialize(_buffer);
-                        message.ping  = NetworkTransport.GetRemoteDelayTimeMS(socketId, connectionId, message.timeStamp, out _error);
+
+                        message.ping =
+                            NetworkTransport.GetRemoteDelayTimeMS(socketId, connectionId, message.timeStamp,
+                                out _error);
+
                         if ((NetworkError) _error != NetworkError.Ok)
-                            Debug.LogError(string.Format("NetworkError {0}", (NetworkError) _error));
+                            Debug.LogErrorFormat("NetworkError {0}", (NetworkError) _error);
+
                         _sockets[socketId].onDataEvent(connectionId, message);
                         break;
 
@@ -68,7 +73,7 @@ namespace Network
                 }
             } while (networkEvent != NetworkEventType.Nothing);
         }
-        
+
         #region MonoBehaviour
         private void Awake()
         {
@@ -102,7 +107,7 @@ namespace Network
             NetworkTransport.Shutdown();
         }
         #endregion
-        
+
         #region Sockets
         public int OpenSocket(SocketConfiguration sc)
         {
@@ -159,7 +164,7 @@ namespace Network
             NetworkTransport.Send(socketId, connectionId, channelId, binaryMessage, binaryMessage.Length, out _error);
 
             if ((NetworkError) _error != NetworkError.Ok)
-                Debug.LogError(string.Format("NetworkError {0}", (NetworkError) _error));
+                Debug.LogErrorFormat("NetworkError {0}", (NetworkError) _error);
         }
         public void OpenConnection(int socketId, ConnectionConfiguration cc)
         {
@@ -173,7 +178,7 @@ namespace Network
             ConnectionUsing(socketId, connectionId);
 
             if ((NetworkError) _error != NetworkError.Ok)
-                Debug.LogError(string.Format("NetworkError {0}", (NetworkError) _error));
+                Debug.LogErrorFormat("NetworkError {0}", (NetworkError) _error);
         }
         public void CloseConnection(int socketId, int connectionId)
         {
@@ -182,7 +187,7 @@ namespace Network
             NetworkTransport.Disconnect(socketId, connectionId, out _error);
 
             if ((NetworkError) _error != NetworkError.Ok)
-                Debug.LogError(string.Format("NetworkError {0}", (NetworkError) _error));
+                Debug.LogErrorFormat("NetworkError {0}", (NetworkError) _error);
         }
         private void ConnectionUsing(int socketId, int connectionId)
         {

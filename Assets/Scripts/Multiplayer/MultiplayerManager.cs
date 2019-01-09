@@ -12,6 +12,7 @@ namespace Multiplayer
 
         public static MultiplayerManager Singleton { get; private set; }
         public bool Hosting { get; set; }
+
         public void DeployMessage(AMultiplayerMessage message)
         {
             var player = GameObject.Find("Player");
@@ -21,48 +22,51 @@ namespace Multiplayer
             if (Hosting)
             {
                 rb.isKinematic = false;
-                if(message.multiplayerMessageType != MultiplayerMessageType.RigidbodySynchronization)
+
+                if (message.multiplayerMessageType != MultiplayerMessageType.RigidbodySynchronization)
                     PullMessage(message);
 
                 if (message.multiplayerMessageType == MultiplayerMessageType.RigidbodySynchronization)
-                {
                     _mmr.Publish(message);
-                }
             }
             else
             {
-                if(message.multiplayerMessageType != MultiplayerMessageType.RigidbodySynchronization)
+                if (message.multiplayerMessageType != MultiplayerMessageType.RigidbodySynchronization)
                     _mmr.Publish(message);
             }
-            
         }
         public void PullMessage(AMultiplayerMessage message)
         {
             var player = GameObject.Find("Player");
-            player = GameObject.Find("Player");
-
             switch (message.multiplayerMessageType)
             {
-                case MultiplayerMessageType.Beep:
+                case MultiplayerMessageType.Boop:
                     Debug.Log(" > Boop from multiplayer layer");
+                    break;
+                case MultiplayerMessageType.Connect:
+                    
                     break;
 
                 case MultiplayerMessageType.Move:
+
                     if (Hosting)
                     {
                         var rb = player.GetComponent<Rigidbody>();
                         var move = (Move) message;
                         rb.AddForce(move.Vector);
                     }
+
                     break;
 
                 case MultiplayerMessageType.RigidbodySynchronization:
+
                     if (!Hosting)
                     {
                         var p = player.GetComponent<Player>();
                         var rigidbodySynchronization = (RigidbodySynchronization) message;
                         p.SynchronizeRigidbody(rigidbodySynchronization);
                     }
+
                     break;
             }
         }

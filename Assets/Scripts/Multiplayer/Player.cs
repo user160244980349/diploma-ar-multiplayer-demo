@@ -1,28 +1,25 @@
 ﻿using Multiplayer.Messages;
 using UnityEngine;
-using UnityEngine.Experimental.PlayerLoop;
 
 namespace Multiplayer
 {
     public class Player : MonoBehaviour
     {
+        private readonly float _syncPeriod = 0.02f;
+        private float _interpTime;
+        private float _lastSyncTime;
+        private Vector3 _newrbavel;
         private Vector3 _newrbpos;
         private Quaternion _newrbrot;
         private Vector3 _newrbvel;
-        private Vector3 _newrbavel;
+        private Vector3 _prevrbavel;
         private Vector3 _prevrbpos;
         private Quaternion _prevrbrot;
         private Vector3 _prevrbvel;
-        private Vector3 _prevrbavel;
-        
         private Rigidbody _rb;
-        private Transform _t;
-        
-        private float _syncPeriod = 0.02f;
-        private float _lastSyncTime;
         private float _syncTime;
-        private float _interpTime;
-        
+        private Transform _t;
+
         public void SynchronizeRigidbody(RigidbodySynchronization message)
         {
             _syncTime = Time.time;
@@ -90,14 +87,12 @@ namespace Multiplayer
             }
 
             if (MultiplayerManager.Singleton.Hosting)
-            {
                 if (Time.time - _lastSyncTime > _syncPeriod)
                 {
                     _lastSyncTime = Time.time;
                     MultiplayerManager.Singleton.DeployMessage(new RigidbodySynchronization(_rb));
                 }
-            }
-            
+
             if (!MultiplayerManager.Singleton.Hosting)
             {
                 var percentage = (Time.time - _syncTime) / (_syncPeriod + _interpTime);

@@ -2,7 +2,8 @@ namespace Multiplayer.Messages
 {
     public enum MultiplayerMessageType
     {
-        Beep,
+        Boop,
+        Connect,
         Move,
         RigidbodySynchronization,
     }

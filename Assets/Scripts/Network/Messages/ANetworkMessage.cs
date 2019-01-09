@@ -6,7 +6,7 @@ namespace Network.Messages
     public abstract class ANetworkMessage
     {
         public NetworkMessageType networkMessageType;
-        public int timeStamp;
         public int ping;
+        public int timeStamp;
     }
 }

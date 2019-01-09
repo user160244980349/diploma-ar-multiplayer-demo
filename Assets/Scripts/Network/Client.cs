@@ -12,10 +12,10 @@ namespace Network
         private MultiplayerMessageReady _mmr;
         private ReceivedMultiplayerMessage _rmm;
         private int _socketId;
-        
+
         public static Client Singleton { get; private set; }
         public ClientState State { get; private set; }
-        
+
         public void Boot()
         {
             Debug.Log("CLIENT::Boot");
@@ -29,7 +29,7 @@ namespace Network
                 onBroadcastEvent = OnBroadcastEvent,
                 onDisconnectEvent = OnDisconnectEvent
             };
-        
+
             _socketId = NetworkManager.Singleton.OpenSocket(sc);
         }
         public void Connect(ConnectionConfiguration cc)
@@ -52,7 +52,7 @@ namespace Network
         public void Shutdown()
         {
             Debug.Log("CLIENT::Shutdown");
-            State = ClientState.Down;     
+            State = ClientState.Down;
             NetworkManager.Singleton.CloseSocket(_socketId);
         }
 

@@ -13,6 +13,7 @@ namespace Scenes
         private ButtonClicked _buttonClick;
         private Text _ip;
         private Text _port;
+
         public static MenuManager Singleton { get; private set; }
 
         #region MonoBehaviour
@@ -67,17 +68,18 @@ namespace Scenes
         {
             MultiplayerManager.Singleton.Hosting = true;
             ApplicationManager.Singleton.LoadScene("Loading");
-            
+
             if (Host.Singleton.State == HostState.Down) Host.Singleton.Boot();
         }
         private void Connecting()
         {
             MultiplayerManager.Singleton.Hosting = false;
             ApplicationManager.Singleton.LoadScene("Loading");
-            
+
             var cc = new ConnectionConfiguration
             {
                 ip = "127.0.0.1",
+                // ip = "192.168.1.35",
                 port = 8000,
                 notificationLevel = 1,
                 exceptionConnectionId = 0

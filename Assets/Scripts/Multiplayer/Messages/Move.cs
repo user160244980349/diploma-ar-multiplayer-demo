@@ -9,6 +9,7 @@ namespace Multiplayer.Messages
         private float _x;
         private float _y;
         private float _z;
+
         public Move(Vector3 v)
         {
             multiplayerMessageType = MultiplayerMessageType.Move;
@@ -16,7 +17,7 @@ namespace Multiplayer.Messages
         }
         public Vector3 Vector
         {
-            get { return new Vector3(_x, _y, _z); }
+            get => new Vector3(_x, _y, _z);
             private set
             {
                 _x = value.x;

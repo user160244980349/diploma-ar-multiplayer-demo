@@ -9,7 +9,9 @@ namespace UI.Console
         private Console _console;
         private LinkedList<ConsoleMessage> _messages;
         public bool WithStackTrace;
+
         public static ConsoleManager Singleton { get; private set; }
+
         public void InstantiateConsole()
         {
             var canvas = GameObject.Find("Canvas");

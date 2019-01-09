@@ -6,6 +6,9 @@ namespace Multiplayer.Messages
     [Serializable]
     public class RigidbodySynchronization : AMultiplayerMessage
     {
+        private float _avx;
+        private float _avy;
+        private float _avz;
         private float _px;
         private float _py;
         private float _pz;
@@ -16,10 +19,7 @@ namespace Multiplayer.Messages
         private float _vx;
         private float _vy;
         private float _vz;
-        private float _avx;
-        private float _avy;
-        private float _avz;
-        
+
         public RigidbodySynchronization(Rigidbody rb)
         {
             multiplayerMessageType = MultiplayerMessageType.RigidbodySynchronization;
@@ -30,7 +30,7 @@ namespace Multiplayer.Messages
         }
         public Vector3 Position
         {
-            get { return new Vector3(_px, _py, _pz); }
+            get => new Vector3(_px, _py, _pz);
             private set
             {
                 _px = value.x;
@@ -40,7 +40,7 @@ namespace Multiplayer.Messages
         }
         public Vector3 Velocity
         {
-            get { return new Vector3(_vx, _vy, _vz); }
+            get => new Vector3(_vx, _vy, _vz);
             private set
             {
                 _vx = value.x;
@@ -50,7 +50,7 @@ namespace Multiplayer.Messages
         }
         public Vector3 AngularVelocity
         {
-            get { return new Vector3(_avx, _avy, _avz); }
+            get => new Vector3(_avx, _avy, _avz);
             private set
             {
                 _avx = value.x;
@@ -60,7 +60,7 @@ namespace Multiplayer.Messages
         }
         public Quaternion Rotation
         {
-            get { return new Quaternion(_qx, _qy, _qz, _qw); }
+            get => new Quaternion(_qx, _qy, _qz, _qw);
             private set
             {
                 _qx = value.x;

@@ -9,19 +9,20 @@ public class ApplicationManager : MonoBehaviour
     private ButtonClicked _buttonClick;
     private Client _client;
     private Host _host;
+
     public static ApplicationManager Singleton { get; private set; }
-    public void LoadScene(string name)
+    public void LoadScene(string sceneName)
     {
-        SceneManager.LoadScene(name, LoadSceneMode.Single);
+        SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
     }
-    public void DelayedLoadScene(string name, float time)
+    public void DelayedLoadScene(string sceneName, float time)
     {
-        StartCoroutine(LoadSceneCoroutine(name, time));
+        StartCoroutine(LoadSceneCoroutine(sceneName, time));
     }
-    private IEnumerator LoadSceneCoroutine(string name, float time)
+    private IEnumerator LoadSceneCoroutine(string sceneName, float time)
     {
         yield return new WaitForSeconds(time);
-        LoadScene(name);
+        LoadScene(sceneName);
     }
 
     #region MonoBehaviour
