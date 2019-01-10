@@ -34,11 +34,11 @@ namespace Multiplayer
         }
         #endregion
 
-        public void DeployMessage(AMultiplayerMessage message)
+        private void DeployMessage(AMultiplayerMessage message)
         {
             _mmr.Publish(message);
         }
-        public void PollMessage(AMultiplayerMessage message)
+        private void PollMessage(AMultiplayerMessage message)
         {
             switch (message.multiplayerMessageType)
             {
@@ -75,6 +75,5 @@ namespace Multiplayer
         private void Disconnect(AMultiplayerMessage message)
         {
         }
-
     }
 }

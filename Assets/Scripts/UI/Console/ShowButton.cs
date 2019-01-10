@@ -5,8 +5,9 @@ namespace UI.Console
 {
     public class ShowButton : MonoBehaviour
     {
-        private Toggle _toggle;
         public GameObject rect;
+
+        private Toggle _toggle;
 
         #region MonoBehaviour
         private void Start()

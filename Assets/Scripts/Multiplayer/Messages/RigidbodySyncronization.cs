@@ -62,6 +62,5 @@ namespace Multiplayer.Messages
             AngularVelocity = rb.angularVelocity;
             Rotation = rb.rotation;
         }
-
     }
 }

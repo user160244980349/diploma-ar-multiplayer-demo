@@ -44,13 +44,14 @@ public class ApplicationManager : MonoBehaviour
         yield return new WaitForSeconds(time);
         LoadScene(sceneName);
     }
-
 }
 
 /**
  *
  * TODO:
- *
+ * 
+ * + Refactor
+ * 
  * - Multiplayer:
  * 
  *     - Messages:

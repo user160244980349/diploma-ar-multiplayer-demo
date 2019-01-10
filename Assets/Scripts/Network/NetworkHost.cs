@@ -68,12 +68,12 @@ namespace Network
             _mmr.Unsubscribe(Send);
             ApplicationManager.Singleton.LoadScene("MainMenu");
         }
-        public void OnConnectEvent(int connection)
+        private void OnConnectEvent(int connection)
         {
             Debug.Log(string.Format("HOST::Client {0} connected to socket {1}", connection, _socketId));
             _clients.Add(connection);
         }
-        public void OnBroadcastEvent(int connection)
+        private void OnBroadcastEvent(int connection)
         {
         }
         private void OnDataEvent(int connection, ANetworkMessage message)
@@ -96,7 +96,7 @@ namespace Network
                     break;
             }
         }
-        public void OnDisconnectEvent(int connection)
+        private void OnDisconnectEvent(int connection)
         {
             Debug.Log(string.Format("HOST::Client {0} disconnected from socket {1}", connection, _socketId));
             _clients.Remove(connection);
