@@ -3,7 +3,7 @@ using Network.Messages;
 
 namespace Events.EventTypes
 {
-    public class MultiplayerMessageReady
+    public class SendNetworkMessage
     {
         public delegate void Callback(ANetworkMessage b);
 

@@ -10,8 +10,10 @@ namespace Events
             events = new List<object>
             {
                 new ButtonClicked(),
-                new MultiplayerMessageReady(),
-                new ReceivedMultiplayerMessage()
+                new SendNetworkMessage(),
+                new ReceiveNetworkMessage(),
+                new SendMultiplayerMessage(),
+                new ReceiveMultiplayerMessage(),
             };
         }
     }

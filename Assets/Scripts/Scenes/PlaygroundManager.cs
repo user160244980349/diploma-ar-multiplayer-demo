@@ -1,5 +1,6 @@
 using Events;
 using Events.EventTypes;
+using Multiplayer.Messages;
 using Network;
 using UI.Console;
 using UnityEngine;
@@ -11,6 +12,7 @@ namespace Scenes
     {
         public static PlaygroundManager Singleton { get; private set; }
 
+        private SendMultiplayerMessage _smm;
         private ButtonClicked _buttonClick;
         private GameObject _menu;
 
@@ -28,6 +30,7 @@ namespace Scenes
             _menu = GameObject.Find("Menu");
             _menu.SetActive(false);
 
+            _smm = EventManager.Singleton.GetEvent<SendMultiplayerMessage>();
             _buttonClick = EventManager.Singleton.GetEvent<ButtonClicked>();
             _buttonClick.Subscribe(OnButtonClick);
         }
@@ -45,6 +48,10 @@ namespace Scenes
                     _menu.SetActive(false);
                     break;
 
+                case "Connect":
+                    Connect();
+                    break;
+
                 case "Leave":
                     Leave();
                     break;
@@ -54,14 +61,20 @@ namespace Scenes
                     break;
             }
         }
+        private void Connect()
+        {
+            var playerName = GameObject.Find("PlayerName").GetComponent<InputField>();
+            _smm.Publish(new Connect(playerName.text, Color.blue));
+            Destroy(GameObject.Find("ConnectDialog"));
+        }
         private void Leave()
         {
-            Debug.Log("Leaving");
+            _smm.Publish(new Disconnect(1));
             ApplicationManager.Singleton.LoadScene("Loading");
 
             if (NetworkHost.Singleton.State == HostState.Up)
                 NetworkHost.Singleton.Shutdown();
-            else
+            if (NetworkClient.Singleton.State == ClientState.Connected)
                 NetworkClient.Singleton.Disconnect();
         }
     }

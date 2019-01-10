@@ -11,9 +11,14 @@ namespace Multiplayer
         public static MultiplayerManager Singleton { get; private set; }
         public bool Hosting { get; set; }
 
-        private MultiplayerMessageReady _mmr;
+        private SendNetworkMessage _snm;
+        private ReceiveNetworkMessage _rnm;
+        private SendMultiplayerMessage _smm;
+        private ReceiveMultiplayerMessage _rmm;
+
+        private int _spawnId;
+        private int _identityCounter;
         private List<Player> _players;
-        private ReceivedMultiplayerMessage _rmm;
 
         #region MonoBehaviour
         private void Awake()
@@ -28,17 +33,23 @@ namespace Multiplayer
         private void Start()
         {
             _players = new List<Player>();
-            _mmr = EventManager.Singleton.GetEvent<MultiplayerMessageReady>();
-            _rmm = EventManager.Singleton.GetEvent<ReceivedMultiplayerMessage>();
-            _rmm.Subscribe(PollMessage);
+            _snm = EventManager.Singleton.GetEvent<SendNetworkMessage>();
+            _rnm = EventManager.Singleton.GetEvent<ReceiveNetworkMessage>();
+            _smm = EventManager.Singleton.GetEvent<SendMultiplayerMessage>();
+            _rmm = EventManager.Singleton.GetEvent<ReceiveMultiplayerMessage>();
+            _rnm.Subscribe(PollMM);
+            _smm.Subscribe(SendMM);
         }
         #endregion
 
-        private void DeployMessage(AMultiplayerMessage message)
+        private void SendMM(AMultiplayerMessage message)
         {
-            _mmr.Publish(message);
+            if (Hosting)
+                PollMM(message);
+            else
+                _snm.Publish(message);
         }
-        private void PollMessage(AMultiplayerMessage message)
+        private void PollMM(AMultiplayerMessage message)
         {
             switch (message.multiplayerMessageType)
             {
@@ -55,7 +66,7 @@ namespace Multiplayer
                     break;
 
                 case MultiplayerMessageType.RigidbodySynchronization:
-                    SynchronizeRigidbody((RigidbodySynchronization) message);
+                    SynchronizeRigidbody((RBSync) message);
                     break;
 
                 case MultiplayerMessageType.Disconnect:
@@ -63,17 +74,35 @@ namespace Multiplayer
                     break;
             }
         }
-        private void Connect(AMultiplayerMessage message)
+        private void Connect(Connect message)
+        {
+            if (_spawnId > 4) _spawnId = 0;
+
+            var spawn = GameObject.Find(string.Format("SpawnPoint{0}", ++_spawnId)).GetComponent<Transform>();
+            var scene = GameObject.Find("Scene").GetComponent<Transform>();
+
+            var playerObject = Instantiate((GameObject)Resources.Load("Game/Player"), scene.transform);
+            playerObject.transform.position = spawn.position;
+            playerObject.name = string.Format("Player<{0}>", message.PlayerName);
+
+            var playerScript = playerObject.GetComponent<Player>();
+            playerScript.playerId = ++_identityCounter;
+            playerScript.playerName = message.PlayerName;
+            playerScript.playerColor = message.PlayerColor;
+
+            _players.Add(playerScript);
+        }
+        private void Move(Move message)
         {
         }
-        private void Move(AMultiplayerMessage message)
+        private void SynchronizeRigidbody(RBSync message)
         {
         }
-        private void SynchronizeRigidbody(AMultiplayerMessage message)
+        private void Disconnect(Disconnect message)
         {
-        }
-        private void Disconnect(AMultiplayerMessage message)
-        {
+            var player = _players.Find(e => e.playerId == message.PlayerId);
+            _players.Remove(player);
+            Destroy(player);
         }
     }
 }

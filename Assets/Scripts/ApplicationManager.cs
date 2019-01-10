@@ -52,21 +52,25 @@ public class ApplicationManager : MonoBehaviour
  * 
  * + Refactor
  * 
+ * - Event based interfaces
+ * 
  * - Multiplayer:
  * 
  *     - Messages:
  *         + Connection
  *         + Disconnection
  *         - Smth with message structure (PlayerID add)
- *     - Player identification via ID
- *     - Player spawn
+ *     + Player identification via ID
+ *     + Player spawn
+ *     - MultiplayerManager Serialization/Deserialization
  *     - Synchronization logic
  *     - Divide host and client logic by parts
  *     - (OPTIONAL) Smoother interpolation ways 
  *
  * - Playground:
  *
- *     - Non-controllable physical objects (cube pyramid)
+ *     - Color picker for login dialog
+ *     + Non-controllable physical objects (cube pyramid)
  *
  * - MainMenu:
  *
@@ -90,5 +94,10 @@ public class ApplicationManager : MonoBehaviour
  *         - Crosshair
  *         - Some other UI 
  *         - Commands
+ *         
+ * # Thoughts
+ *  RBSync by script on object
+ *  Commands by script on player
+ *  Disconnect command use is problemmatic
  * 
 */

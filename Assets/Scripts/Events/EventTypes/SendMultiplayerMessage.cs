@@ -3,7 +3,7 @@ using Network.Messages;
 
 namespace Events.EventTypes
 {
-    public class ReceivedMultiplayerMessage
+    public class SendMultiplayerMessage
     {
         public delegate void Callback(AMultiplayerMessage b);
 
@@ -17,9 +17,9 @@ namespace Events.EventTypes
         {
             _c -= c;
         }
-        public void Publish(ANetworkMessage b)
+        public void Publish(AMultiplayerMessage b)
         {
-            _c((AMultiplayerMessage) b);
+            _c(b);
         }
     }
 }

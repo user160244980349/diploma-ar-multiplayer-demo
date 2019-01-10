@@ -24,7 +24,7 @@ namespace Multiplayer.Messages
 
         public Connect(string name, Color color)
         {
-            multiplayerMessageType = MultiplayerMessageType.Move;
+            multiplayerMessageType = MultiplayerMessageType.Connect;
             PlayerName = name;
             PlayerColor = color;
         }

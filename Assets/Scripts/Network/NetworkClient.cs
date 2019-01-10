@@ -11,10 +11,10 @@ namespace Network
         public static NetworkClient Singleton { get; private set; }
         public ClientState State { get; private set; }
 
-        private int _connectionId;
-        private MultiplayerMessageReady _mmr;
-        private ReceivedMultiplayerMessage _rmm;
+        private SendNetworkMessage _snm;
+        private ReceiveNetworkMessage _rnm;
         private int _socketId;
+        private int _connectionId;
 
         #region MonoBehaviour
         private void Awake()
@@ -29,8 +29,8 @@ namespace Network
         }
         private void Start()
         {
-            _mmr = EventManager.Singleton.GetEvent<MultiplayerMessageReady>();
-            _rmm = EventManager.Singleton.GetEvent<ReceivedMultiplayerMessage>();
+            _snm = EventManager.Singleton.GetEvent<SendNetworkMessage>();
+            _rnm = EventManager.Singleton.GetEvent<ReceiveNetworkMessage>();
         }
         #endregion
 
@@ -53,13 +53,13 @@ namespace Network
         public void Connect(ConnectionConfiguration cc)
         {
             State = ClientState.Connecting;
-            _mmr.Subscribe(Send);
+            _snm.Subscribe(Send);
             NetworkManager.Singleton.OpenConnection(_socketId, cc);
         }
         public void Disconnect()
         {
             State = ClientState.Disconnecting;
-            _mmr.Unsubscribe(Send);
+            _snm.Unsubscribe(Send);
             NetworkManager.Singleton.CloseConnection(_socketId, _connectionId);
         }
         public void Send(ANetworkMessage message)
@@ -99,7 +99,7 @@ namespace Network
                     break;
 
                 case NetworkMessageType.Higher:
-                    _rmm.Publish(message);
+                    _rnm.Publish(message);
                     break;
             }
         }

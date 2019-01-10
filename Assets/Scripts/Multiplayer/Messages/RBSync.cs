@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Multiplayer.Messages
 {
     [Serializable]
-    public class RigidbodySynchronization : AMultiplayerMessage
+    public class RBSync : AMultiplayerMessage
     {
         public Vector3 Position {
             get => new Vector3(_px, _py, _pz);
@@ -54,7 +54,7 @@ namespace Multiplayer.Messages
         private float _vy;
         private float _vz;
 
-        public RigidbodySynchronization(Rigidbody rb)
+        public RBSync(Rigidbody rb)
         {
             multiplayerMessageType = MultiplayerMessageType.RigidbodySynchronization;
             Position = rb.position;
