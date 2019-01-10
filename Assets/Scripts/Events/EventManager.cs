@@ -5,9 +5,9 @@ namespace Events
 {
     public class EventManager : MonoBehaviour
     {
-        private List<object> _events;
-
         public static EventManager Singleton { get; private set; }
+
+        private List<object> _events;
 
         #region MonoBehaviour
         private void Awake()
@@ -17,7 +17,7 @@ namespace Events
             else if (Singleton == this) Destroy(gameObject);
 
             DontDestroyOnLoad(gameObject);
-
+            gameObject.name = "EventManager";
             EventsBootstrapper.LoadEvents(out _events);
         }
         #endregion

@@ -7,15 +7,34 @@ using UnityEngine.Networking;
 
 namespace Network
 {
-    public class Host : MonoBehaviour
+    public class NetworkHost : MonoBehaviour
     {
+        public static NetworkHost Singleton { get; private set; }
+        public HostState State { get; private set; }
+
         private List<int> _clients;
         private MultiplayerMessageReady _mmr;
         private ReceivedMultiplayerMessage _rmm;
         private int _socketId;
 
-        public static Host Singleton { get; private set; }
-        public HostState State { get; private set; }
+        #region MonoBehaviour
+        private void Awake()
+        {
+            if (Singleton == null)
+                Singleton = this;
+            else if (Singleton == this) Destroy(gameObject);
+
+            DontDestroyOnLoad(gameObject);
+            gameObject.name = "NetworkHost";
+            State = HostState.Down;
+        }
+        private void Start()
+        {
+            _clients = new List<int>();
+            _mmr = EventManager.Singleton.GetEvent<MultiplayerMessageReady>();
+            _rmm = EventManager.Singleton.GetEvent<ReceivedMultiplayerMessage>();
+        }
+        #endregion
 
         public void Boot()
         {
@@ -49,27 +68,6 @@ namespace Network
             _mmr.Unsubscribe(Send);
             ApplicationManager.Singleton.LoadScene("MainMenu");
         }
-
-        #region MonoBehaviour
-        private void Awake()
-        {
-            if (Singleton == null)
-                Singleton = this;
-            else if (Singleton == this) Destroy(gameObject);
-
-            DontDestroyOnLoad(gameObject);
-
-            State = HostState.Down;
-        }
-        private void Start()
-        {
-            _clients = new List<int>();
-            _mmr = EventManager.Singleton.GetEvent<MultiplayerMessageReady>();
-            _rmm = EventManager.Singleton.GetEvent<ReceivedMultiplayerMessage>();
-        }
-        #endregion
-
-        #region Network delegates
         public void OnConnectEvent(int connection)
         {
             Debug.Log(string.Format("HOST::Client {0} connected to socket {1}", connection, _socketId));
@@ -80,8 +78,8 @@ namespace Network
         }
         private void OnDataEvent(int connection, ANetworkMessage message)
         {
-//            Debug.Log(string.Format("HOST::Received data from client {0} connected to socket {1}", connection,
-//                _socketId));
+            //            Debug.Log(string.Format("HOST::Received data from client {0} connected to socket {1}", connection,
+            //                _socketId));
 
             switch (message.networkMessageType)
             {
@@ -103,6 +101,5 @@ namespace Network
             Debug.Log(string.Format("HOST::Client {0} disconnected from socket {1}", connection, _socketId));
             _clients.Remove(connection);
         }
-        #endregion
     }
 }

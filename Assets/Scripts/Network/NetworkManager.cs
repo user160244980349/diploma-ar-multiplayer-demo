@@ -6,14 +6,48 @@ namespace Network
 {
     public class NetworkManager : MonoBehaviour
     {
-        private const int _MaxSockets = 16;
-        private const int _MaxConnections = 16;
-        private const int _BufferSize = 1024;
+        public static NetworkManager Singleton { get; private set; }
+
+        private const int MaxSockets = 16;
+        private const int MaxConnections = 16;
+        private const int BufferSize = 1024;
         private byte[] _buffer;
         private byte _error;
         private Socket[] _sockets;
 
-        public static NetworkManager Singleton { get; private set; }
+        #region MonoBehaviour
+        private void Awake()
+        {
+            if (Singleton == null)
+                Singleton = this;
+            else if (Singleton == this) Destroy(gameObject);
+
+            DontDestroyOnLoad(gameObject);
+            gameObject.name = "NetworkManager";
+            _sockets = new Socket[MaxSockets];
+
+            for (var i = 0; i < MaxSockets; i++)
+            {
+                _sockets[i].inUse = false;
+
+                _sockets[i].connections = new Connection[MaxConnections];
+                for (var j = 0; j < MaxSockets; j++) _sockets[i].connections[j].inUse = false;
+            }
+
+            _buffer = new byte[BufferSize];
+
+            var config = new GlobalConfig();
+            NetworkTransport.Init(config);
+        }
+        private void Update()
+        {
+            Receive();
+        }
+        private void OnDestroy()
+        {
+            NetworkTransport.Shutdown();
+        }
+        #endregion
 
         private void Receive()
         {
@@ -31,13 +65,13 @@ namespace Network
                     out connectionId,
                     out channelId,
                     _buffer,
-                    _BufferSize,
+                    BufferSize,
                     out dataSize,
                     out _error
                 );
 
-                if ((NetworkError) _error != NetworkError.Ok)
-                    Debug.LogErrorFormat("NetworkError {0}", (NetworkError) _error);
+                if ((NetworkError)_error != NetworkError.Ok)
+                    Debug.LogErrorFormat("NetworkError {0}", (NetworkError)_error);
 
                 switch (networkEvent)
                 {
@@ -53,8 +87,8 @@ namespace Network
                             NetworkTransport.GetRemoteDelayTimeMS(socketId, connectionId, message.timeStamp,
                                 out _error);
 
-                        if ((NetworkError) _error != NetworkError.Ok)
-                            Debug.LogErrorFormat("NetworkError {0}", (NetworkError) _error);
+                        if ((NetworkError)_error != NetworkError.Ok)
+                            Debug.LogErrorFormat("NetworkError {0}", (NetworkError)_error);
 
                         _sockets[socketId].onDataEvent(connectionId, message);
                         break;
@@ -73,48 +107,12 @@ namespace Network
                 }
             } while (networkEvent != NetworkEventType.Nothing);
         }
-
-        #region MonoBehaviour
-        private void Awake()
-        {
-            if (Singleton == null)
-                Singleton = this;
-            else if (Singleton == this) Destroy(gameObject);
-
-            DontDestroyOnLoad(gameObject);
-
-            _sockets = new Socket[_MaxSockets];
-
-            for (var i = 0; i < _MaxSockets; i++)
-            {
-                _sockets[i].inUse = false;
-
-                _sockets[i].connections = new Connection[_MaxConnections];
-                for (var j = 0; j < _MaxSockets; j++) _sockets[i].connections[j].inUse = false;
-            }
-
-            _buffer = new byte[_BufferSize];
-
-            var config = new GlobalConfig();
-            NetworkTransport.Init(config);
-        }
-        private void Update()
-        {
-            Receive();
-        }
-        private void OnDestroy()
-        {
-            NetworkTransport.Shutdown();
-        }
-        #endregion
-
-        #region Sockets
         public int OpenSocket(SocketConfiguration sc)
         {
             var connectionConfig = new ConnectionConfig();
             connectionConfig.Channels.Clear();
             for (var i = 0; i < sc.channels.Length; i++) connectionConfig.AddChannel(sc.channels[i]);
-            var hostTopology = new HostTopology(connectionConfig, _MaxConnections);
+            var hostTopology = new HostTopology(connectionConfig, MaxConnections);
 
             var freshSocketId = NetworkTransport.AddHost(
                 hostTopology,
@@ -127,7 +125,7 @@ namespace Network
         {
             if (!_sockets[socketId].inUse) return;
 
-            for (var i = 0; i < _MaxConnections; i++)
+            for (var i = 0; i < MaxConnections; i++)
             {
                 if (!_sockets[socketId].connections[i].inUse) continue;
                 ConnectionNotUsing(socketId, i);
@@ -138,7 +136,7 @@ namespace Network
         }
         private void SocketUsing(int socketId, HostTopology t, ConnectionConfig cc, SocketConfiguration sc)
         {
-            for (var i = 0; i < _MaxConnections; i++) ConnectionNotUsing(socketId, i);
+            for (var i = 0; i < MaxConnections; i++) ConnectionNotUsing(socketId, i);
 
             _sockets[socketId].inUse = true;
             _sockets[socketId].topology = t;
@@ -152,9 +150,6 @@ namespace Network
         {
             _sockets[socketId].inUse = false;
         }
-        #endregion
-
-        #region Connections
         public void Send(int socketId, int connectionId, int channelId, ANetworkMessage message)
         {
             if (!_sockets[socketId].inUse) return;
@@ -197,6 +192,5 @@ namespace Network
         {
             _sockets[socketId].connections[connectionId].inUse = false;
         }
-        #endregion
     }
 }

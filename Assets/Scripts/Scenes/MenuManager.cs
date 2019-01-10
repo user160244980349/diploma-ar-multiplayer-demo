@@ -10,11 +10,11 @@ namespace Scenes
 {
     public class MenuManager : MonoBehaviour
     {
+        public static MenuManager Singleton { get; private set; }
+
         private ButtonClicked _buttonClick;
         private Text _ip;
         private Text _port;
-
-        public static MenuManager Singleton { get; private set; }
 
         #region MonoBehaviour
         private void Awake()
@@ -39,7 +39,6 @@ namespace Scenes
         }
         #endregion
 
-        #region Button events
         private void OnButtonClick(Button button)
         {
             switch (button.name)
@@ -59,8 +58,8 @@ namespace Scenes
         }
         private void Quitting()
         {
-            if (Client.Singleton.State == ClientState.Ready) Client.Singleton.Shutdown();
-            if (Host.Singleton.State == HostState.Up) Host.Singleton.Shutdown();
+            if (NetworkClient.Singleton.State == ClientState.Ready) NetworkClient.Singleton.Shutdown();
+            if (NetworkHost.Singleton.State == HostState.Up) NetworkHost.Singleton.Shutdown();
             MultiplayerManager.Singleton.Hosting = false;
             Application.Quit();
         }
@@ -69,7 +68,7 @@ namespace Scenes
             MultiplayerManager.Singleton.Hosting = true;
             ApplicationManager.Singleton.LoadScene("Loading");
 
-            if (Host.Singleton.State == HostState.Down) Host.Singleton.Boot();
+            if (NetworkHost.Singleton.State == HostState.Down) NetworkHost.Singleton.Boot();
         }
         private void Connecting()
         {
@@ -85,9 +84,8 @@ namespace Scenes
                 exceptionConnectionId = 0
             };
 
-            if (Client.Singleton.State == ClientState.Down) Client.Singleton.Boot();
-            if (Client.Singleton.State == ClientState.Ready) Client.Singleton.Connect(cc);
+            if (NetworkClient.Singleton.State == ClientState.Down) NetworkClient.Singleton.Boot();
+            if (NetworkClient.Singleton.State == ClientState.Ready) NetworkClient.Singleton.Connect(cc);
         }
-        #endregion
     }
 }

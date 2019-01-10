@@ -5,6 +5,7 @@ namespace Multiplayer.Messages
         Boop,
         Connect,
         Move,
-        RigidbodySynchronization,
+        Disconnect,
+        RigidbodySynchronization
     }
 }

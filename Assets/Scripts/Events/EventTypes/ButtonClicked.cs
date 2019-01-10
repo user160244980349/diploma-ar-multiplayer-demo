@@ -7,6 +7,7 @@ namespace Events.EventTypes
         public delegate void Callback(Button b);
 
         private Callback _c;
+
         public void Subscribe(Callback c)
         {
             _c += c;

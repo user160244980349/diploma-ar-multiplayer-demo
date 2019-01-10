@@ -20,20 +20,6 @@ namespace Multiplayer
         private float _syncTime;
         private Transform _t;
 
-        public void SynchronizeRigidbody(RigidbodySynchronization message)
-        {
-            _syncTime = Time.time;
-            _interpTime = message.ping / 1000f;
-            _prevrbpos = _newrbpos;
-            _prevrbvel = _newrbvel;
-            _prevrbavel = _newrbavel;
-            _prevrbrot = _newrbrot;
-            _newrbpos = message.Position;
-            _newrbvel = message.Velocity;
-            _newrbavel = message.AngularVelocity;
-            _newrbrot = message.Rotation;
-        }
-
         #region MonoBehaviour
         private void Start()
         {
@@ -110,5 +96,19 @@ namespace Multiplayer
             }
         }
         #endregion
+
+        public void SynchronizeRigidbody(RigidbodySynchronization message)
+        {
+            _syncTime = Time.time;
+            _interpTime = message.ping / 1000f;
+            _prevrbpos = _newrbpos;
+            _prevrbvel = _newrbvel;
+            _prevrbavel = _newrbavel;
+            _prevrbrot = _newrbrot;
+            _newrbpos = message.Position;
+            _newrbvel = message.Velocity;
+            _newrbavel = message.AngularVelocity;
+            _newrbrot = message.Rotation;
+        }
     }
 }

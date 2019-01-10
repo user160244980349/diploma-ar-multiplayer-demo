@@ -6,15 +6,33 @@ using UnityEngine.Networking;
 
 namespace Network
 {
-    public class Client : MonoBehaviour
+    public class NetworkClient : MonoBehaviour
     {
+        public static NetworkClient Singleton { get; private set; }
+        public ClientState State { get; private set; }
+
         private int _connectionId;
         private MultiplayerMessageReady _mmr;
         private ReceivedMultiplayerMessage _rmm;
         private int _socketId;
 
-        public static Client Singleton { get; private set; }
-        public ClientState State { get; private set; }
+        #region MonoBehaviour
+        private void Awake()
+        {
+            if (Singleton == null)
+                Singleton = this;
+            else if (Singleton == this) Destroy(gameObject);
+
+            DontDestroyOnLoad(gameObject);
+            gameObject.name = "NetworkClient";
+            State = ClientState.Down;
+        }
+        private void Start()
+        {
+            _mmr = EventManager.Singleton.GetEvent<MultiplayerMessageReady>();
+            _rmm = EventManager.Singleton.GetEvent<ReceivedMultiplayerMessage>();
+        }
+        #endregion
 
         public void Boot()
         {
@@ -55,26 +73,6 @@ namespace Network
             State = ClientState.Down;
             NetworkManager.Singleton.CloseSocket(_socketId);
         }
-
-        #region MonoBehaviour
-        private void Awake()
-        {
-            if (Singleton == null)
-                Singleton = this;
-            else if (Singleton == this) Destroy(gameObject);
-
-            DontDestroyOnLoad(gameObject);
-
-            State = ClientState.Down;
-        }
-        private void Start()
-        {
-            _mmr = EventManager.Singleton.GetEvent<MultiplayerMessageReady>();
-            _rmm = EventManager.Singleton.GetEvent<ReceivedMultiplayerMessage>();
-        }
-        #endregion
-
-        #region Network events
         private void OnBroadcastEvent(int connection)
         {
         }
@@ -111,6 +109,5 @@ namespace Network
             State = ClientState.Ready;
             ApplicationManager.Singleton.LoadScene("MainMenu");
         }
-        #endregion
     }
 }

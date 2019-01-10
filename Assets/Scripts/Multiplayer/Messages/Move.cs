@@ -6,6 +6,15 @@ namespace Multiplayer.Messages
     [Serializable]
     public class Move : AMultiplayerMessage
     {
+        public Vector3 Vector {
+            get => new Vector3(_x, _y, _z);
+            private set {
+                _x = value.x;
+                _y = value.y;
+                _z = value.z;
+            }
+        }
+
         private float _x;
         private float _y;
         private float _z;
@@ -14,16 +23,6 @@ namespace Multiplayer.Messages
         {
             multiplayerMessageType = MultiplayerMessageType.Move;
             Vector = v;
-        }
-        public Vector3 Vector
-        {
-            get => new Vector3(_x, _y, _z);
-            private set
-            {
-                _x = value.x;
-                _y = value.y;
-                _z = value.z;
-            }
         }
     }
 }

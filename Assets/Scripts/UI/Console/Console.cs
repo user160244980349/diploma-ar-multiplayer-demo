@@ -6,10 +6,11 @@ namespace UI.Console
 {
     public class Console : MonoBehaviour
     {
-        private LinkedList<GameObject> _messages;
         public GameObject consoleSurface;
         public int maxMessages;
         public LinkedList<ConsoleMessage> previousMessages;
+
+        private LinkedList<GameObject> _messages;
 
         #region MonoBehaviour
         private void Start()

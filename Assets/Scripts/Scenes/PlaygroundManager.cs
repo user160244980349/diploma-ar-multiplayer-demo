@@ -9,10 +9,10 @@ namespace Scenes
 {
     public class PlaygroundManager : MonoBehaviour
     {
+        public static PlaygroundManager Singleton { get; private set; }
+
         private ButtonClicked _buttonClick;
         private GameObject _menu;
-
-        public static PlaygroundManager Singleton { get; private set; }
 
         #region MonoBehaviour
         private void Awake()
@@ -37,7 +37,6 @@ namespace Scenes
         }
         #endregion
 
-        #region Button events
         private void OnButtonClick(Button button)
         {
             switch (button.name)
@@ -60,11 +59,10 @@ namespace Scenes
             Debug.Log("Leaving");
             ApplicationManager.Singleton.LoadScene("Loading");
 
-            if (Host.Singleton.State == HostState.Up)
-                Host.Singleton.Shutdown();
+            if (NetworkHost.Singleton.State == HostState.Up)
+                NetworkHost.Singleton.Shutdown();
             else
-                Client.Singleton.Disconnect();
+                NetworkClient.Singleton.Disconnect();
         }
-        #endregion
     }
 }
