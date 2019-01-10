@@ -42,6 +42,8 @@ namespace Network
             var sc = new SocketConfiguration
             {
                 channels = new QosType[2] {QosType.Reliable, QosType.Unreliable},
+                maxConnections = 16,
+                maxMessagesForSend = 16,
                 onConnectEvent = OnConnectEvent,
                 onDataEvent = OnDataEvent,
                 onBroadcastEvent = OnBroadcastEvent,
@@ -49,6 +51,12 @@ namespace Network
             };
 
             _socketId = NetworkManager.Singleton.OpenSocket(sc);
+        }
+        public void Shutdown()
+        {
+            Debug.Log("CLIENT::Shutdown");
+            State = ClientState.Down;
+            NetworkManager.Singleton.CloseSocket(_socketId);
         }
         public void Connect(ConnectionConfiguration cc)
         {
@@ -64,14 +72,8 @@ namespace Network
         }
         public void Send(ANetworkMessage message)
         {
-//            Debug.Log("CLIENT::Sending data");
+            // Debug.Log("CLIENT::Sending data");
             NetworkManager.Singleton.Send(_socketId, _connectionId, 0, message);
-        }
-        public void Shutdown()
-        {
-            Debug.Log("CLIENT::Shutdown");
-            State = ClientState.Down;
-            NetworkManager.Singleton.CloseSocket(_socketId);
         }
         private void OnBroadcastEvent(int connection)
         {
@@ -85,9 +87,7 @@ namespace Network
         }
         private void OnDataEvent(int connection, ANetworkMessage message)
         {
-//            Debug.Log(string.Format("CLIENT::Received data from host {0} connected to socket {1}", connection,
-//                _socketId));
-
+            // Debug.Log(string.Format("CLIENT::Received data from host {0} connected to socket {1}", connection, _socketId));
             switch (message.networkMessageType)
             {
                 case NetworkMessageType.Beep:

@@ -7,6 +7,8 @@ namespace Network
     {
         public QosType[] channels;
         public int port;
+        public ushort maxConnections;
+        public ushort maxMessagesForSend;
         public OnConnectEvent onConnectEvent;
         public OnDataEvent onDataEvent;
         public OnBroadcastEvent onBroadcastEvent;

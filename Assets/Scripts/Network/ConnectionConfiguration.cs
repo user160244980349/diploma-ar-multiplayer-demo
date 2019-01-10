@@ -5,6 +5,5 @@
         public string ip;
         public int port;
         public int exceptionConnectionId;
-        public int notificationLevel;
     }
 }

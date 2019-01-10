@@ -80,7 +80,6 @@ namespace Scenes
                 ip = "127.0.0.1",
                 // ip = "192.168.1.35",
                 port = 8000,
-                notificationLevel = 1,
                 exceptionConnectionId = 0
             };
 

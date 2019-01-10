@@ -45,6 +45,8 @@ namespace Network
             {
                 channels = new QosType[2] {QosType.Reliable, QosType.Unreliable},
                 port = 8000,
+                maxConnections = 16,
+                maxMessagesForSend = 16,
                 onConnectEvent = OnConnectEvent,
                 onDataEvent = OnDataEvent,
                 onBroadcastEvent = OnBroadcastEvent,
@@ -57,7 +59,7 @@ namespace Network
         }
         public void Send(ANetworkMessage message)
         {
-//            Debug.Log("CLIENT::Sending data");
+            // Debug.Log("CLIENT::Sending data");
             for (var i = 0; i < _clients.Count; i++) NetworkManager.Singleton.Send(_socketId, _clients[i], 1, message);
         }
         public void Shutdown()
@@ -78,9 +80,7 @@ namespace Network
         }
         private void OnDataEvent(int connection, ANetworkMessage message)
         {
-            //            Debug.Log(string.Format("HOST::Received data from client {0} connected to socket {1}", connection,
-            //                _socketId));
-
+            // Debug.Log(string.Format("HOST::Received data from client {0} connected to socket {1}", connection, _socketId));
             switch (message.networkMessageType)
             {
                 case NetworkMessageType.Beep:
