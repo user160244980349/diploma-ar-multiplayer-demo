@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading;
 using Events;
 using Events.EventTypes;
 using Network.Messages;
@@ -10,12 +11,15 @@ namespace Network
     public class NetworkHost : MonoBehaviour
     {
         public static NetworkHost Singleton { get; private set; }
-        public HostState State { get; private set; }
+        public ConnectionConfiguration Configuration { get; set; }
 
         private SendNetworkMessage _snm;
         private ReceiveNetworkMessage _rnm;
-        private int _socketId;
-        private List<int> _clients;
+
+        private GameObject _socketObject;
+
+        private Socket _socket;
+        private List<int> _connections;
 
         #region MonoBehaviour
         private void Awake()
@@ -26,61 +30,73 @@ namespace Network
 
             DontDestroyOnLoad(gameObject);
             gameObject.name = "NetworkHost";
-            State = HostState.Down;
         }
         private void Start()
         {
-            _clients = new List<int>();
+            Debug.Log("HOST::Boot");
+
+            _connections = new List<int>();
+
             _snm = EventManager.Singleton.GetEvent<SendNetworkMessage>();
             _rnm = EventManager.Singleton.GetEvent<ReceiveNetworkMessage>();
-        }
-        #endregion
 
-        public void Boot()
-        {
-            Debug.Log("HOST::Boot");
-            State = HostState.Up;
+            _socketObject = (GameObject)Resources.Load("Networking/Socket");
 
-            var sc = new SocketConfiguration
+            var socket = Instantiate(_socketObject, gameObject.transform);
+            _socket = socket.GetComponent<Socket>();
+            _socket.Config = new SocketConfiguration
             {
-                channels = new QosType[2] {QosType.Reliable, QosType.Unreliable},
+                channels = new QosType[2] { QosType.Reliable, QosType.Unreliable },
                 port = 8000,
                 maxConnections = 16,
                 maxMessagesForSend = 16,
+                onStart = OnStart,
                 onConnectEvent = OnConnectEvent,
                 onDataEvent = OnDataEvent,
                 onBroadcastEvent = OnBroadcastEvent,
-                onDisconnectEvent = OnDisconnectEvent
+                onDisconnectEvent = OnDisconnectEvent,
+                onClose = OnClose,
             };
 
-            _socketId = NetworkManager.Singleton.OpenSocket(sc);
             _snm.Subscribe(Send);
-            ApplicationManager.Singleton.LoadScene("Playground");
+        }
+        private void OnDestroy()
+        {
+            Debug.Log("HOST::Shutdown");
+            _snm.Unsubscribe(Send);
+        }
+        #endregion
+
+        public void Shutdown()
+        {
+            _socket.Close();
         }
         public void Send(ANetworkMessage message)
         {
-            // Debug.Log("CLIENT::Sending data");
-            for (var i = 0; i < _clients.Count; i++) NetworkManager.Singleton.Send(_socketId, _clients[i], 1, message);
+            Debug.Log("HOST::Sending data");
+            for (var i = 0; i < _connections.Count; i++) _socket.Send(_connections[i], 1, message);
         }
-        public void Shutdown()
+        private void Disconnect(int connection)
         {
-            Debug.Log("HOST::Shutdown");
-            State = HostState.Down;
-            NetworkManager.Singleton.CloseSocket(_socketId);
-            _snm.Unsubscribe(Send);
-            ApplicationManager.Singleton.LoadScene("MainMenu");
+            Debug.Log(string.Format("HOST::Client {0} connected to socket {1}", connection, _socket.Id));
+            _socket.CloseConnection(connection);
+            _connections.Remove(connection);
+        }
+
+        private void OnStart()
+        {
         }
         private void OnConnectEvent(int connection)
         {
-            Debug.Log(string.Format("HOST::Client {0} connected to socket {1}", connection, _socketId));
-            _clients.Add(connection);
+            Debug.Log(string.Format("HOST::Client {0} connected to socket {1}", connection, _socket.Id));
+            _connections.Add(connection);
         }
         private void OnBroadcastEvent(int connection)
         {
         }
         private void OnDataEvent(int connection, ANetworkMessage message)
         {
-            // Debug.Log(string.Format("HOST::Received data from client {0} connected to socket {1}", connection, _socketId));
+            Debug.Log(string.Format("HOST::Received data from client {0} connected to socket {1}", connection, _socket.Id));
             switch (message.networkMessageType)
             {
                 case NetworkMessageType.Beep:
@@ -98,8 +114,12 @@ namespace Network
         }
         private void OnDisconnectEvent(int connection)
         {
-            Debug.Log(string.Format("HOST::Client {0} disconnected from socket {1}", connection, _socketId));
-            _clients.Remove(connection);
+            Debug.Log(string.Format("HOST::Client {0} disconnected from socket {1}", connection, _socket.Id));
+            _connections.Remove(connection);
+        }
+        private void OnClose()
+        {
+            Destroy(gameObject);
         }
     }
 }

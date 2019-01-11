@@ -16,18 +16,21 @@ public class ApplicationManager : MonoBehaviour
             Singleton = this;
         else if (Singleton == this) Destroy(gameObject);
 
+        var  _eventManager = (GameObject)Resources.Load("Managers/EventManager");
+        var  _networkManager = (GameObject)Resources.Load("Managers/NetworkManager");
+        var  _multiplayerManager = (GameObject)Resources.Load("Managers/MultiplayerManager");
+        var  _consoleManager = (GameObject)Resources.Load("Managers/ConsoleManager");
+
         DontDestroyOnLoad(gameObject);
-        Instantiate(Resources.Load("Managers/EventManager"));
-        Instantiate(Resources.Load("Managers/NetworkManager"));
-        Instantiate(Resources.Load("Managers/MultiplayerManager"));
-        Instantiate(Resources.Load("Managers/ConsoleManager"));
-        Instantiate(Resources.Load("Networking/NetworkHost"));
-        Instantiate(Resources.Load("Networking/NetworkClient"));
+
+        Instantiate(_eventManager);
+        Instantiate(_networkManager);
+        Instantiate(_multiplayerManager);
+        Instantiate(_consoleManager);
     }
     private void Start()
     {
-        LoadScene("Loading");
-        DelayedLoadScene("MainMenu", 0.25f);
+        LoadScene("MainMenu");
     }
     #endregion
 
@@ -78,7 +81,7 @@ public class ApplicationManager : MonoBehaviour
  *
  * - Network:
  *
- *     - Sending messages by groups (queueing)
+ *     + Sending messages by groups (queueing)
  *     - Network discovery for lobby's
  *     - Falling back system
  *     - (OPTIONAL)Channel management if game will be laggy
@@ -99,5 +102,6 @@ public class ApplicationManager : MonoBehaviour
  *  RBSync by script on object
  *  Commands by script on player
  *  Disconnect command use is problemmatic
+ *  Think about wait disconnection on update cycle
  * 
 */

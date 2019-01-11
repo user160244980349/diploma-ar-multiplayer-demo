@@ -2,6 +2,7 @@
 using Events;
 using Events.EventTypes;
 using Multiplayer.Messages;
+using Network;
 using UnityEngine;
 
 namespace Multiplayer
@@ -18,7 +19,7 @@ namespace Multiplayer
 
         private int _spawnId;
         private int _identityCounter;
-        private List<Player> _players;
+        private List<LocalPlayer> _players;
 
         #region MonoBehaviour
         private void Awake()
@@ -32,7 +33,7 @@ namespace Multiplayer
         }
         private void Start()
         {
-            _players = new List<Player>();
+            _players = new List<LocalPlayer>();
             _snm = EventManager.Singleton.GetEvent<SendNetworkMessage>();
             _rnm = EventManager.Singleton.GetEvent<ReceiveNetworkMessage>();
             _smm = EventManager.Singleton.GetEvent<SendMultiplayerMessage>();
@@ -76,7 +77,7 @@ namespace Multiplayer
         }
         private void Connect(Connect message)
         {
-            if (_spawnId > 4) _spawnId = 0;
+            if (_spawnId > 3) _spawnId = 0;
 
             var spawn = GameObject.Find(string.Format("SpawnPoint{0}", ++_spawnId)).GetComponent<Transform>();
             var scene = GameObject.Find("Scene").GetComponent<Transform>();
@@ -85,12 +86,13 @@ namespace Multiplayer
             playerObject.transform.position = spawn.position;
             playerObject.name = string.Format("Player<{0}>", message.PlayerName);
 
-            var playerScript = playerObject.GetComponent<Player>();
+            var playerScript = playerObject.GetComponent<LocalPlayer>();
             playerScript.playerId = ++_identityCounter;
             playerScript.playerName = message.PlayerName;
             playerScript.playerColor = message.PlayerColor;
 
             _players.Add(playerScript);
+            Debug.LogFormat("Player {0} connected", playerScript.playerId);
         }
         private void Move(Move message)
         {
@@ -100,9 +102,10 @@ namespace Multiplayer
         }
         private void Disconnect(Disconnect message)
         {
+            Debug.LogFormat("Player {0} disconnected", message.PlayerId);
             var player = _players.Find(e => e.playerId == message.PlayerId);
             _players.Remove(player);
-            Destroy(player);
+            Destroy(player.gameObject);
         }
     }
 }

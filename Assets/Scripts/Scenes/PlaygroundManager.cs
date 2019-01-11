@@ -69,13 +69,13 @@ namespace Scenes
         }
         private void Leave()
         {
-            _smm.Publish(new Disconnect(1));
-            ApplicationManager.Singleton.LoadScene("Loading");
+            var client = GameObject.Find("NetworkClient");
+            if (client != null)
+            {
+                _smm.Publish(new Disconnect(2));
+            }
 
-            if (NetworkHost.Singleton.State == HostState.Up)
-                NetworkHost.Singleton.Shutdown();
-            if (NetworkClient.Singleton.State == ClientState.Connected)
-                NetworkClient.Singleton.Disconnect();
+            ApplicationManager.Singleton.LoadScene("MainMenu");
         }
     }
 }

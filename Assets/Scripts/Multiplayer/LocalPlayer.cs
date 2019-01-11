@@ -2,10 +2,11 @@
 using Events.EventTypes;
 using Multiplayer.Messages;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Multiplayer
 {
-    public class Player : MonoBehaviour
+    public class LocalPlayer : MonoBehaviour
     {
         public int playerId;
         public string playerName;

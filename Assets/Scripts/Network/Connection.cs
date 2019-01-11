@@ -8,10 +8,10 @@ namespace Network
     {
         public int id;
         public int parentId;
+        public bool readyToSend;
         public string ip;
         public int port;
         public int exceptionConnectionId;
-        public int notificationLevel;
 
         private byte _error;
 
@@ -28,29 +28,39 @@ namespace Network
             parentId = socketId;
             Debug.LogFormat(" >> Connection accepted {0}", id);
         }
-        ~Connection()
+        public void Disconnect()
         {
-            Debug.LogFormat(" >> Connection cloased {0}", id);
+            Debug.LogFormat(" >> Connection closed {0}", id);
             NetworkTransport.Disconnect(parentId, id, out _error);
             ShowErrorIfThrown();
         }
-        public void SendQueuedMessages()
+        public void ReadyToSend()
         {
-            NetworkTransport.SendQueuedMessages(parentId, id, out _error);
+            readyToSend = true;
         }
         public void QueueMessage(int channelId, ANetworkMessage message)
         {
             message.timeStamp = NetworkTransport.GetNetworkTimestamp();
             var binaryMessage = Formatter.Serialize(message);
 
-            NetworkTransport.QueueMessageForSending(parentId, id, channelId, binaryMessage, binaryMessage.Length, out _error);
+            NetworkTransport.Send(parentId, id, channelId, binaryMessage, binaryMessage.Length, out _error);
             ShowErrorIfThrown();
 
-            var queueSize = NetworkTransport.GetOutgoingMessageQueueSize(parentId, out _error);
-            ShowErrorIfThrown();
+            //NetworkTransport.QueueMessageForSending(parentId, id, channelId, binaryMessage, binaryMessage.Length, out _error);
+            //ShowErrorIfThrown();
 
-            NetworkTransport.NotifyWhenConnectionReadyForSend(parentId, id, queueSize, out _error);
-            ShowErrorIfThrown();
+            //var queueSize = NetworkTransport.GetOutgoingMessageQueueSize(parentId, out _error);
+            //ShowErrorIfThrown();
+
+            //NetworkTransport.NotifyWhenConnectionReadyForSend(parentId, id, queueSize, out _error);
+            //ShowErrorIfThrown();
+
+            //if (readyToSend)
+            //{
+            //    readyToSend = false;
+            //    NetworkTransport.SendQueuedMessages(parentId, id, out _error);
+            //    ShowErrorIfThrown();
+            //}
         }
         private void ShowErrorIfThrown()
         {

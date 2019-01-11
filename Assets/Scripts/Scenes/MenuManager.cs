@@ -16,6 +16,9 @@ namespace Scenes
         private Text _ip;
         private Text _port;
 
+        private GameObject _hostObject;
+        private GameObject _clientObject;
+
         #region MonoBehaviour
         private void Awake()
         {
@@ -27,11 +30,28 @@ namespace Scenes
         {
             ConsoleManager.Singleton.InstantiateConsole();
 
+            _hostObject = (GameObject)Resources.Load("Networking/NetworkHost");
+            _clientObject = (GameObject)Resources.Load("Networking/NetworkClient");
+
             _ip = GameObject.Find("Ip").GetComponentInChildren<Text>();
             _port = GameObject.Find("Port").GetComponentInChildren<Text>();
 
             _buttonClick = EventManager.Singleton.GetEvent<ButtonClicked>();
             _buttonClick.Subscribe(OnButtonClick);
+
+            var host = GameObject.Find("NetworkHost");
+            if (host != null)
+            {
+                var hostScript = host.GetComponent<NetworkHost>();
+                hostScript.Shutdown();
+            }
+
+            var client = GameObject.Find("NetworkClient");
+            if (client != null)
+            {
+                var clientScript = client.GetComponent<NetworkClient>();
+                clientScript.Shutdown();
+            }
         }
         private void OnDestroy()
         {
@@ -58,33 +78,28 @@ namespace Scenes
         }
         private void Quitting()
         {
-            if (NetworkClient.Singleton.State == ClientState.Ready) NetworkClient.Singleton.Shutdown();
-            if (NetworkHost.Singleton.State == HostState.Up) NetworkHost.Singleton.Shutdown();
-            MultiplayerManager.Singleton.Hosting = false;
             Application.Quit();
         }
         private void Hosting()
         {
             MultiplayerManager.Singleton.Hosting = true;
-            ApplicationManager.Singleton.LoadScene("Loading");
+            ApplicationManager.Singleton.LoadScene("Playground");
 
-            if (NetworkHost.Singleton.State == HostState.Down) NetworkHost.Singleton.Boot();
+            var host = Instantiate(_hostObject);
         }
         private void Connecting()
         {
             MultiplayerManager.Singleton.Hosting = false;
-            ApplicationManager.Singleton.LoadScene("Loading");
+            ApplicationManager.Singleton.LoadScene("Playground");
 
-            var cc = new ConnectionConfiguration
+            var client = Instantiate(_clientObject);
+            var clientScript = client.GetComponent<NetworkClient>();
+            clientScript.Configuration = new ConnectionConfiguration
             {
                 ip = "127.0.0.1",
-                // ip = "192.168.1.35",
                 port = 8000,
                 exceptionConnectionId = 0
             };
-
-            if (NetworkClient.Singleton.State == ClientState.Down) NetworkClient.Singleton.Boot();
-            if (NetworkClient.Singleton.State == ClientState.Ready) NetworkClient.Singleton.Connect(cc);
         }
     }
 }
