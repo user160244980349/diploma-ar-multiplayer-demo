@@ -43,6 +43,7 @@ namespace Network
             var hostTopology = new HostTopology(connectionConfig, Config.maxConnections);
             var id = NetworkTransport.AddHost(hostTopology, Config.port);
 
+
             _topology = hostTopology;
             _config = connectionConfig;
             _connections = new Connection[Config.maxConnections];
@@ -60,7 +61,16 @@ namespace Network
             Debug.LogFormat(" >> Socket opended {0}", id);
 
             gameObject.name = string.Format("Socket{0}", Id);
-            _onStart();
+
+            if (id >= 0)
+            {
+                _onStart();
+            }
+            else
+            {
+                _onClose();
+                Destroy(gameObject);
+            }
         }
         private void Update()
         {
