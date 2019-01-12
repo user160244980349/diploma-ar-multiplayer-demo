@@ -149,7 +149,8 @@ namespace Network
         private void OnDisconnectEvent(int connection)
         {
             Debug.Log("CLIENT::Disconnected from host");
-            ApplicationManager.Singleton.LoadScene("MainMenu");
+            ApplicationManager.Singleton.LoadScene("Loading");
+            Shutdown();
         }
     }
 }

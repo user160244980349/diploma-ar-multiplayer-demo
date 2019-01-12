@@ -112,9 +112,12 @@ namespace Network
             ClientBooted = false;
             Destroy(_client.gameObject);
             _client = null;
+
+            ApplicationManager.Singleton.LoadScene("MainMenu");
         }
         private void HostStart()
         {
+            ApplicationManager.Singleton.LoadScene("Playground");
             HostBooted = true;
         }
         private void HostShutdown()
@@ -122,6 +125,8 @@ namespace Network
             HostBooted = false;
             Destroy(_host.gameObject);
             _host = null;
+
+            ApplicationManager.Singleton.LoadScene("MainMenu");
         }
     }
 }

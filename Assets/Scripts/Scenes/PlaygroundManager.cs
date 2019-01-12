@@ -70,7 +70,18 @@ namespace Scenes
         private void Leave()
         {
             _smm.Publish(new Disconnect(2));
-            ApplicationManager.Singleton.LoadScene("MainMenu");
+
+            ApplicationManager.Singleton.LoadScene("Loading");
+
+            if (NetworkManager.Singleton.HostBooted)
+            {
+                NetworkManager.Singleton.DespawnHost();
+            }
+
+            if (NetworkManager.Singleton.ClientBooted)
+            {
+                NetworkManager.Singleton.DespawnClient();
+            }
         }
     }
 }

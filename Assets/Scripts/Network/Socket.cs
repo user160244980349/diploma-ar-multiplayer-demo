@@ -65,7 +65,11 @@ namespace Network
             _onDisconnectEvent = Configuration.onDisconnectEvent;
             _onSocketShutdown = Configuration.onSocketDestroy;
 
-            _connectionConfig = new ConnectionConfig();
+            _connectionConfig = new ConnectionConfig
+            {
+                ConnectTimeout = 2,
+                DisconnectTimeout = 2,
+            };
 
             for (var i = 0; i < _channels.Length; i++)
                 _connectionConfig.AddChannel(_channels[i]);

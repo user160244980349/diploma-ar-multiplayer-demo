@@ -38,16 +38,6 @@ namespace Scenes
 
             _buttonClick = EventManager.Singleton.GetEvent<ButtonClicked>();
             _buttonClick.Subscribe(OnButtonClick);
-
-            if (NetworkManager.Singleton.HostBooted)
-            {
-                NetworkManager.Singleton.DespawnHost();
-            }
-
-            if (NetworkManager.Singleton.ClientBooted)
-            {
-                NetworkManager.Singleton.DespawnClient();
-            }
         }
         private void OnDestroy()
         {
@@ -78,14 +68,14 @@ namespace Scenes
         }
         private void Hosting()
         {
+            ApplicationManager.Singleton.LoadScene("Loading");
             MultiplayerManager.Singleton.Hosting = true;
-            ApplicationManager.Singleton.LoadScene("Playground");
             NetworkManager.Singleton.SpawnHost();
         }
         private void Connecting()
         {
-            MultiplayerManager.Singleton.Hosting = false;
             ApplicationManager.Singleton.LoadScene("Loading");
+            MultiplayerManager.Singleton.Hosting = false;
             NetworkManager.Singleton.SpawnClient();
         }
     }
