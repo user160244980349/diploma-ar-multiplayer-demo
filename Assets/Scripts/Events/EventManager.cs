@@ -5,42 +5,26 @@ namespace Events
 {
     public class EventManager : MonoBehaviour
     {
-        private static EventManager _instance;
+        public static EventManager Singleton { get; private set; }
 
         private List<object> _events;
 
         #region MonoBehaviour
         private void Awake()
         {
-            if (_instance == null)
-            {
-                _instance = this;
-            }
-            else if (_instance == this)
-            {
-                Destroy(gameObject);
-            }
+            if (Singleton == null)
+                Singleton = this;
+            else if (Singleton == this) Destroy(gameObject);
+
             DontDestroyOnLoad(gameObject);
-
+            gameObject.name = "EventManager";
             EventsBootstrapper.LoadEvents(out _events);
-        }
-        private void Start()
-        {
-
-        }
-        private void Update()
-        {
-
         }
         #endregion
 
-        public static EventManager GetInstance()
-        {
-            return _instance;
-        }
         public T GetEvent<T>()
         {
-            return (T)_events.Find(e => e is T);
+            return (T) _events.Find(e => e is T);
         }
     }
 }

@@ -5,26 +5,23 @@ namespace UI.Console
 {
     public class ConsoleManager : MonoBehaviour
     {
-        public bool WithStackTrace;
+        public static ConsoleManager Singleton { get; private set; }
+        public bool withStackTrace;
 
-        private static ConsoleManager _instance;
-
-        private int _maxMessages = 200;
+        private const int MaxMessages = 200;
         private Console _console;
         private LinkedList<ConsoleMessage> _messages;
 
         #region MonoBehaviour
         private void Awake()
         {
-            if (_instance == null)
-            {
-                _instance = this;
-            }
-            else if (_instance == this)
-            {
-                Destroy(gameObject);
-            }
+            if (Singleton == null)
+                Singleton = this;
+            else if (Singleton == this) Destroy(gameObject);
+
             DontDestroyOnLoad(gameObject);
+
+            gameObject.name = "ConsoleManager";
 
             _messages = new LinkedList<ConsoleMessage>();
         }
@@ -38,36 +35,29 @@ namespace UI.Console
         }
         #endregion
 
-        public static ConsoleManager GetInstance()
-        {
-            return _instance;
-        }
-        public void InstantiateOnScene()
+        public void InstantiateConsole()
         {
             var canvas = GameObject.Find("Canvas");
-            var consolePanel = Instantiate(Resources.Load("UI/Console/Console") as GameObject, canvas.transform);
+            var consolePanel = Instantiate((GameObject)Resources.Load("UI/Console/Console"), canvas.transform);
 
             _console = consolePanel.GetComponent<Console>();
             _console.previousMessages = _messages;
-            _console.maxMessages = _maxMessages;
+            _console.maxMessages = MaxMessages;
         }
         public void SendMessage(ConsoleMessage message)
         {
-            if (_messages.Count >= _maxMessages)
-            {
-                _messages.Remove(_messages.First);
-            }
+            if (_messages.Count >= MaxMessages) _messages.Remove(_messages.First);
             _messages.AddLast(message);
 
-            if (_console)
-                _console.WriteMessage(message);
+            if (_console != null)
+                if (_console.Started)
+                    _console.WriteMessage(message);
         }
-
         private void SendLog(string condition, string stackTrace, LogType type)
         {
             ConsoleMessage message;
 
-            if (WithStackTrace && type != LogType.Log)
+            if (withStackTrace && type != LogType.Log)
                 condition = string.Format("Message: {0}\nStackTrace: {1}", condition, stackTrace);
 
             message.text = condition;

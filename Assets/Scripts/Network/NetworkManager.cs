@@ -1,52 +1,40 @@
-﻿using Network.Messages;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Networking;
 
 namespace Network
 {
     public class NetworkManager : MonoBehaviour
     {
-        private static NetworkManager _instance;
+        public static NetworkManager Singleton { get; private set; }
+        public bool HostBooted { get; private set; }
+        public bool ClientBooted { get; private set; }
 
-        private const int _MaxSockets = 16;
-        private const int _MaxConnections = 16;
-        private const int _MaxChannels = 16;
-        private const int _BufferSize = 1024;
+        private GameObject _hostPrefab;
+        private GameObject _clientPrefab;
 
-        private byte[] _buffer;
-        private byte _error;
+        private Host _host;
+        private Client _client;
+        private int _maxSockets = 16;
         private Socket[] _sockets;
 
         #region MonoBehaviour
         private void Awake()
         {
-            if (_instance == null)
-            {
-                _instance = this;
-            }
-            else if (_instance == this)
-            {
-                Destroy(gameObject);
-            }
+            if (Singleton == null)
+                Singleton = this;
+            else if (Singleton == this) Destroy(gameObject);
+
             DontDestroyOnLoad(gameObject);
+            gameObject.name = "NetworkManager";
+            _sockets = new Socket[_maxSockets];
 
-            _sockets = new Socket[_MaxSockets];
-            for (var i = 0; i < _MaxSockets; i++)
-            {
-                _sockets[i].inUse = false;
-
-                _sockets[i].connections = new Connection[_MaxConnections];
-                for (var j = 0; j < _MaxSockets; j++) _sockets[i].connections[j].inUse = false;
-            }
-
-            _buffer = new byte[_BufferSize];
-
-            var config = new GlobalConfig();
+            var config = new GlobalConfig {
+                NetworkEventAvailable = NetworkEventAvailable,
+            };
             NetworkTransport.Init(config);
-        }
-        private void Update()
-        {
-            Receive();
+
+            _hostPrefab = (GameObject)Resources.Load("Networking/NetworkHost");
+            _clientPrefab = (GameObject)Resources.Load("Networking/NetworkClient");
         }
         private void OnDestroy()
         {
@@ -54,145 +42,84 @@ namespace Network
         }
         #endregion
 
-        public static NetworkManager GetInstance()
+        public void RegisterSocket(Socket socket)
         {
-            return _instance;
+            _sockets[socket.Id] = socket;
+        }
+        public void UnregisterSocket(Socket socket)
+        {
+            _sockets[socket.Id] = null;
+        }
+        private void NetworkEventAvailable(int socketId)
+        {
+            _sockets[socketId].EventsReady = true;
         }
 
-        private void Receive()
+        public void SpawnHost()
         {
-            NetworkEventType networkEvent;
-            do
+            if (HostBooted) return;
+
+            var hostObject = Instantiate(_hostPrefab, gameObject.transform);
+            _host = hostObject.GetComponent<Host>();
+
+            _host.HostConfig = new HostConfiguration
             {
-                int socketId;
-                int connectionId;
-                int channelId;
-                int dataSize;
-
-                networkEvent = NetworkTransport.Receive(
-                    out socketId,
-                    out connectionId,
-                    out channelId,
-                    _buffer,
-                    _BufferSize,
-                    out dataSize,
-                    out _error
-                );
-
-                if ((NetworkError)_error != NetworkError.Ok)
-                    Debug.LogError(string.Format("NetworkError {0}", (NetworkError)_error));
-
-                switch (networkEvent)
-                {
-                    case NetworkEventType.ConnectEvent:
-                        ConnectionUsing(socketId, connectionId);
-                        _sockets[socketId].onConnectEvent(connectionId);
-                        break;
-
-                    case NetworkEventType.DataEvent:
-                        _sockets[socketId].onDataEvent(connectionId, Formatter.Deserialize(_buffer));
-                        break;
-
-                    case NetworkEventType.BroadcastEvent:
-                        _sockets[socketId].onBroadcastEvent(connectionId);
-                        break;
-
-                    case NetworkEventType.DisconnectEvent:
-                        _sockets[socketId].onDisconnectEvent(connectionId);
-                        ConnectionNotUsing(socketId, connectionId);
-                        break;
-
-                    case NetworkEventType.Nothing:
-                        break;
-                }
-            } while (networkEvent != NetworkEventType.Nothing);
+                onHostStart = HostStart,
+                onHostShutdown = HostShutdown,
+            };
         }
-
-        #region Sockets
-        public int OpenSocket(SocketConfiguration sc)
+        public void DespawnHost()
         {
-            var connectionConfig = new ConnectionConfig();
-            connectionConfig.Channels.Clear();
-            for (var i = 0; i < sc.channels.Length; i++)
+            _host.Shutdown();
+        }
+        public void SpawnClient()
+        {
+            if (ClientBooted) return;
+
+            var clientObject = Instantiate(_clientPrefab, gameObject.transform);
+            _client = clientObject.GetComponent<Client>();
+
+            _client.ClientConfig = new ClientConfiguration
             {
-                connectionConfig.AddChannel(sc.channels[i]);
-            }
-            var hostTopology = new HostTopology(connectionConfig, _MaxConnections);
-            var freshSocketId = NetworkTransport.AddHost(
-                hostTopology,
-                sc.port);
-            SocketUsing(freshSocketId, hostTopology, connectionConfig, sc);
-            return freshSocketId;
-        }
-        public void CloseSocket(int socketId)
-        {
-            if (!_sockets[socketId].inUse) return;
-            for (var i = 0; i < _MaxConnections; i++)
+                onClientStart = ClientStart,
+                onClientShutdown = ClientShutdown,
+            };
+
+            _client.ConnectionConfig = new ConnectionConfiguration
             {
-                if (!_sockets[socketId].connections[i].inUse) continue;
-                ConnectionNotUsing(socketId, i);
-            }
-            SocketNotUsing(socketId);
-            NetworkTransport.RemoveHost(socketId);
+                ip = "127.0.0.1",
+                port = 8000,
+            };
+        }
+        public void DespawnClient()
+        {
+            _client.Shutdown();
         }
 
-        private void SocketUsing(int socketId, HostTopology t, ConnectionConfig cc, SocketConfiguration sc)
+        private void ClientStart(Client networkClient)
         {
-            for (var i = 0; i < _MaxConnections; i++) ConnectionNotUsing(socketId, i);
+            ClientBooted = true;
+        }
+        private void ClientShutdown(Client networkClient)
+        {
+            ClientBooted = false;
+            Destroy(_client.gameObject);
+            _client = null;
 
-            _sockets[socketId].inUse = true;
-            _sockets[socketId].topology = t;
-            _sockets[socketId].config = cc;
-            _sockets[socketId].onBroadcastEvent = sc.onBroadcastEvent;
-            _sockets[socketId].onConnectEvent = sc.onConnectEvent;
-            _sockets[socketId].onDataEvent = sc.onDataEvent;
-            _sockets[socketId].onDisconnectEvent = sc.onDisconnectEvent;
+            ApplicationManager.Singleton.LoadScene("MainMenu");
         }
-        private void SocketNotUsing(int socketId)
+        private void HostStart(Host networkHost)
         {
-            _sockets[socketId].inUse = false;
+            ApplicationManager.Singleton.LoadScene("Playground");
+            HostBooted = true;
         }
-        #endregion
+        private void HostShutdown(Host networkHost)
+        {
+            HostBooted = false;
+            Destroy(_host.gameObject);
+            _host = null;
 
-        #region Connections
-        public void Send(int socketId, int connectionId, int channelId, ANetworkMessage message)
-        {
-            if (!_sockets[socketId].inUse) return;
-            if (!_sockets[socketId].connections[connectionId].inUse) return;
-            var binaryMessage = Formatter.Serialize(message);
-            NetworkTransport.Send(socketId, connectionId, channelId, binaryMessage, binaryMessage.Length, out _error);
-            if ((NetworkError)_error != NetworkError.Ok)
-                Debug.LogError(string.Format("NetworkError {0}", (NetworkError)_error));
+            ApplicationManager.Singleton.LoadScene("MainMenu");
         }
-        public void OpenConnection(int socketId, ConnectionConfiguration cc)
-        {
-            var connectionId = NetworkTransport.Connect(
-                socketId,
-                cc.ip,
-                cc.port,
-                cc.exceptionConnectionId,
-                out _error);
-            ConnectionUsing(socketId, connectionId);
-            if ((NetworkError)_error != NetworkError.Ok)
-                Debug.LogError(string.Format("NetworkError {0}", (NetworkError)_error));
-        }
-        public void CloseConnection(int socketId, int connectionId)
-        {
-            if (!_sockets[socketId].inUse) return;
-            if (!_sockets[socketId].connections[connectionId].inUse) return;
-            NetworkTransport.Disconnect(socketId, connectionId, out _error);
-            if ((NetworkError)_error != NetworkError.Ok)
-                Debug.LogError(string.Format("NetworkError {0}", (NetworkError)_error));
-        }
-
-        private void ConnectionUsing(int socketId, int connectionId)
-        {
-            _sockets[socketId].connections[connectionId].inUse = true;
-        }
-        private void ConnectionNotUsing(int socketId, int connectionId)
-        {
-            _sockets[socketId].connections[connectionId].inUse = false;
-        }
-        #endregion
     }
 }

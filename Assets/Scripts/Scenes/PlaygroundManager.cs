@@ -1,7 +1,7 @@
 using Events;
 using Events.EventTypes;
+using Multiplayer.Messages;
 using Network;
-using Network.Messages;
 using UI.Console;
 using UnityEngine;
 using UnityEngine.UI;
@@ -10,39 +10,29 @@ namespace Scenes
 {
     public class PlaygroundManager : MonoBehaviour
     {
-        private static PlaygroundManager _instance;
+        public static PlaygroundManager Singleton { get; private set; }
 
+        private SendMultiplayerMessage _smm;
         private ButtonClicked _buttonClick;
         private GameObject _menu;
 
         #region MonoBehaviour
         private void Awake()
         {
-            if (_instance == null)
-            {
-                _instance = this;
-            }
-            else if (_instance == this)
-            {
-                Destroy(gameObject);
-            }
+            if (Singleton == null)
+                Singleton = this;
+            else if (Singleton == this) Destroy(gameObject);
         }
         private void Start()
         {
-            ConsoleManager.GetInstance().InstantiateOnScene();
+            ConsoleManager.Singleton.InstantiateConsole();
 
             _menu = GameObject.Find("Menu");
             _menu.SetActive(false);
 
-            _buttonClick = EventManager.GetInstance().GetEvent<ButtonClicked>();
+            _smm = EventManager.Singleton.GetEvent<SendMultiplayerMessage>();
+            _buttonClick = EventManager.Singleton.GetEvent<ButtonClicked>();
             _buttonClick.Subscribe(OnButtonClick);
-        }
-        private void Update()
-        {
-            if (Input.GetKeyDown(KeyCode.Space))
-            {
-                Client.GetInstance().Send(new Beep("qq"));
-            } 
         }
         private void OnDestroy()
         {
@@ -50,18 +40,16 @@ namespace Scenes
         }
         #endregion
 
-        public static PlaygroundManager GetInstance()
-        {
-            return _instance;
-        }
-
-        #region Button events
         private void OnButtonClick(Button button)
         {
             switch (button.name)
             {
                 case "Resume":
                     _menu.SetActive(false);
+                    break;
+
+                case "Connect":
+                    Connect();
                     break;
 
                 case "Leave":
@@ -73,15 +61,27 @@ namespace Scenes
                     break;
             }
         }
+        private void Connect()
+        {
+            var playerName = GameObject.Find("PlayerName").GetComponent<InputField>();
+            _smm.Publish(new Connect(playerName.text, Color.blue));
+            Destroy(GameObject.Find("ConnectDialog"));
+        }
         private void Leave()
         {
-            Client.GetInstance().Disconnect();
-            if (Host.GetInstance().GetState() == HostState.Up)
+            _smm.Publish(new Disconnect(2));
+
+            ApplicationManager.Singleton.LoadScene("Loading");
+
+            if (NetworkManager.Singleton.HostBooted)
             {
-                Host.GetInstance().Shutdown();
+                NetworkManager.Singleton.DespawnHost();
             }
-            ApplicationManager.GetInstance().LoadScene("Loading");
+
+            if (NetworkManager.Singleton.ClientBooted)
+            {
+                NetworkManager.Singleton.DespawnClient();
+            }
         }
-        #endregion
     }
 }

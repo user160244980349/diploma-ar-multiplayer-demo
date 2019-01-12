@@ -1,10 +1,14 @@
-﻿namespace Network
+﻿using Network.Delegates;
+
+namespace Network
 {
     public struct ConnectionConfiguration
     {
+        public int id;
+        public int socketId;
         public string ip;
         public int port;
-        public int exceptionConnectionId;
-        public int notificationLevel;
+        public OnConnectionStart onConnectionStart;
+        public OnConnectionShutdown onConnectionDestroy;
     }
 }

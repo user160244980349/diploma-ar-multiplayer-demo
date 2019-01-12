@@ -9,7 +9,11 @@ namespace Events
         {
             events = new List<object>
             {
-                new ButtonClicked()
+                new ButtonClicked(),
+                new SendNetworkMessage(),
+                new ReceiveNetworkMessage(),
+                new SendMultiplayerMessage(),
+                new ReceiveMultiplayerMessage(),
             };
         }
     }

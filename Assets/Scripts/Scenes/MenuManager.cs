@@ -1,5 +1,6 @@
 ﻿using Events;
 using Events.EventTypes;
+using Multiplayer;
 using Network;
 using UI.Console;
 using UnityEngine;
@@ -9,32 +10,33 @@ namespace Scenes
 {
     public class MenuManager : MonoBehaviour
     {
-        private static MenuManager _instance;
+        public static MenuManager Singleton { get; private set; }
 
         private ButtonClicked _buttonClick;
         private Text _ip;
         private Text _port;
 
+        private GameObject _hostObject;
+        private GameObject _clientObject;
+
         #region MonoBehaviour
         private void Awake()
         {
-            if (_instance == null)
-            {
-                _instance = this;
-            }
-            else if (_instance == this)
-            {
-                Destroy(gameObject);
-            }
+            if (Singleton == null)
+                Singleton = this;
+            else if (Singleton == this) Destroy(gameObject);
         }
         private void Start()
         {
-            ConsoleManager.GetInstance().InstantiateOnScene();
+            ConsoleManager.Singleton.InstantiateConsole();
+
+            _hostObject = (GameObject)Resources.Load("Networking/NetworkHost");
+            _clientObject = (GameObject)Resources.Load("Networking/NetworkClient");
 
             _ip = GameObject.Find("Ip").GetComponentInChildren<Text>();
             _port = GameObject.Find("Port").GetComponentInChildren<Text>();
 
-            _buttonClick = EventManager.GetInstance().GetEvent<ButtonClicked>();
+            _buttonClick = EventManager.Singleton.GetEvent<ButtonClicked>();
             _buttonClick.Subscribe(OnButtonClick);
         }
         private void OnDestroy()
@@ -43,12 +45,6 @@ namespace Scenes
         }
         #endregion
 
-        public static MenuManager GetInstance()
-        {
-            return _instance;
-        }
-
-        #region Button events
         private void OnButtonClick(Button button)
         {
             switch (button.name)
@@ -64,44 +60,23 @@ namespace Scenes
                 case "Connect":
                     Connecting();
                     break;
-
-                default:
-                    break;
             }
         }
         private void Quitting()
         {
-            if (Client.GetInstance().GetState() == ClientState.Ready) Client.GetInstance().Shutdown();
-            if (Host.GetInstance().GetState() == HostState.Up) Host.GetInstance().Shutdown();
             Application.Quit();
         }
         private void Hosting()
         {
-            if (Host.GetInstance().GetState() == HostState.Down) Host.GetInstance().Boot();
-            var cc = new ConnectionConfiguration
-            {
-                ip = "127.0.0.1",
-                port = 8000,
-                notificationLevel = 1,
-                exceptionConnectionId = 0
-            };
-            if (Client.GetInstance().GetState() == ClientState.Down) Client.GetInstance().Boot();
-            if (Client.GetInstance().GetState() == ClientState.Ready) Client.GetInstance().Connect(cc);
-            ApplicationManager.GetInstance().LoadScene("Loading");
+            ApplicationManager.Singleton.LoadScene("Loading");
+            MultiplayerManager.Singleton.Hosting = true;
+            NetworkManager.Singleton.SpawnHost();
         }
         private void Connecting()
         {
-            var cc = new ConnectionConfiguration
-            {
-                ip = "127.0.0.1",
-                port = 8000,
-                notificationLevel = 1,
-                exceptionConnectionId = 0
-            };
-            if (Client.GetInstance().GetState() == ClientState.Down) Client.GetInstance().Boot();
-            if (Client.GetInstance().GetState() == ClientState.Ready) Client.GetInstance().Connect(cc);
-            ApplicationManager.GetInstance().LoadScene("Loading");
+            ApplicationManager.Singleton.LoadScene("Loading");
+            MultiplayerManager.Singleton.Hosting = false;
+            NetworkManager.Singleton.SpawnClient();
         }
-        #endregion
     }
 }

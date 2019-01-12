@@ -6,24 +6,26 @@ namespace UI.Console
 {
     public class Console : MonoBehaviour
     {
-        public int maxMessages;
+        public bool Started { get; private set; }
+
         public GameObject consoleSurface;
+        public int maxMessages;
         public LinkedList<ConsoleMessage> previousMessages;
 
         private LinkedList<GameObject> _messages;
+        private GameObject _messageObject;
 
         #region MonoBehaviour
         private void Start()
         {
             _messages = new LinkedList<GameObject>();
+            _messageObject = (GameObject)Resources.Load("UI/Console/Message");
 
             if (previousMessages != null)
-            {
                 foreach (var m in previousMessages)
-                {
                     WriteMessage(m);
-                }
-            }
+
+            Started = true;
         }
         #endregion
 
@@ -35,7 +37,8 @@ namespace UI.Console
                 _messages.Remove(_messages.First);
             }
 
-            var newMessageInstance = Instantiate(Resources.Load("UI/Console/Message") as GameObject, consoleSurface.transform);
+            var newMessageInstance = Instantiate(_messageObject, consoleSurface.transform);
+
             var newMessageText = newMessageInstance.GetComponent<Text>();
 
             newMessageText.text = m.text;

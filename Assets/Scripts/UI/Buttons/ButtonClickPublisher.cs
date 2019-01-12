@@ -16,7 +16,7 @@ namespace UI.Buttons
             _button = GetComponent<Button>();
 
             _button.onClick.AddListener(Click);
-            _click = EventManager.GetInstance().GetEvent<ButtonClicked>();
+            _click = EventManager.Singleton.GetEvent<ButtonClicked>();
         }
         #endregion
 

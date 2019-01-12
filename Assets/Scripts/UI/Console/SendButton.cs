@@ -21,7 +21,7 @@ namespace UI.Console
             ConsoleMessage m;
             m.text = input.text;
             m.color = Color.green;
-            ConsoleManager.GetInstance().SendMessage(m);
+            ConsoleManager.Singleton.SendMessage(m);
         }
     }
 }

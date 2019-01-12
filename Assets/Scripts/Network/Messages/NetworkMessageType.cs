@@ -2,9 +2,8 @@ namespace Network.Messages
 {
     public enum NetworkMessageType
     {
-        None,
+        Beep,
         Service,
         Higher,
-        Beep
     }
 }

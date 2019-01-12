@@ -1,23 +1,27 @@
-using Network.Messages;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using Network.Messages;
 
 namespace Network
 {
-    public static class Formatter
+    public class Formatter
     {
-        public static byte[] Serialize(ANetworkMessage data)
+        private BinaryFormatter _formatter;
+
+        public Formatter()
         {
-            var formatter = new BinaryFormatter();
-            var stream = new MemoryStream();
-            formatter.Serialize(stream, data);
-            return stream.ToArray();
+            _formatter = new BinaryFormatter();
         }
-        public static ANetworkMessage Deserialize(byte[] array)
+        public byte[] Serialize(ANetworkMessage data)
         {
-            var stream = new MemoryStream(array);
-            var formatter = new BinaryFormatter();
-            return (ANetworkMessage) formatter.Deserialize(stream);
+            var _stream = new MemoryStream();
+            _formatter.Serialize(_stream, data);
+            return _stream.ToArray();
+        }
+        public ANetworkMessage Deserialize(byte[] array)
+        {
+            var _stream = new MemoryStream(array);
+            return (ANetworkMessage) _formatter.Deserialize(_stream);
         }
     }
 }

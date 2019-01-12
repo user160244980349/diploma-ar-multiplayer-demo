@@ -1,46 +1,109 @@
-﻿using Network;
-using System.Text;
+﻿using System.Collections.Generic;
+using Events;
+using Events.EventTypes;
+using Multiplayer.Messages;
+using Network;
 using UnityEngine;
 
 namespace Multiplayer
 {
     public class MultiplayerManager : MonoBehaviour
     {
-        private static MultiplayerManager _instance;
+        public static MultiplayerManager Singleton { get; private set; }
+        public bool Hosting { get; set; }
+
+        private SendNetworkMessage _snm;
+        private ReceiveNetworkMessage _rnm;
+        private SendMultiplayerMessage _smm;
+        private ReceiveMultiplayerMessage _rmm;
+
+        private int _spawnId;
+        private int _identityCounter;
+        private List<LocalPlayer> _players;
 
         #region MonoBehaviour
         private void Awake()
         {
-            if (_instance == null)
-            {
-                _instance = this;
-            }
-            else if (_instance == this)
-            {
-                Destroy(gameObject);
-            }
+            if (Singleton == null)
+                Singleton = this;
+            else if (Singleton == this) Destroy(gameObject);
+
             DontDestroyOnLoad(gameObject);
+            gameObject.name = "MultiplayerManager";
         }
         private void Start()
         {
-
-        }
-        private void Update()
-        {
-            //if (Client.GetInstance().GetState() == ClientState.Connected)
-            //{
-            //    NetworkMessage m;
-            //    m.type = NetworkMessageType.Service;
-            //    m.data = Encoding.ASCII.GetBytes("Boop");
-            //    m.length = m.data.Length;
-            //    Client.GetInstance().Send(m);
-            //}
+            _players = new List<LocalPlayer>();
+            _snm = EventManager.Singleton.GetEvent<SendNetworkMessage>();
+            _rnm = EventManager.Singleton.GetEvent<ReceiveNetworkMessage>();
+            _smm = EventManager.Singleton.GetEvent<SendMultiplayerMessage>();
+            _rmm = EventManager.Singleton.GetEvent<ReceiveMultiplayerMessage>();
+            _rnm.Subscribe(PollMM);
+            _smm.Subscribe(SendMM);
         }
         #endregion
 
-        public static MultiplayerManager GetInstance()
+        private void SendMM(AMultiplayerMessage message)
         {
-            return _instance;
+            if (Hosting)
+                PollMM(message);
+            else
+                _snm.Publish(message);
+        }
+        private void PollMM(AMultiplayerMessage message)
+        {
+            switch (message.multiplayerMessageType)
+            {
+                case MultiplayerMessageType.Boop:
+                    Debug.Log(" > Boop from multiplayer layer");
+                    break;
+
+                case MultiplayerMessageType.Connect:
+                    Connect((Connect) message);
+                    break;
+
+                case MultiplayerMessageType.Move:
+                    Move((Move) message);
+                    break;
+
+                case MultiplayerMessageType.RigidbodySynchronization:
+                    SynchronizeRigidbody((RBSync) message);
+                    break;
+
+                case MultiplayerMessageType.Disconnect:
+                    Disconnect((Disconnect) message);
+                    break;
+            }
+        }
+        private void Connect(Connect message)
+        {
+            if (_spawnId > 3) _spawnId = 0;
+
+            var spawn = GameObject.Find(string.Format("SpawnPoint{0}", ++_spawnId)).GetComponent<Transform>();
+            var scene = GameObject.Find("Scene").GetComponent<Transform>();
+
+            var playerObject = Instantiate((GameObject)Resources.Load("Game/Player"), scene.transform);
+            playerObject.transform.position = spawn.position;
+            playerObject.name = string.Format("Player<{0}>", message.PlayerName);
+
+            var playerScript = playerObject.GetComponent<LocalPlayer>();
+            playerScript.playerId = ++_identityCounter;
+            playerScript.playerName = message.PlayerName;
+            playerScript.playerColor = message.PlayerColor;
+
+            _players.Add(playerScript);
+            Debug.LogFormat("Player {0} connected", playerScript.playerId);
+        }
+        private void Move(Move message)
+        {
+        }
+        private void SynchronizeRigidbody(RBSync message)
+        {
+        }
+        private void Disconnect(Disconnect message)
+        {
+            Debug.LogFormat("Player {0} disconnected", message.PlayerId);
+            var player = _players.Find(e => e.playerId == message.PlayerId);
         }
     }
 }

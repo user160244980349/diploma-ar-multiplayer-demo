@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using UnityEngine.UI;
+﻿using UnityEngine.UI;
 
 namespace Events.EventTypes
 {
     public class ButtonClicked
     {
         public delegate void Callback(Button b);
+
         private Callback _c;
 
         public void Subscribe(Callback c)
