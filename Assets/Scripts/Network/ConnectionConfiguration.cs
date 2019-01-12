@@ -1,4 +1,4 @@
-﻿using static Network.Connection;
+﻿using Network.Delegates;
 
 namespace Network
 {

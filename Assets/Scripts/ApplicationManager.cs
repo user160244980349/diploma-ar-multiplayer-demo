@@ -52,8 +52,8 @@ public class ApplicationManager : MonoBehaviour
  *     - Messages:
  *         + Connection
  *         + Disconnection
- *         - Serialize/Deserialize in formatter
- *         - Smth with message structure (PlayerID add)
+ *         + Serialize/Deserialize in formatter
+ *         + Smth with message structure (PlayerID add)
  *     + Player identification via ID
  *     + Player spawn
  *     - MultiplayerManager Serialization/Deserialization
@@ -72,7 +72,7 @@ public class ApplicationManager : MonoBehaviour
  *
  * - Network:
  *
- *     - Replace delegates in configs and do them public
+ *     x Replace delegates in configs and do them public
  *     + Sending messages by groups (queueing)
  *     + Almost all errors fixed
  *     - Objects configs correction
@@ -97,7 +97,8 @@ public class ApplicationManager : MonoBehaviour
  *         - Commands
  *         
  * # Thoughts
- *   RBSync by script on object
+ * 
+ *  RBSync by script on object
  *  Commands by script on player
  *  + Disconnect command use is problemmatic
  *  + Think about wait disconnection on update cycle

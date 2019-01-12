@@ -12,11 +12,10 @@ namespace Network
         private GameObject _hostPrefab;
         private GameObject _clientPrefab;
 
+        private Host _host;
+        private Client _client;
         private int _maxSockets = 16;
         private Socket[] _sockets;
-
-        private NetworkHost _host;
-        private NetworkClient _client;
 
         #region MonoBehaviour
         private void Awake()
@@ -31,7 +30,6 @@ namespace Network
 
             var config = new GlobalConfig {
                 NetworkEventAvailable = NetworkEventAvailable,
-                ConnectionReadyForSend = ConnectionReadyForSend,
             };
             NetworkTransport.Init(config);
 
@@ -44,17 +42,30 @@ namespace Network
         }
         #endregion
 
+        public void RegisterSocket(Socket socket)
+        {
+            _sockets[socket.Id] = socket;
+        }
+        public void UnregisterSocket(Socket socket)
+        {
+            _sockets[socket.Id] = null;
+        }
+        private void NetworkEventAvailable(int socketId)
+        {
+            _sockets[socketId].EventsReady = true;
+        }
+
         public void SpawnHost()
         {
             if (HostBooted) return;
 
             var hostObject = Instantiate(_hostPrefab, gameObject.transform);
-            _host = hostObject.GetComponent<NetworkHost>();
+            _host = hostObject.GetComponent<Host>();
 
-            _host.HostConfiguration = new NetworkHostConfiguration
+            _host.HostConfig = new HostConfiguration
             {
-                onNetworkHostStart = HostStart,
-                onNetworkHostShutdown = HostShutdown,
+                onHostStart = HostStart,
+                onHostShutdown = HostShutdown,
             };
         }
         public void DespawnHost()
@@ -66,15 +77,15 @@ namespace Network
             if (ClientBooted) return;
 
             var clientObject = Instantiate(_clientPrefab, gameObject.transform);
-            _client = clientObject.GetComponent<NetworkClient>();
+            _client = clientObject.GetComponent<Client>();
 
-            _client.ClientConfiguration = new NetworkClientConfiguration
+            _client.ClientConfig = new ClientConfiguration
             {
-                onNetworkClientStart = ClientStart,
-                onNetworkClientShutdown = ClientShutdown,
+                onClientStart = ClientStart,
+                onClientShutdown = ClientShutdown,
             };
 
-            _client.Configuration = new ConnectionConfiguration
+            _client.ConnectionConfig = new ConnectionConfiguration
             {
                 ip = "127.0.0.1",
                 port = 8000,
@@ -85,29 +96,11 @@ namespace Network
             _client.Shutdown();
         }
 
-        public void RegisterSocket(Socket socket)
-        {
-            _sockets[socket.Id] = socket;
-        }
-        public void UnregisterSocket(Socket socket)
-        {
-            _sockets[socket.Id] = null;
-        }
-
-        private void NetworkEventAvailable(int socketId)
-        {
-            _sockets[socketId].EventsReady();
-        }
-        private void ConnectionReadyForSend(int socketId, int connectionId)
-        {
-            _sockets[socketId].ConnectionReady(connectionId);
-        }
-
-        private void ClientStart()
+        private void ClientStart(Client networkClient)
         {
             ClientBooted = true;
         }
-        private void ClientShutdown()
+        private void ClientShutdown(Client networkClient)
         {
             ClientBooted = false;
             Destroy(_client.gameObject);
@@ -115,12 +108,12 @@ namespace Network
 
             ApplicationManager.Singleton.LoadScene("MainMenu");
         }
-        private void HostStart()
+        private void HostStart(Host networkHost)
         {
             ApplicationManager.Singleton.LoadScene("Playground");
             HostBooted = true;
         }
-        private void HostShutdown()
+        private void HostShutdown(Host networkHost)
         {
             HostBooted = false;
             Destroy(_host.gameObject);

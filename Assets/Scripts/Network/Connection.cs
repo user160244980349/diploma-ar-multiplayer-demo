@@ -1,6 +1,7 @@
 ﻿using UnityEngine.Networking;
 using UnityEngine;
 using Network.Messages;
+using Network.Delegates;
 
 namespace Network
 {
@@ -16,14 +17,9 @@ namespace Network
         private float _sendRate = 0.02f;
         private float _lastSendTime;
         private float _timeToDisconnect = 1f;
-        private float _timeToConnect = 1f;
+        private int _queueLength;
 
-        #region Delegates
-        public delegate void OnConnectionStart(Connection connection);
-        public delegate void OnConnectionShutdown(Connection connection);
-        #endregion
-
-        #region Configurations
+        #region Configuration
         private int _socketId;
         private string _ip;
         private int _port;
@@ -54,13 +50,6 @@ namespace Network
         }
         private void Update()
         {
-            if (_timeToConnect > 0)
-            {
-                // Debug.Log("Connecting");
-                _timeToConnect -= Time.deltaTime;
-                return;
-            }
-
             if (_shutteddown)
             {
                 _timeToDisconnect -= Time.deltaTime;
@@ -73,11 +62,9 @@ namespace Network
             if (Time.time - _lastSendTime < _sendRate) return;
             _lastSendTime = Time.time;
 
-            var outgoingMessageCount = 1;// NetworkTransport.GetOutgoingMessageCountForConnection(_socketId, Id, out _error);
-            ShowErrorIfThrown();
-
-            if (outgoingMessageCount > 0)
+            if (_queueLength > 0)
             {
+                _queueLength = 0;
                 NetworkTransport.SendQueuedMessages(_socketId, Id, out _error);
                 ShowErrorIfThrown();
             }
@@ -91,18 +78,12 @@ namespace Network
             NetworkTransport.Disconnect(_socketId, Id, out _error);
             ShowErrorIfThrown();
         }
-        public void ReadyForSend()
-        {
-            _readyToSend = true;
-        }
-        public void QueueMessage(int channelId, ANetworkMessage message)
+        public void QueueMessage(int channelId, byte[] packet)
         {
             if (_shutteddown) return;
 
-            message.timeStamp = NetworkTransport.GetNetworkTimestamp();
-            var binaryMessage = Formatter.Serialize(message);
-
-            NetworkTransport.QueueMessageForSending(_socketId, Id, channelId, binaryMessage, binaryMessage.Length, out _error);
+            _queueLength++;
+            NetworkTransport.QueueMessageForSending(_socketId, Id, channelId, packet, packet.Length, out _error);
             ShowErrorIfThrown();
         }
         private void ShowErrorIfThrown()

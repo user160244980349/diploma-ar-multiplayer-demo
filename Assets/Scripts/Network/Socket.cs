@@ -1,3 +1,4 @@
+using Network.Delegates;
 using Network.Messages;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -8,18 +9,9 @@ namespace Network
     {
         public int Id { get; private set; }
         public SocketConfiguration Configuration { get; set; }
-        public bool Closing { get; private set; }
+        public bool EventsReady { get; set; }
 
-        #region Delegates
-        public delegate void OnSocketStart(Socket socket);
-        public delegate void OnConnectEvent(int connection);
-        public delegate void OnDataEvent(int connection, ANetworkMessage message);
-        public delegate void OnBroadcastEvent(int connection);
-        public delegate void OnDisconnectEvent(int connection);
-        public delegate void OnSocketShutdown(Socket socket);
-        #endregion
-
-        #region Configurations
+        #region Configuration
         private QosType[] _channels;
         private int _port;
         private ushort _maxConnections;
@@ -32,6 +24,7 @@ namespace Network
         private OnSocketShutdown _onSocketShutdown;
         #endregion
 
+        private Formatter _formatter;
         private GameObject _connectionPrefab;
         private Connection[] _connections;
 
@@ -40,17 +33,16 @@ namespace Network
 
         private const int PacketSize = 1024;
         private byte[] _packet;
-        private bool _eventsReady;
 
         private bool _shutteddown;
         private int _activeConnections;
-        private float _timeToShutdown = 1f;
 
         private byte _error;
 
         #region MonoBehaviour
         private void Start()
         {
+            _formatter = new Formatter();
             _connectionPrefab = (GameObject)Resources.Load("Networking/Connection");
 
             _channels = Configuration.channels;
@@ -65,11 +57,7 @@ namespace Network
             _onDisconnectEvent = Configuration.onDisconnectEvent;
             _onSocketShutdown = Configuration.onSocketDestroy;
 
-            _connectionConfig = new ConnectionConfig
-            {
-                ConnectTimeout = 2,
-                DisconnectTimeout = 2,
-            };
+            _connectionConfig = new ConnectionConfig();
 
             for (var i = 0; i < _channels.Length; i++)
                 _connectionConfig.AddChannel(_channels[i]);
@@ -90,7 +78,6 @@ namespace Network
             _packet = new byte[PacketSize];
 
             NetworkManager.Singleton.RegisterSocket(this);
-
             gameObject.name = string.Format("Socket{0}", Id);
         }
         private void Update()
@@ -98,18 +85,14 @@ namespace Network
             if (_shutteddown)
             {
                 if (_activeConnections != 0) return;
-                // Debug.Log("Closing socket");
-                _timeToShutdown -= Time.deltaTime;
-                if (_timeToShutdown > 0) return;
-                NetworkManager.Singleton.UnregisterSocket(this);
                 NetworkTransport.RemoveHost(Id);
                 _onSocketShutdown(this);
                 return;
             }
 
+            if (!EventsReady) return;
+            EventsReady = false;
             NetworkEventType networkEvent;
-            if (!_eventsReady) return;
-            _eventsReady = false;
             do
             {
                 networkEvent = NetworkTransport.ReceiveFromHost(
@@ -132,7 +115,7 @@ namespace Network
 
                     case NetworkEventType.DataEvent:
                         if (_connections[connectionId] == null) continue;
-                        var message = Formatter.Deserialize(_packet);
+                        var message = _formatter.Deserialize(_packet);
                         message.ping = NetworkTransport.GetRemoteDelayTimeMS(Id, connectionId, message.timeStamp, out _error);
                         ShowErrorIfThrown();
                         _onDataEvent(connectionId, message);
@@ -153,6 +136,10 @@ namespace Network
                         break;
                 }
             } while (networkEvent != NetworkEventType.Nothing);
+        }
+        private void OnDestroy()
+        {
+            NetworkManager.Singleton.UnregisterSocket(this);
         }
         #endregion
 
@@ -179,15 +166,6 @@ namespace Network
             Debug.LogFormat(" >> Connection closed {0}", connection.Id);
         }
 
-        public void ConnectionReady(int connectionId)
-        {
-            if (_connections[connectionId] == null) return;
-            _connections[connectionId].ReadyForSend();
-        }
-        public void EventsReady()
-        {
-            _eventsReady = true;
-        }
         public void OpenConnection(ConnectionConfiguration cc)
         {
             cc.socketId = Id;
@@ -224,7 +202,9 @@ namespace Network
         public void Send(int connectionId, int channelId, ANetworkMessage message)
         {
             if (_connections[connectionId] == null) return;
-            _connections[connectionId].QueueMessage(channelId, message);
+            message.timeStamp = NetworkTransport.GetNetworkTimestamp();
+            var packet = _formatter.Serialize(message);
+            _connections[connectionId].QueueMessage(channelId, packet);
         }
         private void ShowErrorIfThrown()
         {

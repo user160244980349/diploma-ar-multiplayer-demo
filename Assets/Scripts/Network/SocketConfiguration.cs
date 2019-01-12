@@ -1,5 +1,5 @@
-﻿using UnityEngine.Networking;
-using static Network.Socket;
+﻿using Network.Delegates;
+using UnityEngine.Networking;
 
 namespace Network
 {
