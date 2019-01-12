@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using Events.EventTypes;
+﻿using Events.EventTypes;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -38,15 +37,6 @@ public class ApplicationManager : MonoBehaviour
     {
         SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
     }
-    public void DelayedLoadScene(string sceneName, float time)
-    {
-        StartCoroutine(LoadSceneCoroutine(sceneName, time));
-    }
-    private IEnumerator LoadSceneCoroutine(string sceneName, float time)
-    {
-        yield return new WaitForSeconds(time);
-        LoadScene(sceneName);
-    }
 }
 
 /**
@@ -62,6 +52,7 @@ public class ApplicationManager : MonoBehaviour
  *     - Messages:
  *         + Connection
  *         + Disconnection
+ *         - Serialize/Deserialize in formatter
  *         - Smth with message structure (PlayerID add)
  *     + Player identification via ID
  *     + Player spawn
@@ -81,11 +72,18 @@ public class ApplicationManager : MonoBehaviour
  *
  * - Network:
  *
+ *     - Replace delegates in configs and do them public
  *     + Sending messages by groups (queueing)
+ *     + Almost all errors fixed
+ *     - Objects configs correction
  *     - Network discovery for lobby's
  *     - Falling back system
- *     - (OPTIONAL)Channel management if game will be laggy
+ *     - (OPTIONAL) Channel management if game will be laggy
  *
+ * - UI:
+ * 
+ *     - (OPTIONAL) Divide console prefab on parts and hide all fields
+ * 
  * - AR:
  *
  *     - Plant a mark and move scene to AR
@@ -99,9 +97,9 @@ public class ApplicationManager : MonoBehaviour
  *         - Commands
  *         
  * # Thoughts
- *  RBSync by script on object
+ *   RBSync by script on object
  *  Commands by script on player
- *  Disconnect command use is problemmatic
- *  Think about wait disconnection on update cycle
+ *  + Disconnect command use is problemmatic
+ *  + Think about wait disconnection on update cycle
  * 
 */

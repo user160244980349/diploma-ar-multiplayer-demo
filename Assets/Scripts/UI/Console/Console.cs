@@ -6,6 +6,8 @@ namespace UI.Console
 {
     public class Console : MonoBehaviour
     {
+        public bool Started { get; private set; }
+
         public GameObject consoleSurface;
         public int maxMessages;
         public LinkedList<ConsoleMessage> previousMessages;
@@ -22,6 +24,8 @@ namespace UI.Console
             if (previousMessages != null)
                 foreach (var m in previousMessages)
                     WriteMessage(m);
+
+            Started = true;
         }
         #endregion
 

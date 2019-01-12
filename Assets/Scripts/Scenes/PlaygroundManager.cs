@@ -69,12 +69,7 @@ namespace Scenes
         }
         private void Leave()
         {
-            var client = GameObject.Find("NetworkClient");
-            if (client != null)
-            {
-                _smm.Publish(new Disconnect(2));
-            }
-
+            _smm.Publish(new Disconnect(2));
             ApplicationManager.Singleton.LoadScene("MainMenu");
         }
     }

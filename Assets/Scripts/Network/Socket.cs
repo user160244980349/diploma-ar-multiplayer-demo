@@ -1,6 +1,4 @@
-using Network.Delegates;
 using Network.Messages;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -9,87 +7,100 @@ namespace Network
     public class Socket : MonoBehaviour
     {
         public int Id { get; private set; }
-        public SocketConfiguration Config { get; set; }
+        public SocketConfiguration Configuration { get; set; }
+        public bool Closing { get; private set; }
 
-        private int _activeConnections;
-        private Connection[] _connections;
+        #region Delegates
+        public delegate void OnSocketStart(Socket socket);
+        public delegate void OnConnectEvent(int connection);
+        public delegate void OnDataEvent(int connection, ANetworkMessage message);
+        public delegate void OnBroadcastEvent(int connection);
+        public delegate void OnDisconnectEvent(int connection);
+        public delegate void OnSocketShutdown(Socket socket);
+        #endregion
 
-        private HostTopology _topology;
-        private ConnectionConfig _config;
-
-        private OnStart _onStart;
+        #region Configurations
+        private QosType[] _channels;
+        private int _port;
+        private ushort _maxConnections;
+        private ushort _maxMessagesForSend;
+        private OnSocketStart _onSocketStart;
         private OnConnectEvent _onConnectEvent;
         private OnDataEvent _onDataEvent;
         private OnBroadcastEvent _onBroadcastEvent;
         private OnDisconnectEvent _onDisconnectEvent;
-        private OnClose _onClose;
+        private OnSocketShutdown _onSocketShutdown;
+        #endregion
+
+        private GameObject _connectionPrefab;
+        private Connection[] _connections;
+
+        private HostTopology _topology;
+        private ConnectionConfig _connectionConfig;
 
         private const int PacketSize = 1024;
         private byte[] _packet;
         private bool _eventsReady;
 
-        private bool _closing;
-        private int _closingConnection;
+        private bool _shutteddown;
+        private int _activeConnections;
+        private float _timeToShutdown = 1f;
 
         private byte _error;
 
         #region MonoBehaviour
         private void Start()
         {
-            var connectionConfig = new ConnectionConfig();
+            _connectionPrefab = (GameObject)Resources.Load("Networking/Connection");
 
-            for (var i = 0; i < Config.channels.Length; i++) connectionConfig.AddChannel(Config.channels[i]);
+            _channels = Configuration.channels;
+            _port = Configuration.port;
+            _maxConnections = Configuration.maxConnections;
+            _maxMessagesForSend = Configuration.maxMessagesForSend;
 
-            var hostTopology = new HostTopology(connectionConfig, Config.maxConnections);
-            var id = NetworkTransport.AddHost(hostTopology, Config.port);
+            _onSocketStart = Configuration.onSocketStart;
+            _onBroadcastEvent = Configuration.onBroadcastEvent;
+            _onConnectEvent = Configuration.onConnectEvent;
+            _onDataEvent = Configuration.onDataEvent;
+            _onDisconnectEvent = Configuration.onDisconnectEvent;
+            _onSocketShutdown = Configuration.onSocketDestroy;
 
+            _connectionConfig = new ConnectionConfig();
 
-            _topology = hostTopology;
-            _config = connectionConfig;
-            _connections = new Connection[Config.maxConnections];
+            for (var i = 0; i < _channels.Length; i++)
+                _connectionConfig.AddChannel(_channels[i]);
 
-            _packet = new byte[PacketSize];
+            _topology = new HostTopology(_connectionConfig, _maxConnections);
+            Id = NetworkTransport.AddHost(_topology, _port);
 
-            _onStart = Config.onStart;
-            _onBroadcastEvent = Config.onBroadcastEvent;
-            _onConnectEvent = Config.onConnectEvent;
-            _onDataEvent = Config.onDataEvent;
-            _onDisconnectEvent = Config.onDisconnectEvent;
-            _onClose = Config.onClose;
-
-            NetworkManager.Singleton.RegisterSocket(this);
-            Debug.LogFormat(" >> Socket opended {0}", id);
-
-            gameObject.name = string.Format("Socket{0}", Id);
-
-            if (id >= 0)
+            if (Id >= 0)
             {
-                _onStart();
+                _onSocketStart(this);
             }
             else
             {
-                _onClose();
-                Destroy(gameObject);
+                _onSocketShutdown(this);
             }
+
+            _connections = new Connection[Configuration.maxConnections];
+            _packet = new byte[PacketSize];
+
+            NetworkManager.Singleton.RegisterSocket(this);
+
+            gameObject.name = string.Format("Socket{0}", Id);
         }
         private void Update()
         {
-            if (_closing)
+            if (_shutteddown)
             {
-                if (_activeConnections == 0)
-                {
-                    Destroy(gameObject);
-                    _onClose();
-                }
-                else
-                {
-                    while (_connections[_closingConnection] == null)
-                    {
-                        _closingConnection++;
-                    }
-                    CloseConnection(_closingConnection);
-                    return;
-                }
+                if (_activeConnections != 0) return;
+                // Debug.Log("Closing socket");
+                _timeToShutdown -= Time.deltaTime;
+                if (_timeToShutdown > 0) return;
+                NetworkManager.Singleton.UnregisterSocket(this);
+                NetworkTransport.RemoveHost(Id);
+                _onSocketShutdown(this);
+                return;
             }
 
             NetworkEventType networkEvent;
@@ -130,7 +141,7 @@ namespace Network
 
                     case NetworkEventType.DisconnectEvent:
                         if (_connections[connectionId] == null) continue;
-                        _connections[connectionId] = null;
+                        OnConnectionShutdown(_connections[connectionId]);
                         _onDisconnectEvent(connectionId);
                         break;
 
@@ -139,57 +150,77 @@ namespace Network
                 }
             } while (networkEvent != NetworkEventType.Nothing);
         }
-        private void OnDestroy()
-        {
-            Debug.LogFormat(" >> Socket closed {0}", Id);
-            NetworkManager.Singleton.UnregisterSocket(this);
-            NetworkTransport.RemoveHost(Id);
-        }
         #endregion
+
+        public void Shutdown()
+        {
+            _shutteddown = true;
+            for (var i = 0; i < _maxConnections; i++)
+            {
+                if (_connections[i] == null) continue;
+                _connections[i].Shutdown();
+            }
+        }
+        private void OnConnectionStart(Connection connection)
+        {
+            _activeConnections++;
+            _connections[connection.Id] = connection;
+            Debug.LogFormat(" >> Connection opened {0}", connection.Id);
+        }
+        private void OnConnectionShutdown(Connection connection)
+        {
+            _activeConnections--;
+            _connections[connection.Id] = null;
+            Destroy(connection.gameObject);
+            Debug.LogFormat(" >> Connection closed {0}", connection.Id);
+        }
 
         public void ConnectionReady(int connectionId)
         {
             if (_connections[connectionId] == null) return;
-            _connections[connectionId].ReadyToSend();
+            _connections[connectionId].ReadyForSend();
         }
         public void EventsReady()
         {
             _eventsReady = true;
         }
-        public int OpenConnection(ConnectionConfiguration cc)
+        public void OpenConnection(ConnectionConfiguration cc)
         {
-            _activeConnections++;
-            var newConnection = new Connection(Id, cc);
-            _connections[newConnection.id] = newConnection;
-            return newConnection.id;
+            cc.socketId = Id;
+            cc.onConnectionStart += OnConnectionStart;
+            cc.onConnectionDestroy += OnConnectionShutdown;
+
+            var newConnection = Instantiate(_connectionPrefab, gameObject.transform);
+            var connection = newConnection.GetComponent<Connection>();
+            connection.Configuration = cc;
         }
         public void OpenConnection(int connectionId)
         {
-            if (_connections[connectionId] == null)
+            if (_connections[connectionId] != null) return;
+
+            ConnectionConfiguration cc = new ConnectionConfiguration
             {
-                _activeConnections++;
-                var newConnection = new Connection(Id, connectionId);
-                _connections[newConnection.id] = newConnection;
-            }
-            else
-            {
-                _connections[connectionId].id = connectionId;
-            }
+                socketId = Id,
+                id = connectionId,
+                onConnectionStart = OnConnectionStart,
+                onConnectionDestroy = OnConnectionShutdown,
+            };
+
+            var connectionObject = Instantiate(_connectionPrefab, transform);
+            var connectionScript = connectionObject.GetComponent<Connection>();
+
+            connectionScript.Incoming = true;
+            connectionScript.Configuration = cc;
         }
         public void CloseConnection(int connectionId)
         {
-            _activeConnections--;
-            _connections[connectionId].Disconnect();
-            _connections[connectionId] = null;
+            if (_connections[connectionId] == null) return;
+            _connections[connectionId].Shutdown();
         }
         public void Send(int connectionId, int channelId, ANetworkMessage message)
         {
             if (_connections[connectionId] == null) return;
             _connections[connectionId].QueueMessage(channelId, message);
-        }
-        public void Close()
-        {
-            _closing = true;
         }
         private void ShowErrorIfThrown()
         {

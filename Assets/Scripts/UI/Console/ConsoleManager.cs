@@ -49,8 +49,9 @@ namespace UI.Console
             if (_messages.Count >= MaxMessages) _messages.Remove(_messages.First);
             _messages.AddLast(message);
 
-            if (_console)
-                _console.WriteMessage(message);
+            if (_console != null)
+                if (_console.Started)
+                    _console.WriteMessage(message);
         }
         private void SendLog(string condition, string stackTrace, LogType type)
         {

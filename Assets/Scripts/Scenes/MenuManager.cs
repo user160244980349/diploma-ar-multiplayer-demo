@@ -39,18 +39,14 @@ namespace Scenes
             _buttonClick = EventManager.Singleton.GetEvent<ButtonClicked>();
             _buttonClick.Subscribe(OnButtonClick);
 
-            var host = GameObject.Find("NetworkHost");
-            if (host != null)
+            if (NetworkManager.Singleton.HostBooted)
             {
-                var hostScript = host.GetComponent<NetworkHost>();
-                hostScript.Shutdown();
+                NetworkManager.Singleton.DespawnHost();
             }
 
-            var client = GameObject.Find("NetworkClient");
-            if (client != null)
+            if (NetworkManager.Singleton.ClientBooted)
             {
-                var clientScript = client.GetComponent<NetworkClient>();
-                clientScript.Shutdown();
+                NetworkManager.Singleton.DespawnClient();
             }
         }
         private void OnDestroy()
@@ -84,22 +80,13 @@ namespace Scenes
         {
             MultiplayerManager.Singleton.Hosting = true;
             ApplicationManager.Singleton.LoadScene("Playground");
-
-            var host = Instantiate(_hostObject);
+            NetworkManager.Singleton.SpawnHost();
         }
         private void Connecting()
         {
             MultiplayerManager.Singleton.Hosting = false;
-            ApplicationManager.Singleton.LoadScene("Playground");
-
-            var client = Instantiate(_clientObject);
-            var clientScript = client.GetComponent<NetworkClient>();
-            clientScript.Configuration = new ConnectionConfiguration
-            {
-                ip = "127.0.0.1",
-                port = 8000,
-                exceptionConnectionId = 0
-            };
+            ApplicationManager.Singleton.LoadScene("Loading");
+            NetworkManager.Singleton.SpawnClient();
         }
     }
 }

@@ -104,8 +104,6 @@ namespace Multiplayer
         {
             Debug.LogFormat("Player {0} disconnected", message.PlayerId);
             var player = _players.Find(e => e.playerId == message.PlayerId);
-            _players.Remove(player);
-            Destroy(player.gameObject);
         }
     }
 }

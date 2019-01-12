@@ -1,5 +1,5 @@
-﻿using Network.Delegates;
-using UnityEngine.Networking;
+﻿using UnityEngine.Networking;
+using static Network.Socket;
 
 namespace Network
 {
@@ -9,11 +9,11 @@ namespace Network
         public int port;
         public ushort maxConnections;
         public ushort maxMessagesForSend;
-        public OnStart onStart;
+        public OnSocketStart onSocketStart;
         public OnConnectEvent onConnectEvent;
         public OnDataEvent onDataEvent;
         public OnBroadcastEvent onBroadcastEvent;
         public OnDisconnectEvent onDisconnectEvent;
-        public OnClose onClose;
+        public OnSocketShutdown onSocketDestroy;
     }
 }
