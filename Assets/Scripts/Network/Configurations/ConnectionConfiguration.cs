@@ -1,6 +1,4 @@
-﻿using Network.Delegates;
-
-namespace Network
+﻿namespace Network.Configurations
 {
     public struct ConnectionConfiguration
     {
@@ -8,7 +6,5 @@ namespace Network
         public int socketId;
         public string ip;
         public int port;
-        public OnConnectionStart onConnectionStart;
-        public OnConnectionShutdown onConnectionDestroy;
     }
 }

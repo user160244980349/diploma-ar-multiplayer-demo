@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Network.Configurations;
+using UnityEngine;
 using UnityEngine.Networking;
 
 namespace Network
@@ -14,8 +15,8 @@ namespace Network
 
         private Host _host;
         private Client _client;
-        private int _maxSockets = 16;
         private Socket[] _sockets;
+        private int _maxSockets = 16;
 
         #region MonoBehaviour
         private void Awake()
@@ -44,7 +45,10 @@ namespace Network
 
         public void RegisterSocket(Socket socket)
         {
-            _sockets[socket.Id] = socket;
+            if (-1 < socket.Id && socket.Id < _maxSockets)
+                _sockets[socket.Id] = socket;
+            else
+                socket.Close();
         }
         public void UnregisterSocket(Socket socket)
         {
@@ -61,29 +65,33 @@ namespace Network
 
             var hostObject = Instantiate(_hostPrefab, gameObject.transform);
             _host = hostObject.GetComponent<Host>();
-
-            _host.HostConfig = new HostConfiguration
-            {
-                onHostStart = HostStart,
-                onHostShutdown = HostShutdown,
-            };
+            _host.OnStart = HostStart;
+            _host.OnShutdown = HostShutdown;
         }
         public void DespawnHost()
         {
             _host.Shutdown();
         }
+        private void HostStart(Host networkHost)
+        {
+            ApplicationManager.Singleton.LoadScene("Playground");
+            HostBooted = true;
+        }
+        private void HostShutdown()
+        {
+            HostBooted = false;
+            _host = null;
+            ApplicationManager.Singleton.LoadScene("MainMenu");
+        }
+
         public void SpawnClient()
         {
             if (ClientBooted) return;
 
             var clientObject = Instantiate(_clientPrefab, gameObject.transform);
             _client = clientObject.GetComponent<Client>();
-
-            _client.ClientConfig = new ClientConfiguration
-            {
-                onClientStart = ClientStart,
-                onClientShutdown = ClientShutdown,
-            };
+            _client.OnStart = ClientStart;
+            _client.OnShutdown = ClientShutdown;
 
             _client.ConnectionConfig = new ConnectionConfiguration
             {
@@ -95,29 +103,14 @@ namespace Network
         {
             _client.Shutdown();
         }
-
         private void ClientStart(Client networkClient)
         {
             ClientBooted = true;
         }
-        private void ClientShutdown(Client networkClient)
+        private void ClientShutdown()
         {
             ClientBooted = false;
-            Destroy(_client.gameObject);
             _client = null;
-
-            ApplicationManager.Singleton.LoadScene("MainMenu");
-        }
-        private void HostStart(Host networkHost)
-        {
-            ApplicationManager.Singleton.LoadScene("Playground");
-            HostBooted = true;
-        }
-        private void HostShutdown(Host networkHost)
-        {
-            HostBooted = false;
-            Destroy(_host.gameObject);
-            _host = null;
 
             ApplicationManager.Singleton.LoadScene("MainMenu");
         }
