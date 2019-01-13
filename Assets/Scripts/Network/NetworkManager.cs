@@ -16,7 +16,7 @@ namespace Network
         private Host _host;
         private Client _client;
         private Socket[] _sockets;
-        private int _maxSockets = 16;
+        private ushort _maxSockets = 16;
 
         #region MonoBehaviour
         private void Awake()
@@ -29,7 +29,9 @@ namespace Network
             gameObject.name = "NetworkManager";
             _sockets = new Socket[_maxSockets];
 
-            var config = new GlobalConfig {
+            var config = new GlobalConfig
+            {
+                MaxHosts = _maxSockets,
                 NetworkEventAvailable = NetworkEventAvailable,
             };
             NetworkTransport.Init(config);
@@ -45,10 +47,7 @@ namespace Network
 
         public void RegisterSocket(Socket socket)
         {
-            if (-1 < socket.Id && socket.Id < _maxSockets)
-                _sockets[socket.Id] = socket;
-            else
-                socket.Close();
+            _sockets[socket.Id] = socket;
         }
         public void UnregisterSocket(Socket socket)
         {
@@ -81,7 +80,6 @@ namespace Network
         {
             HostBooted = false;
             _host = null;
-            ApplicationManager.Singleton.LoadScene("MainMenu");
         }
 
         public void SpawnClient()
@@ -111,8 +109,6 @@ namespace Network
         {
             ClientBooted = false;
             _client = null;
-
-            ApplicationManager.Singleton.LoadScene("MainMenu");
         }
     }
 }

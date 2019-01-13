@@ -92,7 +92,7 @@ namespace Multiplayer
             playerScript.playerColor = message.PlayerColor;
 
             _players.Add(playerScript);
-            Debug.LogFormat("Player {0} connected", playerScript.playerId);
+            Debug.LogFormat("Player {0} connected '{1}'", playerScript.playerId, playerScript.name);
         }
         private void Move(Move message)
         {

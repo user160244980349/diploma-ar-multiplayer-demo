@@ -3,7 +3,8 @@
 namespace Network.Delegates
 {
     #region Connection callbacks
-    public delegate void OnConnectionStart(Connection connection);
+    public delegate void OnConnectionStart(int connectionId);
+    public delegate void OnConnectionWaitingConfirm(Connection connection);
     public delegate void OnConnectionShutdown(int connectionId);
     #endregion
 

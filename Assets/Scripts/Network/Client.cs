@@ -33,6 +33,22 @@ namespace Network
 
             _socketPrefab = (GameObject)Resources.Load("Networking/Socket");
 
+            var socketObject = Instantiate(_socketPrefab, gameObject.transform);
+            var socketScript = socketObject.GetComponent<Socket>();
+            socketScript.OnSocketOpened = OnSocketStart;
+            socketScript.OnConnected = OnConnectEvent;
+            socketScript.OnDataReceived = OnDataEvent;
+            socketScript.OnBroadcastReceived = OnBroadcastEvent;
+            socketScript.OnDisconnected = OnDisconnectEvent;
+            socketScript.OnSocketClosed = OnSocketShutdown;
+            socketScript.Configuration = new SocketConfiguration
+            {
+                channels = new QosType[2] { QosType.Reliable, QosType.Unreliable },
+                maxConnections = 1,
+                packetSize = 1024,
+            };
+            _snm.Subscribe(Send);
+
             gameObject.name = "NetworkClient";
         }
         private void Update()
@@ -40,21 +56,6 @@ namespace Network
             switch (State)
             {
                 case NetworkUnitState.StartingUp:
-                    var socketObject = Instantiate(_socketPrefab, gameObject.transform);
-                    var socketScript = socketObject.GetComponent<Socket>();
-                    socketScript.OnSocketOpened = OnSocketStart;
-                    socketScript.OnConnected = OnConnectEvent;
-                    socketScript.OnDataReceived = OnDataEvent;
-                    socketScript.OnBroadcastReceived = OnBroadcastEvent;
-                    socketScript.OnDisconnected = OnDisconnectEvent;
-                    socketScript.OnSocketClosed = OnSocketShutdown;
-                    socketScript.Configuration = new SocketConfiguration
-                    {
-                        channels = new QosType[2] { QosType.Reliable, QosType.Unreliable },
-                        maxConnections = 16,
-                        packetSize = 1024,
-                    };
-                    _snm.Subscribe(Send);
                     State = NetworkUnitState.Up;
                     OnStart(this);
                     break;
@@ -69,7 +70,6 @@ namespace Network
                     break;
 
                 case NetworkUnitState.Down:
-                    _snm.Unsubscribe(Send);
                     OnShutdown();
                     Destroy(gameObject);
                     break;
@@ -77,7 +77,9 @@ namespace Network
         }
         private void OnDestroy()
         {
+            _snm.Unsubscribe(Send);
             Debug.Log("CLIENT::Shutdown");
+            ApplicationManager.Singleton.LoadScene("MainMenu");
         }
         #endregion
 
@@ -86,13 +88,12 @@ namespace Network
             State = NetworkUnitState.ShuttingDown;
             _socket.Close();
         }
-        public void Send(ANetworkMessage message)
+
+        private void Send(ANetworkMessage message)
         {
-            if (_socket == null) return;
-            Debug.Log("CLIENT::Sending data");
+            // Debug.Log("CLIENT::Sending data");
             _socket.Send(_connectionId, 0, message);
         }
-
         private void OnSocketStart(Socket socket)
         {
             _socket = socket;
@@ -128,7 +129,6 @@ namespace Network
         private void OnDisconnectEvent(int connection)
         {
             Debug.Log("CLIENT::Disconnected from host");
-            ApplicationManager.Singleton.LoadScene("Loading");
             Shutdown();
         }
         private void OnSocketShutdown(int socketId)

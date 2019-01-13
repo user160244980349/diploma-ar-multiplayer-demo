@@ -12,7 +12,7 @@ namespace Network
         public int Id { get; private set; }
         public SocketConfiguration Configuration { get; set; }
         public bool EventsReady { get; set; }
-        public NetworkUnitState State { get; private set; }
+        public SocketState State { get; private set; }
         public OnSocketStart OnSocketOpened;
         public OnConnectEvent OnConnected;
         public OnDataEvent OnDataReceived;
@@ -47,16 +47,23 @@ namespace Network
             _packetSize = Configuration.packetSize;
 
             _packet = new byte[_packetSize];
-            _connections = new Connection[_maxConnections];
+            _connections = new Connection[_maxConnections + 1];
 
             _formatter = new Formatter();
             _connectionPrefab = (GameObject)Resources.Load("Networking/Connection");
 
-            _connectionConfig = new ConnectionConfig();
+            _connectionConfig = new ConnectionConfig {
+                ConnectTimeout = 100,
+                MaxConnectionAttempt = 20,
+                DisconnectTimeout = 2000,
+            };
             for (var i = 0; i < _channels.Length; i++)
                 _connectionConfig.AddChannel(_channels[i]);
 
             _topology = new HostTopology(_connectionConfig, _maxConnections);
+
+            Id = NetworkTransport.AddHost(_topology, _port);
+            NetworkManager.Singleton.RegisterSocket(this);
 
             gameObject.name = string.Format("Socket{0}", Id);
         }
@@ -64,14 +71,16 @@ namespace Network
         {
             switch (State)
             {
-                case NetworkUnitState.StartingUp:
-                    Id = NetworkTransport.AddHost(_topology, _port);
-                    NetworkManager.Singleton.RegisterSocket(this);
-                    State = NetworkUnitState.Up;
+                case SocketState.StartingUp:
+                    State = SocketState.Up;
                     OnSocketOpened(this);
                     break;
 
-                case NetworkUnitState.Up:
+                case SocketState.OpeningConnection:
+
+                    break;
+
+                case SocketState.Up:
                     if (!EventsReady) break;
                     EventsReady = false;
                     NetworkEventType networkEvent;
@@ -91,11 +100,10 @@ namespace Network
                         switch (networkEvent)
                         {
                             case NetworkEventType.ConnectEvent:
-                                OpenConnection(connectionId);
+                                OpenConnection(new ConnectionConfiguration(), connectionId, true);
                                 break;
 
                             case NetworkEventType.DataEvent:
-                                if (_connections[connectionId] == null) return;
                                 var message = _formatter.Deserialize(_packet);
                                 message.ping = NetworkTransport.GetRemoteDelayTimeMS(Id, connectionId, message.timeStamp, out _error);
                                 ShowErrorIfThrown();
@@ -103,13 +111,11 @@ namespace Network
                                 break;
 
                             case NetworkEventType.BroadcastEvent:
-                                if (_connections[connectionId] == null) return;
                                 OnBroadcastReceived(connectionId);
                                 break;
 
                             case NetworkEventType.DisconnectEvent:
-                                _connections[connectionId].IncomingDisconnection = true;
-                                CloseConnection(connectionId);
+                                CloseConnection(connectionId, true);
                                 break;
 
                             case NetworkEventType.Nothing:
@@ -118,14 +124,14 @@ namespace Network
                     } while (networkEvent != NetworkEventType.Nothing);
                     break;
 
-                case NetworkUnitState.ShuttingDown:
+                case SocketState.ShuttingDown:
                     if (_activeConnections != 0) break;
                     NetworkManager.Singleton.UnregisterSocket(this);
                     NetworkTransport.RemoveHost(Id);
-                    State = NetworkUnitState.Down;
+                    State = SocketState.Down;
                     break;
 
-                case NetworkUnitState.Down:
+                case SocketState.Down:
                     OnSocketClosed(Id);
                     Destroy(gameObject);
                     break;
@@ -139,8 +145,8 @@ namespace Network
 
         public void Close()
         {
-            State = NetworkUnitState.ShuttingDown;
-            for (var i = 0; i < _maxConnections; i++)
+            State = SocketState.ShuttingDown;
+            for (var i = 0; i <= _maxConnections; i++)
             {
                 if (_connections[i] == null) continue;
                 _connections[i].Disconnect();
@@ -148,13 +154,7 @@ namespace Network
         }
         public void OpenConnection(ConnectionConfiguration cc)
         {
-            cc.socketId = Id;
-
-            var connectionObject = Instantiate(_connectionPrefab, gameObject.transform);
-            var connectionScript = connectionObject.GetComponent<Connection>();
-            connectionScript.Configuration = cc;
-            connectionScript.OnConnect = OnConnect;
-            connectionScript.OnDisconnect = OnDisconnect;
+            OpenConnection(cc, 0, false);
         }
         public void Send(int connectionId, int channelId, ANetworkMessage message)
         {
@@ -165,15 +165,19 @@ namespace Network
         }
         public void CloseConnection(int connectionId)
         {
-            if (_connections[connectionId] == null) return;
-            _connections[connectionId].Disconnect();
+            CloseConnection(connectionId, false);
         }
 
-        private void OpenConnection(int connectionId)
+        private void OpenConnection(ConnectionConfiguration cc, int connectionId, bool incoming)
         {
-            if (_connections[connectionId] != null) return;
+            if (_connections[connectionId] != null)
+            {
+                _connections[connectionId].Confirmed = true;
+                return;
+            }
+            State = SocketState.OpeningConnection;
 
-            ConnectionConfiguration cc = new ConnectionConfiguration
+            ConnectionBindings cb = new ConnectionBindings
             {
                 socketId = Id,
                 id = connectionId,
@@ -181,21 +185,28 @@ namespace Network
 
             var connectionObject = Instantiate(_connectionPrefab, transform);
             var connectionScript = connectionObject.GetComponent<Connection>();
-            connectionScript.IncomingConnection = true;
+            connectionScript.IncomingConnection = incoming;
+            connectionScript.Bindings = cb;
             connectionScript.Configuration = cc;
             connectionScript.OnConnect = OnConnect;
+            connectionScript.OnWaitingConfirm = OnWaitingConfirm;
             connectionScript.OnDisconnect = OnDisconnect;
         }
-        private void OnConnect(Connection connection)
+        private void CloseConnection(int connectionId, bool incoming)
         {
-            if (0 < connection.Id && connection.Id < _maxConnections + 1)
-            {
-                _activeConnections++;
-                _connections[connection.Id] = connection;
-                OnConnected(connection.Id);
-            }
-            else
-                connection.Disconnect();
+            if (_connections[connectionId] == null) return;
+            _connections[connectionId].IncomingDisconnection = incoming;
+            _connections[connectionId].Disconnect();
+        }
+        private void OnWaitingConfirm(Connection connection)
+        {
+            State = SocketState.Up;
+            _activeConnections++;
+            _connections[connection.Id] = connection;
+        }
+        private void OnConnect(int connectionId)
+        {
+            OnConnected(connectionId);
         }
         private void OnDisconnect(int connectionId)
         {

@@ -11,9 +11,12 @@ namespace Network
         public int Id { get; private set; }
         public bool IncomingConnection { get; set; }
         public bool IncomingDisconnection { get; set; }
+        public bool Confirmed { get; set; }
         public ConnectionState State { get; private set; }
         public ConnectionConfiguration Configuration { get; set; }
+        public ConnectionBindings Bindings { get; set; }
         public OnConnectionStart OnConnect;
+        public OnConnectionWaitingConfirm OnWaitingConfirm;
         public OnConnectionShutdown OnDisconnect;
 
         #region Configuration
@@ -25,36 +28,48 @@ namespace Network
         private int _queueLength;
         private float _lastSendTime;
         private float _sendRate = 0.02f;
-        private float _timeBeforeConnect = 1f;
-        private float _timeAfterDisconnect = 1f;
+        private float _timeAfterDisconnect = 0.02f;
         private byte _error;
 
         #region MonoBehaviour
         private void Start()
         {
-            Debug.LogFormat("Connection opened {0}", Id);
 
-            Id = Configuration.id;
-            _socketId = Configuration.socketId;
+            Id = Bindings.id;
+            _socketId = Bindings.socketId;
             _ip = Configuration.ip;
             _port = Configuration.port;
 
+            if (!IncomingConnection)
+            {
+                Id = NetworkTransport.Connect(_socketId, _ip, _port, 0, out _error);
+                ShowErrorIfThrown();
+            }
+
             gameObject.name = string.Format("Connection{0}", Id);
+            Debug.LogFormat("Connection opened {0}", Id);
         }
         private void Update()
         {
             switch (State)
             {
                 case ConnectionState.Connecting:
-                    _timeBeforeConnect -= Time.deltaTime;
-                    if (_timeBeforeConnect > 0) break;
-                    if (!IncomingConnection)
+                    State = ConnectionState.WaitingConfirm;
+                    OnWaitingConfirm(this);
+                    break;
+
+                case ConnectionState.WaitingConfirm:
+                    if (IncomingConnection)
                     {
-                        Id = NetworkTransport.Connect(_socketId, _ip, _port, 0, out _error);
-                        ShowErrorIfThrown();
+                        State = ConnectionState.Connected;
+                        OnConnect(Id);
+                        break;
                     }
-                    State = ConnectionState.Connected;
-                    OnConnect(this);
+                    if (Confirmed)
+                    {
+                        State = ConnectionState.Connected;
+                        OnConnect(Id);
+                    }
                     break;
 
                 case ConnectionState.Connected:
@@ -89,7 +104,11 @@ namespace Network
         public void Disconnect()
         {
             State = ConnectionState.Disconnecting;
-            if (IncomingDisconnection) return;
+            if (IncomingDisconnection)
+            {
+                _timeAfterDisconnect = 0;
+                return;
+            }
             NetworkTransport.Disconnect(_socketId, Id, out _error);
             ShowErrorIfThrown();
         }
