@@ -23,10 +23,16 @@ namespace Network
         private Socket _socket;
         private List<int> _connections;
 
+        private NetworkIdGenerator _gen;
+        private string _networkId;
+        private int _fallbackConnection;
+
         #region MonoBehaviour
         private void Start()
         {
             Debug.Log("HOST::Booted");
+            _gen = new NetworkIdGenerator(20);
+            _networkId = _gen.Generate();
 
             _connections = new List<int>();
 
@@ -92,6 +98,11 @@ namespace Network
             _socket.Close();
         }
 
+        private void Send(ANetworkMessage message, int connectionId)
+        {
+            // Debug.Log("    HOST::Sending data");
+            _socket.Send(connectionId, 1, message);
+        }
         private void Send(ANetworkMessage message)
         {
             // Debug.Log("    HOST::Sending data");
@@ -105,6 +116,13 @@ namespace Network
         {
             Debug.Log(string.Format("HOST::Client {0} connected to socket {1}", connection, _socket.Id));
             _connections.Add(connection);
+
+            Send(new Beep(), connection); // netid
+            if (_fallbackConnection != 0)
+            {
+                _fallbackConnection = connection;
+                Send(new Beep(), _fallbackConnection); // fallback token
+            }
         }
         private void OnBroadcastEvent(int connection)
         {
