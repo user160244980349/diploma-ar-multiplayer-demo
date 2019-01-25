@@ -12,7 +12,7 @@ namespace Network
 {
     public class Host : MonoBehaviour
     {
-        public bool Fallback { get; set; }
+        public bool FallbackMode { get; set; }
         public NetworkUnitState State { get; private set; }
         public OnHostStart OnStart;
         public OnHostShutdown OnShutdown;
@@ -24,8 +24,9 @@ namespace Network
         private Socket _socket;
         private List<int> _connections;
 
-        private float _timeForDiscovery = 5;
         private int _networkKey;
+        private float _timeForDiscovery = 10;
+        private float _switchDelay = 30;
 
         #region MonoBehaviour
         private void Start()
@@ -72,12 +73,13 @@ namespace Network
 
                 case NetworkUnitState.Up:
                 {
-                    if (Fallback)
+                    if (FallbackMode)
                     {
                         _timeForDiscovery -= Time.deltaTime;
                         if (_timeForDiscovery > 0) break;
                         _socket.StopBroadcast();
-                        Fallback = false;
+                        Debug.Log("HOST::Finished broadcasting to 8001 port");
+                        FallbackMode = false;
                     }
                     break;
                 }
@@ -104,12 +106,6 @@ namespace Network
         }
         #endregion
 
-        public void Shutdown()
-        {
-            State = NetworkUnitState.ShuttingDown;
-            _socket.Close();
-        }
-
         private void Send(ANetworkMessage message, int connectionId)
         {
             // Debug.Log("    HOST::Sending data");
@@ -123,9 +119,10 @@ namespace Network
         private void OnSocketOpened(Socket socket)
         {
             _socket = socket;
-            if (Fallback)
+            if (FallbackMode)
             {
-                _socket.StartBroadcast(_networkKey, new FallbackHostReady(_networkKey));
+                Debug.Log("HOST::Broadcasting to 8001 port");
+                _socket.StartBroadcast(_networkKey, 8001, new FallbackHostReady());
             }
         }
         private void OnConnectEvent(int connection)
@@ -133,7 +130,7 @@ namespace Network
             Debug.Log(string.Format("HOST::Client {0} connected to socket {1}", connection, _socket.Id));
             _connections.Add(connection);
 
-            Send(new FallbackInfo(_networkKey, connection), connection);
+            Send(new FallbackInfo(_networkKey, (connection - 1) * _switchDelay), connection);
         }
         private void OnBroadcastEvent(ConnectionConfiguration cc, ANetworkMessage message)
         {
@@ -144,12 +141,16 @@ namespace Network
             switch (message.networkMessageType)
             {
                 case NetworkMessageType.Beep:
+                {
                     Debug.Log("HOST::Boop from network layer");
                     break;
+                }
 
                 case NetworkMessageType.Higher:
+                {
                     _rnm.Publish(message);
                     break;
+                }
             }
         }
         private void OnDisconnectEvent(int connection)
@@ -160,6 +161,11 @@ namespace Network
         private void OnSocketClosed(int socketId)
         {
             _socket = null;
+        }
+        public void Shutdown()
+        {
+            State = NetworkUnitState.ShuttingDown;
+            _socket.Close();
         }
     }
 }

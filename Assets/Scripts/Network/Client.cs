@@ -24,10 +24,7 @@ namespace Network
         private Socket _socket;
         private int _connectionId;
 
-        private int _networkKey;
-        private int _fallbackPos;
-        private float _timeToSwitch;
-        private float _fallbackDelay = 30;
+        private float _switchDelay;
 
         #region MonoBehaviour
         private void Start()
@@ -63,33 +60,43 @@ namespace Network
             switch (State)
             {
                 case NetworkUnitState.StartingUp:
+                {
                     State = NetworkUnitState.Up;
                     OnStart(this);
                     break;
+                }
 
                 case NetworkUnitState.Up:
+                {
 
                     break;
+                }
 
                 case NetworkUnitState.FallingBack:
-                    _timeToSwitch -= Time.deltaTime;
-                    if (_timeToSwitch < 0)
+                {
+                    _switchDelay -= Time.deltaTime;
+                    if (_switchDelay < 0)
                     {
-                        Debug.Log("Falling back");
+                        Debug.Log("CLIENT::Falling back");
                         NetworkManager.Singleton.FallbackMode = true;
                         Shutdown();
                     }
                     break;
+                }
 
                 case NetworkUnitState.ShuttingDown:
+                {
                     if (_socket != null) break;
                     State = NetworkUnitState.Down;
                     break;
+                }
 
                 case NetworkUnitState.Down:
+                {
                     OnShutdown();
                     Destroy(gameObject);
                     break;
+                }
             }
         }
         private void OnDestroy()
@@ -98,12 +105,6 @@ namespace Network
             Debug.Log("CLIENT::Shutdown");
         }
         #endregion
-
-        public void Shutdown()
-        {
-            State = NetworkUnitState.ShuttingDown;
-            _socket.Close();
-        }
 
         private void Send(ANetworkMessage message)
         {
@@ -121,7 +122,6 @@ namespace Network
             switch (message.networkMessageType)
             {
                 case NetworkMessageType.FallbackHostReady:
-                    if (_networkKey != ((FallbackHostReady)message).netKey) return;
                     State = NetworkUnitState.Up;
                     _socket.OpenConnection(cc);
                     break;
@@ -146,12 +146,9 @@ namespace Network
 
                 case NetworkMessageType.FallbackInfo:
                 {
-                    NetworkTransport.SetBroadcastCredentials(_socket.Id, ((FallbackInfo)message).netKey, 0, 0, out byte error);
-                    Debug.Log((NetworkError)error);
-                    _networkKey = ((FallbackInfo)message).netKey;
-                    Debug.Log(_networkKey);
-                    _fallbackPos = ((FallbackInfo)message).queuePosition;
-                    _timeToSwitch = (_fallbackPos - 1) * _fallbackDelay;
+                    var fallbackInfo = (FallbackInfo)message;
+                    _switchDelay = fallbackInfo.switchDelay;
+                    _socket.SetBroadcastReceiveKey(fallbackInfo.netKey);
                     break;
                 }
 
@@ -170,6 +167,11 @@ namespace Network
         private void OnSocketShutdown(int socketId)
         {
             _socket = null;
+        }
+        public void Shutdown()
+        {
+            State = NetworkUnitState.ShuttingDown;
+            _socket.Close();
         }
     }
 }

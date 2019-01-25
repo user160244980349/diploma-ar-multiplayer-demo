@@ -65,7 +65,7 @@ namespace Network
 
             var hostObject = Instantiate(_hostPrefab, gameObject.transform);
             _host = hostObject.GetComponent<Host>();
-            _host.Fallback = fallback;
+            _host.FallbackMode = fallback;
             _host.OnStart = HostStart;
             _host.OnShutdown = HostShutdown;
         }

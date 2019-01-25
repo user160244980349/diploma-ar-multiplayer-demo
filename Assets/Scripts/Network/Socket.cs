@@ -64,7 +64,7 @@ namespace Network
             NetworkManager.Singleton.RegisterSocket(this);
 
             gameObject.name = string.Format("Socket{0}", Id);
-            Debug.LogFormat("Socket opened {0}", Id);
+            //Debug.LogFormat("Socket opened {0}", Id);
         }
         private void Update()
         {
@@ -163,19 +163,10 @@ namespace Network
         }
         private void OnDestroy()
         {
-            Debug.LogFormat("Socket closed {0}", Id);
+            //Debug.LogFormat("Socket closed {0}", Id);
         }
         #endregion
 
-        public void Close()
-        {
-            State = SocketState.ShuttingDown;
-            for (var i = 0; i <= _maxConnections; i++)
-            {
-                if (_connections[i] == null) continue;
-                _connections[i].Disconnect();
-            }
-        }
         public void OpenConnection(ConnectionConfiguration cc)
         {
             OpenConnection(cc, 0, false);
@@ -187,11 +178,17 @@ namespace Network
             var packet = _formatter.Serialize(message);
             _connections[connectionId].QueueMessage(channelId, packet);
         }
-        public void StartBroadcast(int key, ANetworkMessage message)
+        public void SetBroadcastReceiveKey(int key)
+        {
+            NetworkTransport.SetBroadcastCredentials(Id, key, 0, 0, out _error);
+            ShowErrorIfThrown();
+        }
+        public void StartBroadcast(int key, int port, ANetworkMessage message)
         {
             message.timeStamp = NetworkTransport.GetNetworkTimestamp();
             var packet = _formatter.Serialize(message);
-            NetworkTransport.StartBroadcastDiscovery(Id, 8001, key, 0, 0, packet, packet.Length, 10, out _error);
+            NetworkTransport.StartBroadcastDiscovery(Id, port, key, 0, 0, packet, packet.Length, 10, out _error);
+            ShowErrorIfThrown();
         }
         public void StopBroadcast()
         {
@@ -246,6 +243,15 @@ namespace Network
             _activeConnections--;
             _connections[connectionId] = null;
             OnDisconnected(connectionId);
+        }
+        public void Close()
+        {
+            State = SocketState.ShuttingDown;
+            for (var i = 0; i <= _maxConnections; i++)
+            {
+                if (_connections[i] == null) continue;
+                _connections[i].Disconnect();
+            }
         }
         private void ShowErrorIfThrown()
         {

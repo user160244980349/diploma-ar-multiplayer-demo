@@ -47,7 +47,7 @@ namespace Network
             }
 
             gameObject.name = string.Format("Connection{0}", Id);
-            Debug.LogFormat("Connection opened {0}", Id);
+            //Debug.LogFormat("Connection opened {0}", Id);
         }
         private void Update()
         {
@@ -97,7 +97,7 @@ namespace Network
         }
         private void OnDestroy()
         {
-            Debug.LogFormat("Connection closed {0}", Id);
+            //Debug.LogFormat("Connection closed {0}", Id);
         }
         #endregion
 

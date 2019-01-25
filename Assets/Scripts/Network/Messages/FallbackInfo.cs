@@ -6,12 +6,12 @@ namespace Network.Messages
     public class FallbackInfo : ANetworkMessage
     {
         public int netKey;
-        public int queuePosition;
+        public float switchDelay;
 
-        public FallbackInfo(int key, int pos)
+        public FallbackInfo(int key, float delay)
         {
             netKey = key;
-            queuePosition = pos;
+            switchDelay = delay;
             networkMessageType = NetworkMessageType.FallbackInfo;
         }
     }
