@@ -151,6 +151,7 @@ namespace Network
                     BroadcastKey = fallbackInfo.netKey;
                     _switchDelay = fallbackInfo.switchDelay;
                     _socket.SetBroadcastReceiveKey(BroadcastKey);
+                    Debug.LogFormat("CLIENT::Got broadcast key {0}", BroadcastKey);
                     break;
                 }
 

@@ -123,7 +123,7 @@ namespace Network
             _socket = socket;
             if (FallbackMode)
             {
-                Debug.Log("HOST::Broadcasting to 8001 port");
+                Debug.LogFormat("HOST::Broadcasting to 8001 port with key {0}", BroadcastKey);
                 _socket.StartBroadcast(BroadcastKey, 8001, new FallbackHostReady());
             }
         }
