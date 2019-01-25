@@ -30,7 +30,6 @@ namespace Network
         #region MonoBehaviour
         private void Start()
         {
-            Debug.Log("HOST::Booted");
             _networkKey = KeyGenerator.Generate();
 
             _connections = new List<int>();
@@ -58,6 +57,7 @@ namespace Network
             _snm.Subscribe(Send);
 
             gameObject.name = "NetworkHost";
+            Debug.LogFormat("HOST::Boot on port {0}", socketScript.Configuration.port);
         }
         private void Update()
         {

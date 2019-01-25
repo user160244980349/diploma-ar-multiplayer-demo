@@ -39,8 +39,6 @@ namespace Network
         #region MonoBehaviour
         private void Start()
         {
-            Debug.LogFormat("Socket opened {0}", Id);
-
             _port = Configuration.port;
             _channels = Configuration.channels;
             _maxConnections = Configuration.maxConnections;
@@ -66,6 +64,7 @@ namespace Network
             NetworkManager.Singleton.RegisterSocket(this);
 
             gameObject.name = string.Format("Socket{0}", Id);
+            Debug.LogFormat("Socket opened {0}", Id);
         }
         private void Update()
         {
@@ -190,16 +189,21 @@ namespace Network
         }
         public void StartBroadcast(int key, ANetworkMessage message)
         {
-            Debug.Log("Started broadcast");
             message.timeStamp = NetworkTransport.GetNetworkTimestamp();
             var packet = _formatter.Serialize(message);
-            Debug.Log(NetworkTransport.StartBroadcastDiscovery(Id, 8001, key, 1, 1, packet, packet.Length, 100, out _error));
-            ShowErrorIfThrown();
+            for(var i = 1; i < 60; i++)
+            {
+                System.Threading.Thread.Sleep(100);
+                Debug.LogFormat("Broadcasting from {1} to port {0}", 8000 + i, Id);
+                Debug.Log(NetworkTransport.StartBroadcastDiscovery(Id, 8000 + i, key, 1, 1, packet, packet.Length, 10, out _error));
+                ShowErrorIfThrown();
+                System.Threading.Thread.Sleep(100);
+                NetworkTransport.StopBroadcastDiscovery();
+            }
         }
         public void StopBroadcast()
         {
-            Debug.Log("Stoped broadcast");
-            NetworkTransport.StopBroadcastDiscovery();
+            //NetworkTransport.StopBroadcastDiscovery();
         }
         public void CloseConnection(int connectionId)
         {

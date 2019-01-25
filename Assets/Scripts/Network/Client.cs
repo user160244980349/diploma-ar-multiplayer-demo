@@ -4,6 +4,7 @@ using Network.Configurations;
 using Network.Delegates;
 using Network.Messages;
 using Network.States;
+using System;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -26,12 +27,11 @@ namespace Network
         private int _networkKey;
         private int _fallbackPos;
         private float _timeToSwitch;
-        private float _fallbackDelay = 10;
+        private float _fallbackDelay = 30;
 
         #region MonoBehaviour
         private void Start()
         {
-            Debug.Log("CLIENT::Boot");
 
             _snm = EventManager.Singleton.GetEvent<SendNetworkMessage>();
             _rnm = EventManager.Singleton.GetEvent<ReceiveNetworkMessage>();
@@ -50,11 +50,13 @@ namespace Network
             {
                 channels = new QosType[2] { QosType.Reliable, QosType.Unreliable },
                 maxConnections = 1,
+                port = 8001 + DateTime.Now.Second,
                 packetSize = 1024,
             };
             _snm.Subscribe(Send);
 
             gameObject.name = "NetworkClient";
+            Debug.LogFormat("CLIENT::Boot on port {0}", socketScript.Configuration.port);
         }
         private void Update()
         {
@@ -115,7 +117,7 @@ namespace Network
         }
         private void OnBroadcastEvent(ConnectionConfiguration cc, ANetworkMessage message)
         {
-            Debug.Log(string.Format("CLIENT::Received broadcast data from host {0}", _socket.Id));
+            Debug.Log(string.Format("CLIENT::Received broadcast data on socket {0}", _socket.Id));
             switch (message.networkMessageType)
             {
                 case NetworkMessageType.FallbackHostReady:
@@ -144,7 +146,9 @@ namespace Network
 
                 case NetworkMessageType.FallbackInfo:
                 {
+                    NetworkTransport.SetBroadcastCredentials(_socket.Id, ((FallbackInfo)message).netKey, 1, 1, out byte error);
                     _networkKey = ((FallbackInfo)message).netKey;
+                    Debug.Log(_networkKey);
                     _fallbackPos = ((FallbackInfo)message).queuePosition;
                     _timeToSwitch = (_fallbackPos - 1) * _fallbackDelay;
                     break;
