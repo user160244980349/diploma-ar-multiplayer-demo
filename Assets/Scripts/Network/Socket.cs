@@ -121,7 +121,7 @@ namespace Network
 
                             case NetworkEventType.BroadcastEvent:
                             {
-                                Debug.Log("Got broadcast");
+                                NetworkTransport.GetBroadcastConnectionMessage(Id, _packet, _packet.Length, out int size, out _error);
                                 var message = _formatter.Deserialize(_packet);
                                 message.ping = NetworkTransport.GetRemoteDelayTimeMS(Id, connectionId, message.timeStamp, out _error);
                                 ShowErrorIfThrown();
