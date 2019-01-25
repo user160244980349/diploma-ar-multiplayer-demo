@@ -1,4 +1,5 @@
-﻿using Network.Configurations;
+﻿using System;
+using Network.Configurations;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -18,6 +19,7 @@ namespace Network
         private Client _client;
         private Socket[] _sockets;
         private ushort _maxSockets = 16;
+        private int _broadcastKey;
 
         #region MonoBehaviour
         private void Awake()
@@ -46,6 +48,11 @@ namespace Network
         }
         #endregion
 
+        public void Fallback(int broadcastKey)
+        {
+            FallbackMode = true;
+            _broadcastKey = broadcastKey;
+        }
         public void RegisterSocket(Socket socket)
         {
             _sockets[socket.Id] = socket;
@@ -59,13 +66,23 @@ namespace Network
             _sockets[socketId].EventsReady = true;
         }
 
-        public void SpawnHost(bool fallback)
+        public void SpawnHost()
         {
             if (HostBooted) return;
 
             var hostObject = Instantiate(_hostPrefab, gameObject.transform);
             _host = hostObject.GetComponent<Host>();
-            _host.FallbackMode = fallback;
+            _host.OnStart = HostStart;
+            _host.OnShutdown = HostShutdown;
+        }
+        public void SpawnHost(int key)
+        {
+            if (HostBooted) return;
+
+            var hostObject = Instantiate(_hostPrefab, gameObject.transform);
+            _host = hostObject.GetComponent<Host>();
+            _host.FallbackMode = true;
+            _host.BroadcastKey = key;
             _host.OnStart = HostStart;
             _host.OnShutdown = HostShutdown;
         }
@@ -118,7 +135,7 @@ namespace Network
             _client = null;
             if (FallbackMode)
             {
-                SpawnHost(true);
+                SpawnHost(_broadcastKey);
             }
             else
                 ApplicationManager.Singleton.LoadScene("MainMenu");

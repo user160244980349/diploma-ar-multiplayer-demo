@@ -14,6 +14,8 @@ namespace Network
     {
         public bool FallbackMode { get; set; }
         public NetworkUnitState State { get; private set; }
+        public int BroadcastKey { get; internal set; }
+
         public OnHostStart OnStart;
         public OnHostShutdown OnShutdown;
 
