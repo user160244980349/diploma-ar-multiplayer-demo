@@ -191,7 +191,7 @@ namespace Network
         {
             message.timeStamp = NetworkTransport.GetNetworkTimestamp();
             var packet = _formatter.Serialize(message);
-            NetworkTransport.StartBroadcastDiscovery(Id, 0, key, 1, 0, packet, packet.Length, 1, out _error);
+            NetworkTransport.StartBroadcastDiscovery(Id, 8001, key, 1, 0, packet, packet.Length, 1, out _error);
             ShowErrorIfThrown();
         }
         public void StopBroadcast()

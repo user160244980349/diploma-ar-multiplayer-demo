@@ -103,7 +103,7 @@ namespace Network
 
             _client.ConnectionConfig = new ConnectionConfiguration
             {
-                ip = "127.0.0.1",
+                ip = "192.168.1.2",
                 port = 8000,
             };
         }
