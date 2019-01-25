@@ -7,6 +7,7 @@ namespace Network
     public class NetworkManager : MonoBehaviour
     {
         public static NetworkManager Singleton { get; private set; }
+        public bool FallbackMode { get; set; }
         public bool HostBooted { get; private set; }
         public bool ClientBooted { get; private set; }
 
@@ -74,7 +75,12 @@ namespace Network
         }
         private void HostStart(Host networkHost)
         {
-            ApplicationManager.Singleton.LoadScene("Playground");
+            if (FallbackMode)
+            {
+                FallbackMode = false;
+            }
+            else
+                ApplicationManager.Singleton.LoadScene("Playground");
             HostBooted = true;
         }
         private void HostShutdown()
@@ -110,7 +116,11 @@ namespace Network
         private void ClientShutdown()
         {
             _client = null;
-            if (!HostBooted)
+            if (FallbackMode)
+            {
+                SpawnHost(true);
+            }
+            else
                 ApplicationManager.Singleton.LoadScene("MainMenu");
         }
     }

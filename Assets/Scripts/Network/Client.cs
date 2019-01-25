@@ -76,7 +76,7 @@ namespace Network
                     if (_timeToSwitch < 0)
                     {
                         Debug.Log("Falling back");
-                        NetworkManager.Singleton.SpawnHost(true);
+                        NetworkManager.Singleton.FallbackMode = true;
                         Shutdown();
                     }
                     break;
@@ -147,6 +147,7 @@ namespace Network
                 case NetworkMessageType.FallbackInfo:
                 {
                     NetworkTransport.SetBroadcastCredentials(_socket.Id, ((FallbackInfo)message).netKey, 0, 0, out byte error);
+                    Debug.Log((NetworkError)error);
                     _networkKey = ((FallbackInfo)message).netKey;
                     Debug.Log(_networkKey);
                     _fallbackPos = ((FallbackInfo)message).queuePosition;
