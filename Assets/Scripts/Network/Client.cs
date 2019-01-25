@@ -75,8 +75,8 @@ namespace Network
                     if (_timeToSwitch < 0)
                     {
                         Debug.Log("Falling back");
-                        NetworkManager.Singleton.Switch();
-                        State = NetworkUnitState.Up;
+                        NetworkManager.Singleton.SpawnHost();
+                        Shutdown();
                     }
                     break;
 
@@ -95,7 +95,6 @@ namespace Network
         {
             _snm.Unsubscribe(Send);
             Debug.Log("CLIENT::Shutdown");
-            ApplicationManager.Singleton.LoadScene("MainMenu");
         }
         #endregion
 

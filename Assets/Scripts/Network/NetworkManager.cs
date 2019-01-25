@@ -58,16 +58,6 @@ namespace Network
             _sockets[socketId].EventsReady = true;
         }
 
-        public void Switch()
-        {
-            _client.Shutdown();
-            var hostObject = Instantiate(_hostPrefab, gameObject.transform);
-            _host = hostObject.GetComponent<Host>();
-            _host.Fallback = true;
-            _host.OnStart = HostStart;
-            _host.OnShutdown = HostShutdown;
-        }
-
         public void SpawnHost()
         {
             if (HostBooted) return;
@@ -90,6 +80,7 @@ namespace Network
         {
             HostBooted = false;
             _host = null;
+            ApplicationManager.Singleton.LoadScene("MainMenu");
         }
 
         public void SpawnClient()
@@ -117,8 +108,9 @@ namespace Network
         }
         private void ClientShutdown()
         {
-            ClientBooted = false;
             _client = null;
+            if (!HostBooted)
+                ApplicationManager.Singleton.LoadScene("MainMenu");
         }
     }
 }

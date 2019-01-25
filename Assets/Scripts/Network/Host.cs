@@ -101,7 +101,6 @@ namespace Network
         {
             _snm.Unsubscribe(Send);
             Debug.Log("HOST::Shutdown");
-            ApplicationManager.Singleton.LoadScene("MainMenu");
         }
         #endregion
 
