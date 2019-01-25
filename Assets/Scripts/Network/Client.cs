@@ -26,7 +26,7 @@ namespace Network
         private int _networkKey;
         private int _fallbackPos;
         private float _timeToSwitch;
-        private float _fallbackDelay = 5;
+        private float _fallbackDelay = 10;
 
         #region MonoBehaviour
         private void Start()
@@ -50,7 +50,6 @@ namespace Network
             {
                 channels = new QosType[2] { QosType.Reliable, QosType.Unreliable },
                 maxConnections = 1,
-                port = 8001,
                 packetSize = 1024,
             };
             _snm.Subscribe(Send);

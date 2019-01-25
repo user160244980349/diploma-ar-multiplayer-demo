@@ -121,6 +121,7 @@ namespace Network
 
                             case NetworkEventType.BroadcastEvent:
                             {
+                                Debug.Log("Got broadcast");
                                 var message = _formatter.Deserialize(_packet);
                                 message.ping = NetworkTransport.GetRemoteDelayTimeMS(Id, connectionId, message.timeStamp, out _error);
                                 ShowErrorIfThrown();
@@ -189,13 +190,15 @@ namespace Network
         }
         public void StartBroadcast(int key, ANetworkMessage message)
         {
+            Debug.Log("Started broadcast");
             message.timeStamp = NetworkTransport.GetNetworkTimestamp();
             var packet = _formatter.Serialize(message);
-            NetworkTransport.StartBroadcastDiscovery(Id, 8001, key, 1, 0, packet, packet.Length, 1, out _error);
+            Debug.Log(NetworkTransport.StartBroadcastDiscovery(Id, 8001, key, 1, 1, packet, packet.Length, 100, out _error));
             ShowErrorIfThrown();
         }
         public void StopBroadcast()
         {
+            Debug.Log("Stoped broadcast");
             NetworkTransport.StopBroadcastDiscovery();
         }
         public void CloseConnection(int connectionId)

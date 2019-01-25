@@ -125,7 +125,6 @@ namespace Network
             _socket = socket;
             if (Fallback)
             {
-                Debug.Log("Started broadcast");
                 _socket.StartBroadcast(_networkKey, new FallbackHostReady(_networkKey));
             }
         }
