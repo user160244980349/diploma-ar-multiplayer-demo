@@ -191,16 +191,7 @@ namespace Network
         {
             message.timeStamp = NetworkTransport.GetNetworkTimestamp();
             var packet = _formatter.Serialize(message);
-            NetworkTransport.StartBroadcastDiscovery(Id, 8001, key, 1, 1, packet, packet.Length, 10, out _error);
-            //for (var i = 1; i < 60; i++)
-            //{
-            //    System.Threading.Thread.Sleep(100);
-            //    Debug.LogFormat("Broadcasting from {1} to port {0}", 8000 + i, Id);
-            //    Debug.Log(NetworkTransport.StartBroadcastDiscovery(Id, 8000 + i, key, 1, 1, packet, packet.Length, 10, out _error));
-            //    ShowErrorIfThrown();
-            //    System.Threading.Thread.Sleep(100);
-            //    NetworkTransport.StopBroadcastDiscovery();
-            //}
+            NetworkTransport.StartBroadcastDiscovery(Id, 8001, key, 0, 0, packet, packet.Length, 10, out _error);
         }
         public void StopBroadcast()
         {
