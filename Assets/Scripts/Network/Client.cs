@@ -50,7 +50,7 @@ namespace Network
             {
                 channels = new QosType[2] { QosType.Reliable, QosType.Unreliable },
                 maxConnections = 1,
-                port = 8001 + DateTime.Now.Second,
+                //port = 8001 + DateTime.Now.Second,
                 packetSize = 1024,
             };
             _snm.Subscribe(Send);
