@@ -75,7 +75,7 @@ namespace Network
                     if (_timeToSwitch < 0)
                     {
                         Debug.Log("Falling back");
-                        NetworkManager.Singleton.SpawnHost();
+                        NetworkManager.Singleton.SpawnHost(true);
                         Shutdown();
                     }
                     break;

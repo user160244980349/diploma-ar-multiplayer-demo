@@ -70,7 +70,7 @@ namespace Scenes
         {
             ApplicationManager.Singleton.LoadScene("Loading");
             MultiplayerManager.Singleton.Hosting = true;
-            NetworkManager.Singleton.SpawnHost();
+            NetworkManager.Singleton.SpawnHost(false);
         }
         private void Connecting()
         {
