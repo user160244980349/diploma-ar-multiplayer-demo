@@ -1,4 +1,5 @@
-﻿using Network.Messages;
+﻿using Network.Configurations;
+using Network.Messages;
 
 namespace Network.Delegates
 {
@@ -12,7 +13,7 @@ namespace Network.Delegates
     public delegate void OnSocketStart(Socket socket);
     public delegate void OnConnectEvent(int connectionId);
     public delegate void OnDataEvent(int connectionId, ANetworkMessage message);
-    public delegate void OnBroadcastEvent(int connectionId);
+    public delegate void OnBroadcastEvent(ConnectionConfiguration cc, ANetworkMessage message);
     public delegate void OnDisconnectEvent(int connectionId);
     public delegate void OnSocketShutdown(int socketId);
     #endregion

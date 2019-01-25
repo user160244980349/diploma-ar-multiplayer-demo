@@ -58,6 +58,16 @@ namespace Network
             _sockets[socketId].EventsReady = true;
         }
 
+        public void Switch()
+        {
+            _client.Shutdown();
+            var hostObject = Instantiate(_hostPrefab, gameObject.transform);
+            _host = hostObject.GetComponent<Host>();
+            _host.Fallback = true;
+            _host.OnStart = HostStart;
+            _host.OnShutdown = HostShutdown;
+        }
+
         public void SpawnHost()
         {
             if (HostBooted) return;

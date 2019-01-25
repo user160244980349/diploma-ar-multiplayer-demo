@@ -4,6 +4,7 @@
     {
         StartingUp,
         Up,
+        FallingBack,
         ShuttingDown,
         Down,
     }

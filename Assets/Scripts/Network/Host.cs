@@ -12,6 +12,7 @@ namespace Network
 {
     public class Host : MonoBehaviour
     {
+        public bool Fallback { get; set; }
         public NetworkUnitState State { get; private set; }
         public OnHostStart OnStart;
         public OnHostShutdown OnShutdown;
@@ -23,16 +24,14 @@ namespace Network
         private Socket _socket;
         private List<int> _connections;
 
-        private NetworkIdGenerator _gen;
-        private string _networkId;
-        private int _fallbackConnection;
+        private float _timeForDiscovery = 5;
+        private int _networkKey;
 
         #region MonoBehaviour
         private void Start()
         {
             Debug.Log("HOST::Booted");
-            _gen = new NetworkIdGenerator(20);
-            _networkId = _gen.Generate();
+            _networkKey = KeyGenerator.Generate();
 
             _connections = new List<int>();
 
@@ -65,23 +64,37 @@ namespace Network
             switch (State)
             {
                 case NetworkUnitState.StartingUp:
+                {
                     State = NetworkUnitState.Up;
                     OnStart(this);
                     break;
+                }
 
                 case NetworkUnitState.Up:
-
+                {
+                    if (Fallback)
+                    {
+                        _timeForDiscovery -= Time.deltaTime;
+                        if (_timeForDiscovery > 0) break;
+                        _socket.StopBroadcast();
+                        Fallback = false;
+                    }
                     break;
+                }
 
                 case NetworkUnitState.ShuttingDown:
+                {
                     if (_socket != null) break;
                     State = NetworkUnitState.Down;
                     break;
+                }
 
                 case NetworkUnitState.Down:
+                {
                     OnShutdown();
                     Destroy(gameObject);
                     break;
+                }
             }
         }
         private void OnDestroy()
@@ -111,20 +124,19 @@ namespace Network
         private void OnSocketOpened(Socket socket)
         {
             _socket = socket;
+            if (Fallback)
+            {
+                _socket.StartBroadcast(_networkKey, new FallbackHostReady(_networkKey));
+            }
         }
         private void OnConnectEvent(int connection)
         {
             Debug.Log(string.Format("HOST::Client {0} connected to socket {1}", connection, _socket.Id));
             _connections.Add(connection);
 
-            Send(new Beep(), connection); // netid
-            if (_fallbackConnection != 0)
-            {
-                _fallbackConnection = connection;
-                Send(new Beep(), _fallbackConnection); // fallback token
-            }
+            Send(new FallbackInfo(_networkKey, connection), connection);
         }
-        private void OnBroadcastEvent(int connection)
+        private void OnBroadcastEvent(ConnectionConfiguration cc, ANetworkMessage message)
         {
         }
         private void OnDataEvent(int connection, ANetworkMessage message)
@@ -134,10 +146,6 @@ namespace Network
             {
                 case NetworkMessageType.Beep:
                     Debug.Log("HOST::Boop from network layer");
-                    break;
-
-                case NetworkMessageType.Service:
-
                     break;
 
                 case NetworkMessageType.Higher:

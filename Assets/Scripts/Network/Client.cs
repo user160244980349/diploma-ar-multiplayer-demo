@@ -23,6 +23,11 @@ namespace Network
         private Socket _socket;
         private int _connectionId;
 
+        private int _networkKey;
+        private int _fallbackPos;
+        private float _timeToSwitch;
+        private float _fallbackDelay = 5;
+
         #region MonoBehaviour
         private void Start()
         {
@@ -64,6 +69,16 @@ namespace Network
 
                     break;
 
+                case NetworkUnitState.FallingBack:
+                    _timeToSwitch -= Time.deltaTime;
+                    if (_timeToSwitch < 0)
+                    {
+                        Debug.Log("Falling back");
+                        NetworkManager.Singleton.Switch();
+                        State = NetworkUnitState.Up;
+                    }
+                    break;
+
                 case NetworkUnitState.ShuttingDown:
                     if (_socket != null) break;
                     State = NetworkUnitState.Down;
@@ -99,8 +114,17 @@ namespace Network
             _socket = socket;
             socket.OpenConnection(ConnectionConfig);
         }
-        private void OnBroadcastEvent(int connection)
+        private void OnBroadcastEvent(ConnectionConfiguration cc, ANetworkMessage message)
         {
+            Debug.Log(string.Format("CLIENT::Received broadcast data from host {0}", _socket.Id));
+            switch (message.networkMessageType)
+            {
+                case NetworkMessageType.FallbackHostReady:
+                    if (_networkKey != ((FallbackHostReady)message).netKey) return;
+                    State = NetworkUnitState.Up;
+                    _socket.OpenConnection(cc);
+                    break;
+            }
         }
         private void OnConnectEvent(int connection)
         {
@@ -114,22 +138,30 @@ namespace Network
             switch (message.networkMessageType)
             {
                 case NetworkMessageType.Beep:
+                {
                     Debug.Log("CLIENT::Boop from network layer");
                     break;
+                }
 
-                case NetworkMessageType.Service:
-
+                case NetworkMessageType.FallbackInfo:
+                {
+                    _networkKey = ((FallbackInfo)message).netKey;
+                    _fallbackPos = ((FallbackInfo)message).queuePosition;
+                    _timeToSwitch = (_fallbackPos - 1) * _fallbackDelay;
                     break;
+                }
 
                 case NetworkMessageType.Higher:
+                {
                     _rnm.Publish(message);
                     break;
+                }
             }
         }
         private void OnDisconnectEvent(int connection)
         {
             Debug.Log("CLIENT::Disconnected from host");
-            Shutdown();
+            State = NetworkUnitState.FallingBack;
         }
         private void OnSocketShutdown(int socketId)
         {

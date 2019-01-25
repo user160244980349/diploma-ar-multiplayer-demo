@@ -1,29 +1,23 @@
-﻿using System.Text;
-using System;
+﻿using System;
 
 namespace Network
 {
-    public class NetworkIdGenerator
+    public static class KeyGenerator
     {
-        private int _size;
-        private Random _random;
-        private StringBuilder _builder;
+        public static int Generate()
+        {
+            var dateTimeToConvert = DateTime.Now;
 
-        public NetworkIdGenerator(int size)
-        {
-            _size = size;
-            _builder = new StringBuilder(_size);
-            _random = new Random((int)DateTime.Now.Ticks);
-        }
-        public string Generate()
-        {
-            char c;
-            for (int i = 0; i < _size; i++)
-            {
-                c = Convert.ToChar(Convert.ToInt32(Math.Floor(26 * _random.NextDouble() + 65)));
-                _builder.Append(c);
-            }
-            return _builder.ToString();
+            var millisecsInASec = 1000;
+            var millisecsInAMin = 60 * millisecsInASec;
+            var millisecsInAnHour = 60 * millisecsInAMin;
+
+            var key = dateTimeToConvert.Hour * millisecsInAnHour +
+                           (dateTimeToConvert.Minute * millisecsInAMin) +
+                           dateTimeToConvert.Second * millisecsInASec +
+                           dateTimeToConvert.Millisecond;
+
+            return key;
         }
     }
 }

@@ -72,15 +72,20 @@ namespace Network
             switch (State)
             {
                 case SocketState.StartingUp:
+                {
                     State = SocketState.Up;
                     OnSocketOpened(this);
                     break;
+                }
 
                 case SocketState.OpeningConnection:
+                {
 
                     break;
+                }
 
                 case SocketState.Up:
+                {
                     if (!EventsReady) break;
                     EventsReady = false;
                     NetworkEventType networkEvent;
@@ -100,41 +105,60 @@ namespace Network
                         switch (networkEvent)
                         {
                             case NetworkEventType.ConnectEvent:
+                            {
                                 OpenConnection(new ConnectionConfiguration(), connectionId, true);
                                 break;
+                            }
 
                             case NetworkEventType.DataEvent:
+                            {
                                 var message = _formatter.Deserialize(_packet);
                                 message.ping = NetworkTransport.GetRemoteDelayTimeMS(Id, connectionId, message.timeStamp, out _error);
                                 ShowErrorIfThrown();
                                 OnDataReceived(connectionId, message);
                                 break;
+                            }
 
                             case NetworkEventType.BroadcastEvent:
-                                OnBroadcastReceived(connectionId);
+                            {
+                                var message = _formatter.Deserialize(_packet);
+                                message.ping = NetworkTransport.GetRemoteDelayTimeMS(Id, connectionId, message.timeStamp, out _error);
+                                ShowErrorIfThrown();
+                                ConnectionConfiguration cc;
+                                NetworkTransport.GetBroadcastConnectionInfo(Id, out cc.ip, out cc.port, out _error);
+                                ShowErrorIfThrown();
+                                OnBroadcastReceived(cc, message);
                                 break;
+                            }
 
                             case NetworkEventType.DisconnectEvent:
+                            {
                                 CloseConnection(connectionId, true);
                                 break;
+                            }
 
                             case NetworkEventType.Nothing:
                                 break;
                         }
                     } while (networkEvent != NetworkEventType.Nothing);
                     break;
+                }
 
                 case SocketState.ShuttingDown:
+                {
                     if (_activeConnections != 0) break;
                     NetworkManager.Singleton.UnregisterSocket(this);
                     NetworkTransport.RemoveHost(Id);
                     State = SocketState.Down;
                     break;
+                }
 
                 case SocketState.Down:
+                {
                     OnSocketClosed(Id);
                     Destroy(gameObject);
                     break;
+                }
             }
         }
         private void OnDestroy()
@@ -163,11 +187,21 @@ namespace Network
             var packet = _formatter.Serialize(message);
             _connections[connectionId].QueueMessage(channelId, packet);
         }
+        public void StartBroadcast(int key, ANetworkMessage message)
+        {
+            message.timeStamp = NetworkTransport.GetNetworkTimestamp();
+            var packet = _formatter.Serialize(message);
+            NetworkTransport.StartBroadcastDiscovery(Id, 0, key, 1, 0, packet, packet.Length, 1, out _error);
+            ShowErrorIfThrown();
+        }
+        public void StopBroadcast()
+        {
+            NetworkTransport.StopBroadcastDiscovery();
+        }
         public void CloseConnection(int connectionId)
         {
             CloseConnection(connectionId, false);
         }
-
         private void OpenConnection(ConnectionConfiguration cc, int connectionId, bool incoming)
         {
             if (_connections[connectionId] != null)

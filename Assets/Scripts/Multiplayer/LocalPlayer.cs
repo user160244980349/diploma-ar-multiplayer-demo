@@ -2,7 +2,6 @@
 using Events.EventTypes;
 using Multiplayer.Messages;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace Multiplayer
 {
