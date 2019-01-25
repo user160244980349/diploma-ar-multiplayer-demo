@@ -146,7 +146,7 @@ namespace Network
 
                 case NetworkMessageType.FallbackInfo:
                 {
-                    NetworkTransport.SetBroadcastCredentials(_socket.Id, ((FallbackInfo)message).netKey, 1, 1, out byte error);
+                    NetworkTransport.SetBroadcastCredentials(_socket.Id, ((FallbackInfo)message).netKey, 0, 0, out byte error);
                     _networkKey = ((FallbackInfo)message).netKey;
                     Debug.Log(_networkKey);
                     _fallbackPos = ((FallbackInfo)message).queuePosition;
