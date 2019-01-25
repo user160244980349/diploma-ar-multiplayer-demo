@@ -123,9 +123,11 @@ namespace Network
             switch (message.networkMessageType)
             {
                 case NetworkMessageType.FallbackHostReady:
+                {
                     State = NetworkUnitState.Up;
                     _socket.OpenConnection(cc);
                     break;
+                }
             }
         }
         private void OnConnectEvent(int connection)
