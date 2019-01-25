@@ -14,7 +14,7 @@ namespace Network
     {
         public bool FallbackMode { get; set; }
         public NetworkUnitState State { get; private set; }
-        public int BroadcastKey { get; internal set; }
+        public int BroadcastKey { get; set; }
 
         public OnHostStart OnStart;
         public OnHostShutdown OnShutdown;
@@ -26,14 +26,14 @@ namespace Network
         private Socket _socket;
         private List<int> _connections;
 
-        private int _networkKey;
         private float _timeForDiscovery = 10;
         private float _switchDelay = 30;
 
         #region MonoBehaviour
         private void Start()
         {
-            _networkKey = KeyGenerator.Generate();
+            if (BroadcastKey == 0)
+                BroadcastKey = KeyGenerator.Generate();
 
             _connections = new List<int>();
 
@@ -124,7 +124,7 @@ namespace Network
             if (FallbackMode)
             {
                 Debug.Log("HOST::Broadcasting to 8001 port");
-                _socket.StartBroadcast(_networkKey, 8001, new FallbackHostReady());
+                _socket.StartBroadcast(BroadcastKey, 8001, new FallbackHostReady());
             }
         }
         private void OnConnectEvent(int connection)

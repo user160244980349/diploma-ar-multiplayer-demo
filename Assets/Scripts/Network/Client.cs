@@ -14,6 +14,7 @@ namespace Network
     {
         public NetworkUnitState State { get; private set; }
         public ConnectionConfiguration ConnectionConfig { get; set; }
+        public int BroadcastKey { get; set; }
         public OnClientStart OnStart;
         public OnClientShutdown OnShutdown;
 
@@ -25,7 +26,6 @@ namespace Network
         private int _connectionId;
 
         private float _switchDelay;
-        private int _broadcastKey;
 
         #region MonoBehaviour
         private void Start()
@@ -79,7 +79,7 @@ namespace Network
                     if (_switchDelay < 0)
                     {
                         Debug.Log("CLIENT::Falling back");
-                        NetworkManager.Singleton.Fallback(_broadcastKey);
+                        NetworkManager.Singleton.Fallback(BroadcastKey);
                         Shutdown();
                     }
                     break;
@@ -148,9 +148,9 @@ namespace Network
                 case NetworkMessageType.FallbackInfo:
                 {
                     var fallbackInfo = (FallbackInfo)message;
-                    _broadcastKey = fallbackInfo.netKey;
+                    BroadcastKey = fallbackInfo.netKey;
                     _switchDelay = fallbackInfo.switchDelay;
-                    _socket.SetBroadcastReceiveKey(_broadcastKey);
+                    _socket.SetBroadcastReceiveKey(BroadcastKey);
                     break;
                 }
 
