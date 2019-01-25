@@ -132,7 +132,7 @@ namespace Network
             Debug.Log(string.Format("HOST::Client {0} connected to socket {1}", connection, _socket.Id));
             _connections.Add(connection);
 
-            Send(new FallbackInfo(_networkKey, (connection - 1) * _switchDelay), connection);
+            Send(new FallbackInfo(BroadcastKey, (connection - 1) * _switchDelay), connection);
         }
         private void OnBroadcastEvent(ConnectionConfiguration cc, ANetworkMessage message)
         {
