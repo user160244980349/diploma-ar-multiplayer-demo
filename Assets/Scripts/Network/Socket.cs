@@ -180,6 +180,7 @@ namespace Network
         }
         public void SetBroadcastReceiveKey(int key)
         {
+            Debug.LogFormat("SOCKET::Broadcast key is {0}", key);
             NetworkTransport.SetBroadcastCredentials(Id, key, 1, 0, out _error);
             ShowErrorIfThrown();
         }
