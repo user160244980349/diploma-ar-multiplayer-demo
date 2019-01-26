@@ -124,6 +124,7 @@ namespace Network
             {
                 case NetworkMessageType.FallbackHostReady:
                 {
+                    if (State != NetworkUnitState.FallingBack) break;
                     State = NetworkUnitState.Up;
                     _socket.OpenConnection(cc);
                     break;
