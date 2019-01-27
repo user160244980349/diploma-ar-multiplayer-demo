@@ -1,5 +1,4 @@
 using Events;
-using Events.EventTypes;
 using Multiplayer.Messages;
 using Network;
 using UI.Console;
@@ -12,8 +11,6 @@ namespace Scenes
     {
         public static PlaygroundManager Singleton { get; private set; }
 
-        private SendMultiplayerMessage _smm;
-        private ButtonClicked _buttonClick;
         private GameObject _menu;
 
         #region MonoBehaviour
@@ -30,18 +27,17 @@ namespace Scenes
             _menu = GameObject.Find("Menu");
             _menu.SetActive(false);
 
-            _smm = EventManager.Singleton.GetEvent<SendMultiplayerMessage>();
-            _buttonClick = EventManager.Singleton.GetEvent<ButtonClicked>();
-            _buttonClick.Subscribe(OnButtonClick);
+            EventManager.Singleton.RegisterListener(GameEventType.ButtonClicked, OnButtonClick);
         }
         private void OnDestroy()
         {
-            _buttonClick.Unsubscribe(OnButtonClick);
+            EventManager.Singleton.UnregisterListener(GameEventType.ButtonClicked, OnButtonClick);
         }
         #endregion
 
-        private void OnButtonClick(Button button)
+        private void OnButtonClick(object info)
         {
+            var button = info as Button;
             switch (button.name)
             {
                 case "Resume":
@@ -64,14 +60,12 @@ namespace Scenes
         private void Connect()
         {
             var playerName = GameObject.Find("PlayerName").GetComponent<InputField>();
-            _smm.Publish(new Connect(playerName.text, Color.blue));
+            EventManager.Singleton.Publish(GameEventType.MultiplayerMessageSend, new Connect(playerName.text, Color.blue));
             Destroy(GameObject.Find("ConnectDialog"));
         }
         private void Leave()
         {
-            _smm.Publish(new Disconnect(2));
-
-            ApplicationManager.Singleton.LoadScene("Loading");
+            EventManager.Singleton.Publish(GameEventType.MultiplayerMessageSend, new Disconnect(2));
 
             if (NetworkManager.Singleton.HostBooted)
             {

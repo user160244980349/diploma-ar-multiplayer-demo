@@ -8,7 +8,6 @@ namespace Network
     public class NetworkManager : MonoBehaviour
     {
         public static NetworkManager Singleton { get; private set; }
-        public bool FallbackMode { get; set; }
         public bool HostBooted { get; private set; }
         public bool ClientBooted { get; private set; }
 
@@ -19,6 +18,8 @@ namespace Network
         private Client _client;
         private Socket[] _sockets;
         private ushort _maxSockets = 16;
+
+        private bool _fallbackMode;
         private int _broadcastKey;
 
         #region MonoBehaviour
@@ -48,9 +49,9 @@ namespace Network
         }
         #endregion
 
-        public void Fallback(int broadcastKey)
+        public void OnFallback(int broadcastKey)
         {
-            FallbackMode = true;
+            _fallbackMode = true;
             _broadcastKey = broadcastKey;
         }
         public void RegisterSocket(Socket socket)
@@ -72,8 +73,8 @@ namespace Network
 
             var hostObject = Instantiate(_hostPrefab, gameObject.transform);
             _host = hostObject.GetComponent<Host>();
-            _host.OnStart = HostStart;
-            _host.OnShutdown = HostShutdown;
+            _host.OnStart = OnHostStart;
+            _host.OnShutdown = OnHostShutdown;
         }
         public void SpawnHost(int key)
         {
@@ -81,31 +82,33 @@ namespace Network
 
             var hostObject = Instantiate(_hostPrefab, gameObject.transform);
             _host = hostObject.GetComponent<Host>();
-            _host.FallbackMode = true;
             _host.BroadcastKey = key;
-            _host.OnStart = HostStart;
-            _host.OnShutdown = HostShutdown;
+            _host.OnStart = OnHostStart;
+            _host.OnShutdown = OnHostShutdown;
+            _fallbackMode = false;
         }
         public void DespawnHost()
         {
             _host.Shutdown();
         }
-        private void HostStart(Host networkHost)
+        private void OnHostStart(Host networkHost)
         {
-            if (FallbackMode)
+            if (_fallbackMode)
             {
-                FallbackMode = false;
+                _fallbackMode = false;
             }
-            else
-                ApplicationManager.Singleton.LoadScene("Playground");
+            else { }
             HostBooted = true;
         }
-        private void HostShutdown()
+        private void OnHostShutdown()
         {
             HostBooted = false;
             _host = null;
-            ApplicationManager.Singleton.LoadScene("MainMenu");
         }
+
+        // ApplicationManager.Singleton.LoadScene("Playground");
+        // ApplicationManager.Singleton.LoadScene("MainMenu");
+        // ApplicationManager.Singleton.LoadScene("Loading");
 
         public void SpawnClient()
         {
@@ -113,8 +116,9 @@ namespace Network
 
             var clientObject = Instantiate(_clientPrefab, gameObject.transform);
             _client = clientObject.GetComponent<Client>();
-            _client.OnStart = ClientStart;
-            _client.OnShutdown = ClientShutdown;
+            _client.OnStart = OnClientStart;
+            _client.OnFallback = OnFallback;
+            _client.OnShutdown = OnClientShutdown;
 
             _client.ConnectionConfig = new ConnectionConfiguration
             {
@@ -126,19 +130,18 @@ namespace Network
         {
             _client.Shutdown();
         }
-        private void ClientStart(Client networkClient)
+        private void OnClientStart(Client networkClient)
         {
             ClientBooted = true;
         }
-        private void ClientShutdown()
+        private void OnClientShutdown()
         {
             _client = null;
-            if (FallbackMode)
+            if (_fallbackMode)
             {
                 SpawnHost(_broadcastKey);
             }
-            else
-                ApplicationManager.Singleton.LoadScene("MainMenu");
+            else { }
         }
     }
 }
