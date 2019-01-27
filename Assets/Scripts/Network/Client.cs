@@ -47,9 +47,9 @@ namespace Network
                 case ClientState.Up:
                     Up();
                     break;
-
-                case ClientState.FallingBack:
-                    FallingBack();
+                    
+                case ClientState.WaitingReconnect:
+                    WaitingReconnect();
                     break;
 
                 case ClientState.ShuttingDown:
@@ -96,7 +96,7 @@ namespace Network
         {
 
         }
-        private void FallingBack()
+        private void WaitingReconnect()
         {
             if (!_switch.Elapsed) return;
             Debug.Log("CLIENT::Falling back");
@@ -134,12 +134,11 @@ namespace Network
         }
         private void OnBroadcastEvent(ConnectionConfiguration cc, ANetworkMessage message)
         {
-            Debug.Log(string.Format("CLIENT::Received broadcast data on socket {0}", _socket.Id));
             switch (message.networkMessageType)
             {
                 case NetworkMessageType.FallbackHostReady:
                 {
-                    if (State != ClientState.FallingBack) break;
+                    if (State != ClientState.WaitingReconnect) break;
                     State = ClientState.Up;
                     _socket.OpenConnection(cc);
                     break;
@@ -183,7 +182,7 @@ namespace Network
         {
             Debug.Log("CLIENT::Disconnected from host");
             _switch.Running = true;
-            State = ClientState.FallingBack;
+            State = ClientState.WaitingReconnect;
         }
         private void OnSocketShutdown(int socketId)
         {

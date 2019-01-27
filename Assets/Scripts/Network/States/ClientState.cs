@@ -4,7 +4,7 @@
     {
         StartingUp,
         Up,
-        FallingBack,
+        WaitingReconnect,
         ShuttingDown,
         Down,
     }
