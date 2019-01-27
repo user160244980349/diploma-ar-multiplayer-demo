@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using Events;
-using Events.EventTypes;
 using Network.Configurations;
 using Network.Delegates;
 using Network.Messages;
@@ -12,19 +11,18 @@ namespace Network
 {
     public class Host : MonoBehaviour
     {
-        public bool FallbackMode { get; set; }
-        public NetworkUnitState State { get; private set; }
+        public HostState State { get; private set; }
         public int BroadcastKey { get; set; }
 
         public OnHostStart OnStart;
         public OnHostShutdown OnShutdown;
 
-        private SendNetworkMessage _snm;
-        private ReceiveNetworkMessage _rnm;
         private GameObject _socketPrefab;
 
         private Socket _socket;
         private List<int> _connections;
+
+        private Timer _discovery;
 
         private float _timeForDiscovery = 10;
         private float _switchDelay = 30;
@@ -32,15 +30,58 @@ namespace Network
         #region MonoBehaviour
         private void Start()
         {
-            if (BroadcastKey == 0)
-                BroadcastKey = KeyGenerator.Generate();
-
             _connections = new List<int>();
 
-            _snm = EventManager.Singleton.GetEvent<SendNetworkMessage>();
-            _rnm = EventManager.Singleton.GetEvent<ReceiveNetworkMessage>();
+            EventManager.Singleton.RegisterListener(GameEventType.NetworkMessageSend, SendToAll);
 
-            _socketPrefab = (GameObject)Resources.Load("Networking/Socket");
+            _socketPrefab = Resources.Load("Networking/Socket") as GameObject;
+            _discovery = gameObject.AddComponent<Timer>();
+            gameObject.name = "NetworkHost";
+
+            Init();
+        }
+        private void Update()
+        {
+            switch (State)
+            {
+                case HostState.StartingUp:
+                    StartingUp();
+                    break;
+
+                case HostState.Up:
+                    Up();
+                    break;
+
+                case HostState.FallingBack:
+                    FallingBack();
+                    break;
+
+                case HostState.ShuttingDown:
+                    ShuttingDown();
+                    break;
+
+                case HostState.Down:
+                    Down();
+                    break;
+            }
+        }
+        private void OnDestroy()
+        {
+            EventManager.Singleton.UnregisterListener(GameEventType.NetworkMessageSend, SendToAll);
+        }
+        #endregion
+
+        #region Lifecycle
+        private void Init()
+        {
+            if (BroadcastKey == 0)
+                BroadcastKey = KeyGenerator.Generate();
+            else
+            {
+                _discovery.Remains = 5;
+                _discovery.Running = true;
+                State = HostState.FallingBack;
+            }
 
             var socketObject = Instantiate(_socketPrefab, gameObject.transform);
             var socketScript = socketObject.GetComponent<Socket>();
@@ -57,71 +98,58 @@ namespace Network
                 maxConnections = 16,
                 packetSize = 1024,
             };
-            _snm.Subscribe(Send);
-
-            gameObject.name = "NetworkHost";
             Debug.LogFormat("HOST::Boot on port {0}", socketScript.Configuration.port);
         }
-        private void Update()
+        private void StartingUp()
         {
-            switch (State)
-            {
-                case NetworkUnitState.StartingUp:
-                {
-                    State = NetworkUnitState.Up;
-                    OnStart(this);
-                    break;
-                }
-
-                case NetworkUnitState.Up:
-                {
-                    if (FallbackMode)
-                    {
-                        _timeForDiscovery -= Time.deltaTime;
-                        if (_timeForDiscovery > 0) break;
-                        _socket.StopBroadcast();
-                        Debug.Log("HOST::Finished broadcasting to 8001 port");
-                        FallbackMode = false;
-                    }
-                    break;
-                }
-
-                case NetworkUnitState.ShuttingDown:
-                {
-                    if (_socket != null) break;
-                    State = NetworkUnitState.Down;
-                    break;
-                }
-
-                case NetworkUnitState.Down:
-                {
-                    OnShutdown();
-                    Destroy(gameObject);
-                    break;
-                }
-            }
+            State = HostState.Up;
+            OnStart(this);
         }
-        private void OnDestroy()
+        private void FallingBack()
         {
-            _snm.Unsubscribe(Send);
+            if (!_discovery.Elapsed) return;
+            _socket.StopBroadcast();
+            Debug.Log("HOST::Finished broadcasting to 8001 port");
+            State = HostState.Up;
+            OnStart(this);
+        }
+        private void Up()
+        {
+
+        }
+        private void ShuttingDown()
+        {
+            if (_socket != null) return;
+            State = HostState.Down;
+        }
+        private void Down()
+        {
+            OnShutdown();
+            Destroy(gameObject);
             Debug.Log("HOST::Shutdown");
         }
         #endregion
 
-        private void Send(ANetworkMessage message, int connectionId)
+        public void Shutdown()
         {
-            // Debug.Log("    HOST::Sending data");
-            _socket.Send(connectionId, 1, message);
+            State = HostState.ShuttingDown;
+            _socket.Close();
         }
-        private void Send(ANetworkMessage message)
+
+        private void Send(object message, int connectionId)
         {
             // Debug.Log("    HOST::Sending data");
-            for (var i = 0; i < _connections.Count; i++) _socket.Send(_connections[i], 1, message);
+            _socket.Send(connectionId, 1, message as ANetworkMessage);
+        }
+        private void SendToAll(object message)
+        {
+            // Debug.Log("    HOST::Sending data");
+            for (var i = 0; i < _connections.Count; i++) _socket.Send(_connections[i], 1, message as ANetworkMessage);
         }
         private void OnSocketOpened(Socket socket)
         {
             _socket = socket;
-            if (FallbackMode)
+            if (State == HostState.FallingBack)
             {
                 Debug.LogFormat("HOST::Broadcasting to 8001 port with key {0}", BroadcastKey);
                 _socket.StartBroadcast(BroadcastKey, 8001, new FallbackHostReady());
@@ -150,7 +178,7 @@ namespace Network
 
                 case NetworkMessageType.Higher:
                 {
-                    _rnm.Publish(message);
+                    EventManager.Singleton.Publish(GameEventType.NetworkMessageReceived, message);
                     break;
                 }
             }
@@ -163,11 +191,6 @@ namespace Network
         private void OnSocketClosed(int socketId)
         {
             _socket = null;
-        }
-        public void Shutdown()
-        {
-            State = NetworkUnitState.ShuttingDown;
-            _socket.Close();
         }
     }
 }

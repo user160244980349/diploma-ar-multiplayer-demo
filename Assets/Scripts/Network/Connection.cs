@@ -15,9 +15,17 @@ namespace Network
         public ConnectionState State { get; private set; }
         public ConnectionConfiguration Configuration { get; set; }
         public ConnectionBindings Bindings { get; set; }
+
         public OnConnectionStart OnConnect;
         public OnConnectionWaitingConfirm OnWaitingConfirm;
         public OnConnectionShutdown OnDisconnect;
+
+        private int _queueLength;
+        private Timer _send;
+        private Timer _disconnect;
+        private const float _sendRate = 0.02f;
+        private const float _disconnectDelay = 0.5f;
+        private byte _error;
 
         #region Configuration
         private int _socketId;
@@ -25,16 +33,9 @@ namespace Network
         private int _port;
         #endregion
 
-        private int _queueLength;
-        private float _lastSendTime;
-        private float _sendRate = 0.02f;
-        private float _timeAfterDisconnect = 0.02f;
-        private byte _error;
-
         #region MonoBehaviour
         private void Start()
         {
-
             Id = Bindings.id;
             _socketId = Bindings.socketId;
             _ip = Configuration.ip;
@@ -46,69 +47,83 @@ namespace Network
                 ShowErrorIfThrown();
             }
 
+            _send = gameObject.AddComponent<Timer>();
+            _disconnect = gameObject.AddComponent<Timer>();
             gameObject.name = string.Format("Connection{0}", Id);
-            //Debug.LogFormat("Connection opened {0}", Id);
         }
         private void Update()
         {
             switch (State)
             {
                 case ConnectionState.Connecting:
-                    State = ConnectionState.WaitingConfirm;
-                    OnWaitingConfirm(this);
+                    Connecting();
                     break;
 
                 case ConnectionState.WaitingConfirm:
-                    if (IncomingConnection)
-                    {
-                        State = ConnectionState.Connected;
-                        OnConnect(Id);
-                        break;
-                    }
-                    if (Confirmed)
-                    {
-                        State = ConnectionState.Connected;
-                        OnConnect(Id);
-                    }
+                    WaitingConfirm();
                     break;
 
                 case ConnectionState.Connected:
-                    if (Time.time - _lastSendTime < _sendRate) break;
-                    _lastSendTime = Time.time;
-                    if (_queueLength > 0)
-                    {
-                        _queueLength = 0;
-                        NetworkTransport.SendQueuedMessages(_socketId, Id, out _error);
-                        ShowErrorIfThrown();
-                    }
+                    Connected();
                     break;
 
                 case ConnectionState.Disconnecting:
-                    _timeAfterDisconnect -= Time.deltaTime;
-                    if (_timeAfterDisconnect > 0) break;
-                    State = ConnectionState.Disconnected;
+                    Disconnecting();
                     break;
 
                 case ConnectionState.Disconnected:
-                    OnDisconnect(Id);
-                    Destroy(gameObject);
+                    Disconnected();
                     break;
             }
         }
-        private void OnDestroy()
+        #endregion
+
+        #region Lifecycle
+        private void Connecting()
         {
-            //Debug.LogFormat("Connection closed {0}", Id);
+            State = ConnectionState.WaitingConfirm;
+            OnWaitingConfirm(this);
+        }
+        private void WaitingConfirm()
+        {
+            if (IncomingConnection || Confirmed)
+            {
+                State = ConnectionState.Connected;
+                _send.Running = true;
+                OnConnect(Id);
+            }
+        }
+        private void Connected()
+        {
+            if (!_send.Elapsed) return;
+            _send.Remains = _sendRate;
+            if (_queueLength > 0)
+            {
+                _queueLength = 0;
+                NetworkTransport.SendQueuedMessages(_socketId, Id, out _error);
+                ShowErrorIfThrown();
+            }
+        }
+        private void Disconnecting()
+        {
+            if (!_disconnect.Elapsed) return;
+            State = ConnectionState.Disconnected;
+        }
+        private void Disconnected()
+        {
+            OnDisconnect(Id);
+            Destroy(gameObject);
         }
         #endregion
 
         public void Disconnect()
         {
             State = ConnectionState.Disconnecting;
+            _disconnect.Running = true;
             if (IncomingDisconnection)
-            {
-                _timeAfterDisconnect = 0;
                 return;
-            }
+            else
+                _disconnect.Remains = _disconnectDelay;
             NetworkTransport.Disconnect(_socketId, Id, out _error);
             ShowErrorIfThrown();
         }

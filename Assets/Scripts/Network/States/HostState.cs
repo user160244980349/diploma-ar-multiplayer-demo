@@ -1,6 +1,6 @@
 ﻿namespace Network.States
 {
-    public enum NetworkUnitState
+    public enum HostState
     {
         StartingUp,
         Up,

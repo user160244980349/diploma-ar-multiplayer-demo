@@ -25,6 +25,7 @@ namespace Network.Delegates
 
     #region Client callbacks
     public delegate void OnClientStart(Client networkClient);
+    public delegate void OnClientFallback(int broadcastKey);
     public delegate void OnClientShutdown();
     #endregion
 }

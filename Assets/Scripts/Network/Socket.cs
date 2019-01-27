@@ -13,19 +13,13 @@ namespace Network
         public SocketConfiguration Configuration { get; set; }
         public bool EventsReady { get; set; }
         public SocketState State { get; private set; }
+
         public OnSocketStart OnSocketOpened;
         public OnConnectEvent OnConnected;
         public OnDataEvent OnDataReceived;
         public OnBroadcastEvent OnBroadcastReceived;
         public OnDisconnectEvent OnDisconnected;
         public OnSocketShutdown OnSocketClosed;
-
-        #region Configuration
-        private QosType[] _channels;
-        private int _port;
-        private ushort _maxConnections;
-        private int _packetSize;
-        #endregion
 
         private Formatter _formatter;
         private GameObject _connectionPrefab;
@@ -35,6 +29,13 @@ namespace Network
         private byte[] _packet;
         private int _activeConnections;
         private byte _error;
+
+        #region Configuration
+        private QosType[] _channels;
+        private int _port;
+        private ushort _maxConnections;
+        private int _packetSize;
+        #endregion
 
         #region MonoBehaviour
         private void Start()
@@ -48,7 +49,7 @@ namespace Network
             _connections = new Connection[_maxConnections + 1];
 
             _formatter = new Formatter();
-            _connectionPrefab = (GameObject)Resources.Load("Networking/Connection");
+            _connectionPrefab = Resources.Load("Networking/Connection") as GameObject;
 
             _connectionConfig = new ConnectionConfig {
                 ConnectTimeout = 100,
@@ -71,99 +72,108 @@ namespace Network
             switch (State)
             {
                 case SocketState.StartingUp:
-                {
-                    State = SocketState.Up;
-                    OnSocketOpened(this);
+                    StartingUp();
                     break;
-                }
 
                 case SocketState.OpeningConnection:
-                {
-
+                    OpeningConnection();
                     break;
-                }
 
                 case SocketState.Up:
-                {
-                    if (!EventsReady) break;
-                    EventsReady = false;
-                    NetworkEventType networkEvent;
-                    do
-                    {
-                        networkEvent = NetworkTransport.ReceiveFromHost(
-                            Id,
-                            out int connectionId,
-                            out int channelId,
-                            _packet,
-                            _packetSize,
-                            out int dataSize,
-                            out _error
-                        );
-                        ShowErrorIfThrown();
-
-                        switch (networkEvent)
-                        {
-                            case NetworkEventType.ConnectEvent:
-                            {
-                                OpenConnection(new ConnectionConfiguration(), connectionId, true);
-                                break;
-                            }
-
-                            case NetworkEventType.DataEvent:
-                            {
-                                var message = _formatter.Deserialize(_packet);
-                                message.ping = NetworkTransport.GetRemoteDelayTimeMS(Id, connectionId, message.timeStamp, out _error);
-                                ShowErrorIfThrown();
-                                OnDataReceived(connectionId, message);
-                                break;
-                            }
-
-                            case NetworkEventType.BroadcastEvent:
-                            {
-                                NetworkTransport.GetBroadcastConnectionMessage(Id, _packet, _packetSize, out int size, out _error);
-                                var message = _formatter.Deserialize(_packet);
-                                message.ping = NetworkTransport.GetRemoteDelayTimeMS(Id, connectionId, message.timeStamp, out _error);
-                                ShowErrorIfThrown();
-                                ConnectionConfiguration cc;
-                                NetworkTransport.GetBroadcastConnectionInfo(Id, out cc.ip, out cc.port, out _error);
-                                ShowErrorIfThrown();
-                                OnBroadcastReceived(cc, message);
-                                break;
-                            }
-
-                            case NetworkEventType.DisconnectEvent:
-                            {
-                                CloseConnection(connectionId, true);
-                                break;
-                            }
-
-                            case NetworkEventType.Nothing:
-                                break;
-                        }
-                    } while (networkEvent != NetworkEventType.Nothing);
+                    Up();
                     break;
-                }
 
                 case SocketState.ShuttingDown:
-                {
-                    if (_activeConnections != 0) break;
-                    NetworkManager.Singleton.UnregisterSocket(this);
-                    NetworkTransport.RemoveHost(Id);
-                    State = SocketState.Down;
+                    ShuttingDown();
                     break;
-                }
 
                 case SocketState.Down:
-                {
-                    OnSocketClosed(Id);
-                    Destroy(gameObject);
+                    Down();
                     break;
-                }
             }
         }
         private void OnDestroy()
         {
             //Debug.LogFormat("Socket closed {0}", Id);
+        }
+        #endregion
+
+        #region Lifecycle
+        private void StartingUp()
+        {
+            State = SocketState.Up;
+            OnSocketOpened(this);
+        }
+        private void OpeningConnection() { }
+        private void Up() {
+            if (!EventsReady) return;
+            EventsReady = false;
+            NetworkEventType networkEvent;
+            do
+            {
+                networkEvent = NetworkTransport.ReceiveFromHost(
+                    Id,
+                    out int connectionId,
+                    out int channelId,
+                    _packet,
+                    _packetSize,
+                    out int dataSize,
+                    out _error
+                );
+                ShowErrorIfThrown();
+
+                switch (networkEvent)
+                {
+                    case NetworkEventType.ConnectEvent:
+                    {
+                        OpenConnection(new ConnectionConfiguration(), connectionId, true);
+                        break;
+                    }
+
+                    case NetworkEventType.DataEvent:
+                    {
+                        var message = _formatter.Deserialize(_packet);
+                        message.ping = NetworkTransport.GetRemoteDelayTimeMS(Id, connectionId, message.timeStamp, out _error);
+                        ShowErrorIfThrown();
+                        OnDataReceived(connectionId, message);
+                        break;
+                    }
+
+                    case NetworkEventType.BroadcastEvent:
+                    {
+                        NetworkTransport.GetBroadcastConnectionMessage(Id, _packet, _packetSize, out int size, out _error);
+                        var message = _formatter.Deserialize(_packet);
+                        message.ping = NetworkTransport.GetRemoteDelayTimeMS(Id, connectionId, message.timeStamp, out _error);
+                        ShowErrorIfThrown();
+                        ConnectionConfiguration cc;
+                        NetworkTransport.GetBroadcastConnectionInfo(Id, out cc.ip, out cc.port, out _error);
+                        ShowErrorIfThrown();
+                        OnBroadcastReceived(cc, message);
+                        break;
+                    }
+
+                    case NetworkEventType.DisconnectEvent:
+                    {
+                        CloseConnection(connectionId, true);
+                        break;
+                    }
+
+                    case NetworkEventType.Nothing:
+                        break;
+                }
+            } while (networkEvent != NetworkEventType.Nothing);
+        }
+        private void ShuttingDown()
+        {
+            if (_activeConnections != 0) return;
+            NetworkManager.Singleton.UnregisterSocket(this);
+            NetworkTransport.RemoveHost(Id);
+            State = SocketState.Down;
+        }
+        private void Down()
+        {
+            OnSocketClosed(Id);
+            Destroy(gameObject);
         }
         #endregion
 

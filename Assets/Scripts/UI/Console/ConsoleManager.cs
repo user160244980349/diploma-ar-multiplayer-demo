@@ -38,7 +38,7 @@ namespace UI.Console
         public void InstantiateConsole()
         {
             var canvas = GameObject.Find("Canvas");
-            var consolePanel = Instantiate((GameObject)Resources.Load("UI/Console/Console"), canvas.transform);
+            var consolePanel = Instantiate(Resources.Load("UI/Console/Console") as GameObject, canvas.transform);
 
             _console = consolePanel.GetComponent<Console>();
             _console.previousMessages = _messages;

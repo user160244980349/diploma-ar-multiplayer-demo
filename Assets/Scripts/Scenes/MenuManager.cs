@@ -1,5 +1,4 @@
 ﻿using Events;
-using Events.EventTypes;
 using Multiplayer;
 using Network;
 using UI.Console;
@@ -12,7 +11,6 @@ namespace Scenes
     {
         public static MenuManager Singleton { get; private set; }
 
-        private ButtonClicked _buttonClick;
         private Text _ip;
         private Text _port;
 
@@ -30,23 +28,23 @@ namespace Scenes
         {
             ConsoleManager.Singleton.InstantiateConsole();
 
-            _hostObject = (GameObject)Resources.Load("Networking/NetworkHost");
-            _clientObject = (GameObject)Resources.Load("Networking/NetworkClient");
+            _hostObject = Resources.Load("Networking/NetworkHost") as GameObject;
+            _clientObject = Resources.Load("Networking/NetworkClient") as GameObject;
 
             _ip = GameObject.Find("Ip").GetComponentInChildren<Text>();
             _port = GameObject.Find("Port").GetComponentInChildren<Text>();
 
-            _buttonClick = EventManager.Singleton.GetEvent<ButtonClicked>();
-            _buttonClick.Subscribe(OnButtonClick);
+            EventManager.Singleton.RegisterListener(GameEventType.ButtonClicked, OnButtonClick);
         }
         private void OnDestroy()
         {
-            _buttonClick.Unsubscribe(OnButtonClick);
+            EventManager.Singleton.UnregisterListener(GameEventType.ButtonClicked, OnButtonClick);
         }
         #endregion
 
-        private void OnButtonClick(Button button)
+        private void OnButtonClick(object info)
         {
+            var button = info as Button;
             switch (button.name)
             {
                 case "Quit":
@@ -68,13 +66,11 @@ namespace Scenes
         }
         private void Hosting()
         {
-            ApplicationManager.Singleton.LoadScene("Loading");
             MultiplayerManager.Singleton.Hosting = true;
             NetworkManager.Singleton.SpawnHost();
         }
         private void Connecting()
         {
-            ApplicationManager.Singleton.LoadScene("Loading");
             MultiplayerManager.Singleton.Hosting = false;
             NetworkManager.Singleton.SpawnClient();
         }

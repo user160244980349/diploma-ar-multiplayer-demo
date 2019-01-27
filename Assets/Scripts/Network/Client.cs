@@ -1,10 +1,8 @@
 ﻿using Events;
-using Events.EventTypes;
 using Network.Configurations;
 using Network.Delegates;
 using Network.Messages;
 using Network.States;
-using System;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -12,30 +10,66 @@ namespace Network
 {
     public class Client : MonoBehaviour
     {
-        public NetworkUnitState State { get; private set; }
-        public ConnectionConfiguration ConnectionConfig { get; set; }
+        public ClientState State { get; private set; }
         public int BroadcastKey { get; set; }
+        public ConnectionConfiguration ConnectionConfig { get; set; }
+
         public OnClientStart OnStart;
+        public OnClientFallback OnFallback;
         public OnClientShutdown OnShutdown;
 
-        private SendNetworkMessage _snm;
-        private ReceiveNetworkMessage _rnm;
         private GameObject _socketPrefab;
 
         private Socket _socket;
-        private int _connectionId;
+        private int _connection;
 
-        private float _switchDelay;
+        private Timer _switch;
 
         #region MonoBehaviour
         private void Start()
         {
+            EventManager.Singleton.RegisterListener(GameEventType.NetworkMessageSend, Send);
 
-            _snm = EventManager.Singleton.GetEvent<SendNetworkMessage>();
-            _rnm = EventManager.Singleton.GetEvent<ReceiveNetworkMessage>();
+            _socketPrefab = Resources.Load("Networking/Socket") as GameObject;
+            _switch = gameObject.AddComponent<Timer>();
+            gameObject.name = "NetworkClient";
 
-            _socketPrefab = (GameObject)Resources.Load("Networking/Socket");
+            Init();
+        }
+        private void Update()
+        {
+            switch (State)
+            {
+                case ClientState.StartingUp:
+                    StartingUp();
+                    break;
 
+                case ClientState.Up:
+                    Up();
+                    break;
+
+                case ClientState.FallingBack:
+                    FallingBack();
+                    break;
+
+                case ClientState.ShuttingDown:
+                    ShuttingDown();
+                    break;
+
+                case ClientState.Down:
+                    Down();
+                    break;
+            }
+        }
+        private void OnDestroy()
+        {
+            EventManager.Singleton.UnregisterListener(GameEventType.NetworkMessageSend, Send);
+        }
+        #endregion
+
+        #region Lifecycle
+        private void Init()
+        {
             var socketObject = Instantiate(_socketPrefab, gameObject.transform);
             var socketScript = socketObject.GetComponent<Socket>();
             socketScript.OnSocketOpened = OnSocketStart;
@@ -51,66 +85,47 @@ namespace Network
                 port = 8001,
                 packetSize = 1024,
             };
-            _snm.Subscribe(Send);
-
-            gameObject.name = "NetworkClient";
             Debug.LogFormat("CLIENT::Boot on port {0}", socketScript.Configuration.port);
         }
-        private void Update()
+        private void StartingUp()
         {
-            switch (State)
-            {
-                case NetworkUnitState.StartingUp:
-                {
-                    State = NetworkUnitState.Up;
-                    OnStart(this);
-                    break;
-                }
-
-                case NetworkUnitState.Up:
-                {
-
-                    break;
-                }
-
-                case NetworkUnitState.FallingBack:
-                {
-                    _switchDelay -= Time.deltaTime;
-                    if (_switchDelay < 0)
-                    {
-                        Debug.Log("CLIENT::Falling back");
-                        NetworkManager.Singleton.Fallback(BroadcastKey);
-                        Shutdown();
-                    }
-                    break;
-                }
-
-                case NetworkUnitState.ShuttingDown:
-                {
-                    if (_socket != null) break;
-                    State = NetworkUnitState.Down;
-                    break;
-                }
-
-                case NetworkUnitState.Down:
-                {
-                    OnShutdown();
-                    Destroy(gameObject);
-                    break;
-                }
-            }
+            State = ClientState.Up;
+            OnStart(this);
         }
-        private void OnDestroy()
+        private void Up()
         {
-            _snm.Unsubscribe(Send);
+
+        }
+        private void FallingBack()
+        {
+            if (!_switch.Elapsed) return;
+            Debug.Log("CLIENT::Falling back");
+            OnFallback(BroadcastKey);
+            Shutdown();
+        }
+        private void ShuttingDown()
+        {
+            if (_socket != null) return;
+            State = ClientState.Down;
+        }
+        private void Down()
+        {
             Debug.Log("CLIENT::Shutdown");
+            OnShutdown();
+            Destroy(gameObject);
         }
         #endregion
 
-        private void Send(ANetworkMessage message)
+        public void Shutdown()
+        {
+            State = ClientState.ShuttingDown;
+            _socket.Close();
+        }
+
+        private void Send(object message)
         {
             // Debug.Log("CLIENT::Sending data");
-            _socket.Send(_connectionId, 0, message);
+            _socket.Send(_connection, 0, message as ANetworkMessage);
         }
         private void OnSocketStart(Socket socket)
         {
@@ -124,8 +139,8 @@ namespace Network
             {
                 case NetworkMessageType.FallbackHostReady:
                 {
-                    if (State != NetworkUnitState.FallingBack) break;
-                    State = NetworkUnitState.Up;
+                    if (State != ClientState.FallingBack) break;
+                    State = ClientState.Up;
                     _socket.OpenConnection(cc);
                     break;
                 }
@@ -134,8 +149,7 @@ namespace Network
         private void OnConnectEvent(int connection)
         {
             Debug.Log("CLIENT::Connected to host");
-            _connectionId = connection;
-            ApplicationManager.Singleton.LoadScene("Playground");
+            _connection = connection;
         }
         private void OnDataEvent(int connection, ANetworkMessage message)
         {
@@ -152,7 +166,7 @@ namespace Network
                 {
                     var fallbackInfo = (FallbackInfo)message;
                     BroadcastKey = fallbackInfo.netKey;
-                    _switchDelay = fallbackInfo.switchDelay;
+                    _switch.Remains = fallbackInfo.switchDelay;
                     _socket.SetBroadcastReceiveKey(BroadcastKey);
                     Debug.LogFormat("CLIENT::Got broadcast key {0}", BroadcastKey);
                     break;
@@ -160,7 +174,7 @@ namespace Network
 
                 case NetworkMessageType.Higher:
                 {
-                    _rnm.Publish(message);
+                    EventManager.Singleton.Publish(GameEventType.NetworkMessageReceived, message);
                     break;
                 }
             }
@@ -168,16 +182,12 @@ namespace Network
         private void OnDisconnectEvent(int connection)
         {
             Debug.Log("CLIENT::Disconnected from host");
-            State = NetworkUnitState.FallingBack;
+            _switch.Running = true;
+            State = ClientState.FallingBack;
         }
         private void OnSocketShutdown(int socketId)
         {
             _socket = null;
-        }
-        public void Shutdown()
-        {
-            State = NetworkUnitState.ShuttingDown;
-            _socket.Close();
         }
     }
 }
