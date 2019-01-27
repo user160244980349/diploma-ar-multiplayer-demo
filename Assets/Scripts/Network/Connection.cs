@@ -21,10 +21,12 @@ namespace Network
         public OnConnectionShutdown OnDisconnect;
 
         private int _queueLength;
+        private Timer _connect;
         private Timer _send;
         private Timer _disconnect;
         private const float _sendRate = 0.02f;
-        private const float _disconnectDelay = 0.5f;
+        private const float _connectDelay = 0.2f;
+        private const float _disconnectDelay = 0.2f;
         private byte _error;
 
         #region Configuration
@@ -49,6 +51,9 @@ namespace Network
 
             _send = gameObject.AddComponent<Timer>();
             _disconnect = gameObject.AddComponent<Timer>();
+            _connect = gameObject.AddComponent<Timer>();
+            _connect.Remains = _connectDelay;
+            _connect.Running = true;
             gameObject.name = string.Format("Connection{0}", Id);
         }
         private void Update()
@@ -86,7 +91,7 @@ namespace Network
         }
         private void WaitingConfirm()
         {
-            if (IncomingConnection || Confirmed)
+            if ((IncomingConnection || Confirmed) && _connect.Elapsed)
             {
                 State = ConnectionState.Connected;
                 _send.Running = true;

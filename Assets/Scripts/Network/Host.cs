@@ -157,7 +157,7 @@ namespace Network
                     Thread.Sleep(10);
                     Debug.LogFormat("HOST::Broadcasting to {1} port with key {0}", BroadcastKey, 8001 + i);
                     _socket.StartBroadcast(BroadcastKey, 8001 + i, new FallbackHostReady());
-                    Thread.Sleep(10);
+                    Thread.Sleep(100);
                     _socket.StopBroadcast();
                 }
             }
