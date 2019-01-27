@@ -91,7 +91,7 @@ namespace Network
         }
         private void WaitingConfirm()
         {
-            if ((IncomingConnection || Confirmed) && _connect.Elapsed)
+            if (IncomingConnection && _connect.Elapsed || Confirmed)
             {
                 State = ConnectionState.Connected;
                 _send.Running = true;
