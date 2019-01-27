@@ -3,6 +3,7 @@ using Network.Configurations;
 using Network.Delegates;
 using Network.Messages;
 using Network.States;
+using System;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -82,7 +83,7 @@ namespace Network
             {
                 channels = new QosType[2] { QosType.Reliable, QosType.Unreliable },
                 maxConnections = 1,
-                port = 8001,
+                port = 8001 + DateTime.Now.Second,
                 packetSize = 1024,
             };
             Debug.LogFormat("CLIENT::Boot on port {0}", socketScript.Configuration.port);

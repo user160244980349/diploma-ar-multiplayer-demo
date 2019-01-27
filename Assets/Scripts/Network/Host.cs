@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading;
 using Events;
 using Network.Configurations;
 using Network.Delegates;
@@ -108,7 +109,7 @@ namespace Network
         private void FallingBack()
         {
             if (!_discovery.Elapsed) return;
-            _socket.StopBroadcast();
+            // _socket.StopBroadcast();
             Debug.Log("HOST::Finished broadcasting to 8001 port");
             State = HostState.Up;
             OnStart(this);
@@ -151,8 +152,14 @@ namespace Network
             _socket = socket;
             if (State == HostState.FallingBack)
             {
-                Debug.LogFormat("HOST::Broadcasting to 8001 port with key {0}", BroadcastKey);
-                _socket.StartBroadcast(BroadcastKey, 8001, new FallbackHostReady());
+                for (var i = 0; i < 60; i++)
+                {
+                    Thread.Sleep(10);
+                    Debug.LogFormat("HOST::Broadcasting to {1} port with key {0}", BroadcastKey, 8001 + i);
+                    _socket.StartBroadcast(BroadcastKey, 8001 + i, new FallbackHostReady());
+                    Thread.Sleep(100);
+                    _socket.StopBroadcast();
+                }
             }
         }
         private void OnConnectEvent(int connection)
@@ -164,6 +171,7 @@ namespace Network
         }
         private void OnBroadcastEvent(ConnectionConfiguration cc, ANetworkMessage message)
         {
+
         }
         private void OnDataEvent(int connection, ANetworkMessage message)
         {
