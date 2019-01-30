@@ -77,6 +77,7 @@ namespace Network
                     }
                     case SocketState.Closed:
                     {
+                        State = ClientState.ShuttingDown;
                         Destroy(_socket.gameObject);
                         break;
                     }

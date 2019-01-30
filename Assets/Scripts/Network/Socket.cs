@@ -196,8 +196,14 @@ namespace Network
                 }
                 case SocketState.Opening:
                 {
-                    State = SocketState.Opened;
                     Id = NetworkTransport.AddHost(_topology, _port);
+                    if (Id < 0)
+                    {
+                        State = SocketState.Closed;
+                        break;
+                    }
+                    State = SocketState.Opened;
+
                     gameObject.name = string.Format("Socket{0}", Id);
                     NetworkManager.Singleton.RegisterSocket(this);
                     break;

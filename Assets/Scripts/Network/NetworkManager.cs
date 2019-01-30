@@ -60,6 +60,7 @@ namespace Network
                     }
                     case ClientState.Down:
                     {
+                        ClientBooted = false;
                         Destroy(_client.gameObject);
                         break;
                     }
@@ -72,6 +73,7 @@ namespace Network
                 {
                     case HostState.Down:
                     {
+                        HostBooted = false;
                         Destroy(_client.gameObject);
                         break;
                     }
@@ -100,7 +102,6 @@ namespace Network
         public void SpawnHost()
         {
             if (HostBooted) return;
-
             var hostObject = Instantiate(_hostPrefab, gameObject.transform);
             _host = hostObject.GetComponent<Host>();
         }
@@ -111,7 +112,6 @@ namespace Network
         public void SpawnClient()
         {
             if (ClientBooted) return;
-
             var clientObject = Instantiate(_clientPrefab, gameObject.transform);
             _client = clientObject.GetComponent<Client>();
         }
