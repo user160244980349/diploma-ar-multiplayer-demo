@@ -6,6 +6,7 @@ namespace Network.Messages
         Connect,
         Disconnect,
         FallbackInfo,
+        QueueShuffle,
         FallbackHostReady,
         Higher,
     }

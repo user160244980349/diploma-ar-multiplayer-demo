@@ -1,4 +1,4 @@
-﻿namespace Network.Connection
+﻿namespace Network
 {
     public enum ConnectionState
     {

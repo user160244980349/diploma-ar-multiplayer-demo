@@ -1,7 +1,4 @@
-﻿using Network.Client;
-using Network.Host;
-using Network.Socket;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Networking;
 
 
@@ -16,9 +13,9 @@ namespace Network
         private GameObject _hostPrefab;
         private GameObject _clientPrefab;
 
-        private NetworkHost _host;
-        private Client.NetworkClient _client;
-        private NetworkSocket[] _sockets;
+        private Host _host;
+        private Client _client;
+        private Socket[] _sockets;
         private ushort _maxSockets = 16;
 
         private bool _fallbackMode;
@@ -33,7 +30,7 @@ namespace Network
 
             DontDestroyOnLoad(gameObject);
             gameObject.name = "NetworkManager";
-            _sockets = new NetworkSocket[_maxSockets];
+            _sockets = new Socket[_maxSockets];
 
             var config = new GlobalConfig
             {
@@ -57,11 +54,10 @@ namespace Network
                         Destroy(_client.gameObject);
 
                         var hostObject = Instantiate(_hostPrefab, gameObject.transform);
-                        _host = hostObject.GetComponent<NetworkHost>();
+                        _host = hostObject.GetComponent<Host>();
                         _host.BroadcastKey = broadcastKey;
                         break;
                     }
-
                     case ClientState.Down:
                     {
                         Destroy(_client.gameObject);
@@ -88,11 +84,11 @@ namespace Network
         }
         #endregion
 
-        public void RegisterSocket(NetworkSocket socket)
+        public void RegisterSocket(Socket socket)
         {
             _sockets[socket.Id] = socket;
         }
-        public void UnregisterSocket(NetworkSocket socket)
+        public void UnregisterSocket(Socket socket)
         {
             _sockets[socket.Id] = null;
         }
@@ -106,7 +102,7 @@ namespace Network
             if (HostBooted) return;
 
             var hostObject = Instantiate(_hostPrefab, gameObject.transform);
-            _host = hostObject.GetComponent<NetworkHost>();
+            _host = hostObject.GetComponent<Host>();
         }
         public void DespawnHost()
         {
@@ -117,7 +113,7 @@ namespace Network
             if (ClientBooted) return;
 
             var clientObject = Instantiate(_clientPrefab, gameObject.transform);
-            _client = clientObject.GetComponent<Client.NetworkClient>();
+            _client = clientObject.GetComponent<Client>();
         }
         public void DespawnClient()
         {

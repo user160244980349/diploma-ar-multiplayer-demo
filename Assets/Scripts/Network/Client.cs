@@ -1,21 +1,20 @@
 ﻿using Events;
 using Network.Messages;
-using Network.Socket;
 using System;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace Network.Client
+namespace Network
 {
-    public class NetworkClient : MonoBehaviour
+    public class Client : MonoBehaviour
     {
         public ClientState State { get; private set; }
         public int BroadcastKey { get; set; }
 
         private GameObject _socketPrefab;
 
-        private NetworkSocket _socket;
-        private int _connection;
+        private Socket _socket;
+        private int _host;
         private NetworkError _disconnectError;
 
         private Timer _switch;
@@ -30,11 +29,11 @@ namespace Network.Client
             _switch.Duration = _switchDelay;
 
             var socketObject = Instantiate(_socketPrefab, gameObject.transform);
-            _socket = socketObject.GetComponent<NetworkSocket>();
+            _socket = socketObject.GetComponent<Socket>();
             _socket.Settings = new SocketSettings
             {
                 channels = new QosType[2] { QosType.Reliable, QosType.Unreliable },
-                port = 8001 + DateTime.Now.Second,
+                port = 8001/* + DateTime.Now.Second*/,
                 maxConnections = 1,
                 packetSize = 1024,
             };
@@ -71,13 +70,11 @@ namespace Network.Client
                         _socket.Open();
                         break;
                     }
-
                     case SocketState.Opened:
                     {
                         _socket.Up();
                         break;
                     }
-
                     case SocketState.Closed:
                     {
                         Destroy(_socket.gameObject);
@@ -97,13 +94,11 @@ namespace Network.Client
                     _socket.OpenConnection("192.168.1.2", 8000);
                     break;
                 }
-
                 case ClientState.Up:
                 {
                     ParseMessages();
                     break;
                 }
-
                 case ClientState.WaitingReconnect:
                 {
                     while (_socket.PollMessage(out MessageWrapper wrapper))
@@ -112,7 +107,7 @@ namespace Network.Client
                         {
                             State = ClientState.Up;
                             _socket.OpenConnection(wrapper.ip, wrapper.port);
-                            Debug.LogFormat("CLIENT::Connecting to fallback host", BroadcastKey);
+                            Debug.LogFormat("CLIENT::Connecting to fallback {0}:{1} with key {2}", wrapper.ip, wrapper.port, BroadcastKey);
                             break;
                         }
                     }
@@ -122,7 +117,6 @@ namespace Network.Client
                     _socket.Close();
                     break;
                 }
-
                 case ClientState.FallingBack:
                 {
                     if (_socket != null) return;
@@ -130,19 +124,16 @@ namespace Network.Client
                     State = ClientState.WaitingSwitch;
                     break;
                 }
-
                 case ClientState.WaitingSwitch:
                 {
                     break;
                 }
-
                 case ClientState.ShuttingDown:
                 {
                     if (_socket != null) return;
                     State = ClientState.Down;
                     break;
                 }
-
                 case ClientState.Down:
                 {
                     Debug.Log("CLIENT::Shutdown");
@@ -158,35 +149,55 @@ namespace Network.Client
                 {
                     case NetworkMessageType.Connect:
                     {
-                        _connection = wrapper.connection;
-                        Debug.Log("CLIENT::Connected to host");
-                        EventManager.Singleton.Publish(GameEventType.Connected, null);
+                        _host = wrapper.connection;
+                        if (_socket.DisconnectError == NetworkError.Timeout)
+                        {
+                            Debug.LogFormat("CLIENT::Connection recovered to {0}:{1}", wrapper.ip, wrapper.port);
+                        }
+                        else
+                        {
+                            EventManager.Singleton.Publish(GameEventType.Connected, null);
+                            Debug.LogFormat("CLIENT::Connected to {0}:{1}", wrapper.ip, wrapper.port);
+                        }
                         break;
                     }
-
                     case NetworkMessageType.FallbackInfo:
                     {
                         var fallbackInfo = wrapper.message as FallbackInfo;
                         BroadcastKey = fallbackInfo.netKey;
                         _switch.Duration = fallbackInfo.switchDelay;
                         _socket.ReceiveBroadcast(BroadcastKey);
-                        Debug.LogFormat("CLIENT::Got broadcast key {0}", BroadcastKey);
+                        Debug.LogFormat("CLIENT::Got broadcast key {0}, fallback delay {1}", BroadcastKey, _switch.Duration);
                         break;
                     }
-
+                    case NetworkMessageType.QueueShuffle:
+                    {
+                        var fallbackInfo = wrapper.message as QueueShuffle;
+                        _switch.Duration = fallbackInfo.switchDelay;
+                        Debug.LogFormat("CLIENT::Queue shuffled, fallback delay {0}", _switch.Duration);
+                        break;
+                    }
                     case NetworkMessageType.Higher:
                     {
                         EventManager.Singleton.Publish(GameEventType.NetworkMessageReceived, wrapper.message);
+                        Debug.LogFormat("CLIENT::Received higher message from {0}:{1} with ping {2}", wrapper.ip, wrapper.port, wrapper.ping);
                         break;
                     }
-
                     case NetworkMessageType.Disconnect:
                     {
-                        _switch.Discard();
-                        _switch.Running = true;
-                        State = ClientState.WaitingReconnect;
-                        Debug.Log("CLIENT::Disconnected from host");
-                        EventManager.Singleton.Publish(GameEventType.Disconnected, null);
+                        if (_socket.DisconnectError == NetworkError.Timeout)
+                        {
+                            State = ClientState.WaitingReconnect;
+                            _switch.Discard();
+                            _switch.Running = true;
+                            Debug.LogFormat("CLIENT::Disconnected from {0}:{1} with timeout", wrapper.ip, wrapper.port);
+                        }
+                        else
+                        {
+                            Shutdown();
+                            EventManager.Singleton.Publish(GameEventType.Disconnected, null);
+                            Debug.LogFormat("CLIENT::Disconnected from {0}:{1}", wrapper.ip, wrapper.port);
+                        }
                         break;
                     }
                 }
@@ -195,7 +206,7 @@ namespace Network.Client
         private void Send(object message)
         {
             Debug.Log("CLIENT::Sending data");
-            _socket.Send(_connection, 0, message as ANetworkMessage);
+            _socket.Send(_host, 0, message as ANetworkMessage);
         }
     }
 }

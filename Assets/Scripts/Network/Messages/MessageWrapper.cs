@@ -1,6 +1,8 @@
-﻿namespace Network.Messages
+﻿using UnityEngine.Networking;
+
+namespace Network.Messages
 {
-    public class MessageWrapper
+    public struct MessageWrapper
     {
         public ANetworkMessage message;
         public string ip;

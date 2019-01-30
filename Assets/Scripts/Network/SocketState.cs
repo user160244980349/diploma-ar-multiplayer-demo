@@ -1,4 +1,4 @@
-﻿namespace Network.Socket
+﻿namespace Network
 {
     public enum SocketState
     {

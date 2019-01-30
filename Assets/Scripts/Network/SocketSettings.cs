@@ -1,6 +1,6 @@
 ﻿using UnityEngine.Networking;
 
-namespace Network.Socket
+namespace Network
 {
     public struct SocketSettings
     {

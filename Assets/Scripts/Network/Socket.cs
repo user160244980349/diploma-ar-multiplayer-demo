@@ -1,18 +1,17 @@
 using Network.Messages;
-using Network.Connection;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.Networking.Types;
 
-namespace Network.Socket
+namespace Network
 {
-    public class NetworkSocket : MonoBehaviour
+    public class Socket : MonoBehaviour
     {
         public int Id { get; private set; }
         public bool EventsReady { get; set; }
         public SocketState State { get; private set; }
-        public NetworkError Error { get { return (NetworkError)_error; } }
+        public NetworkError DisconnectError { get; private set; }
         public SocketSettings Settings { get; set; }
 
         private GameObject _connectionPrefab;
@@ -22,13 +21,12 @@ namespace Network.Socket
         private HostTopology _topology;
         private ConnectionConfig _connectionConfig;
         private ushort _maxConnections;
-        private Connection.NetworkConnection[] _connections;
+        private Connection[] _connections;
         private QosType[] _channels;
         private int _port;
         private int _packetSize;
         private byte[] _packet;
         private int _activeConnections;
-        private byte _error;
 
         #region MonoBehaviour
         private void Start()
@@ -43,7 +41,7 @@ namespace Network.Socket
             _maxConnections = (ushort)(Settings.maxConnections + 1);
             _packetSize = Settings.packetSize;
             _packet = new byte[_packetSize];
-            _connections = new Connection.NetworkConnection[_maxConnections];
+            _connections = new Connection[_maxConnections];
 
             _connectionConfig = new ConnectionConfig
             {
@@ -71,7 +69,7 @@ namespace Network.Socket
         {
             if (_connections[0] != null && State != SocketState.Up) return;
             var connectionObject = Instantiate(_connectionPrefab, transform);
-            var connectionScript = connectionObject.GetComponent<Connection.NetworkConnection>();
+            var connectionScript = connectionObject.GetComponent<Connection>();
             connectionScript.Settings = new ConnectionSettings
             {
                 socketId = Id,
@@ -101,7 +99,7 @@ namespace Network.Socket
         {
             if (_messages.Count == 0)
             {
-                wrapper = null;
+                wrapper = new MessageWrapper();
                 return false;
             }
             wrapper = _messages.Dequeue();
@@ -109,16 +107,16 @@ namespace Network.Socket
         }
         public void ReceiveBroadcast(int key)
         {
-            NetworkTransport.SetBroadcastCredentials(Id, key, 1, 0, out _error);
-            ShowErrorIfThrown();
+            NetworkTransport.SetBroadcastCredentials(Id, key, 1, 0, out byte error);
+            ParseError(error, NetworkEventType.BroadcastEvent);
         }
         public void StartBroadcast(int key, int port, ANetworkMessage message)
         {
             if (State != SocketState.Up) return;
             message.timeStamp = NetworkTransport.GetNetworkTimestamp();
             var packet = _formatter.Serialize(message);
-            NetworkTransport.StartBroadcastDiscovery(Id, port, key, 1, 0, packet, packet.Length, 10, out _error);
-            ShowErrorIfThrown();
+            NetworkTransport.StartBroadcastDiscovery(Id, port, key, 1, 0, packet, packet.Length, 10, out byte error);
+            ParseError(error, NetworkEventType.BroadcastEvent);
         }
         public void StopBroadcast()
         {
@@ -158,7 +156,6 @@ namespace Network.Socket
                         _connections[i].Connect();
                         break;
                     }
-
                     case ConnectionState.Connected:
                     {
                         _activeConnections++;
@@ -166,15 +163,13 @@ namespace Network.Socket
                         {
                             message = new Connect(),
                             connection = i,
-                            ip = "",
-                            ping = 0,
-                            port = 0,
+                            ip = _connections[i].Ip,
+                            port = _connections[i].Port,
                         };
                         _messages.Enqueue(wrapper);
                         _connections[i].Up();
                         break;
                     }
-
                     case ConnectionState.Disconnected:
                     {
                         _activeConnections--;
@@ -182,9 +177,8 @@ namespace Network.Socket
                         {
                             message = new Disconnect(),
                             connection = i,
-                            ip = "",
-                            ping = 0,
-                            port = 0,
+                            ip = _connections[i].Ip,
+                            port = _connections[i].Port,
                         };
                         _messages.Enqueue(wrapper);
                         Destroy(_connections[i].gameObject);
@@ -201,7 +195,6 @@ namespace Network.Socket
                 {
                     break;
                 }
-
                 case SocketState.Opening:
                 {
                     State = SocketState.Opened;
@@ -210,18 +203,15 @@ namespace Network.Socket
                     NetworkManager.Singleton.RegisterSocket(this);
                     break;
                 }
-
                 case SocketState.Opened:
                 {
                     break;
                 }
-
                 case SocketState.Up:
                 {
                     ParseMessages();
                     break;
                 }
-
                 case SocketState.Closing:
                 {
                     if (_activeConnections != 0) break;
@@ -230,7 +220,6 @@ namespace Network.Socket
                     NetworkTransport.RemoveHost(Id);
                     break;
                 }
-
                 case SocketState.Closed:
                 {
                     break;
@@ -251,9 +240,9 @@ namespace Network.Socket
                     _packet,
                     _packetSize,
                     out int dataSize,
-                    out _error
+                    out byte error
                 );
-                ShowErrorIfThrown();
+                ParseError(error, networkEvent);
 
                 switch (networkEvent)
                 {
@@ -268,10 +257,11 @@ namespace Network.Socket
                             break;
                         }
                         if (_connections[connectionId] == null)
+                        {
                             IncomingOpenConnection(connectionId);
+                        }
                         break;
                     }
-
                     case NetworkEventType.DataEvent:
                     {
                         var wrapper = new MessageWrapper
@@ -280,42 +270,30 @@ namespace Network.Socket
                             connection = connectionId,
                         };
 
-                        wrapper.ping = NetworkTransport.GetRemoteDelayTimeMS(Id, connectionId, wrapper.message.timeStamp, out _error);
-                        ShowErrorIfThrown();
-
-                        NetworkTransport.GetConnectionInfo(Id, connectionId, out wrapper.ip, out wrapper.port, out NetworkID network, out NodeID end, out _error);
-                        ShowErrorIfThrown();
+                        wrapper.ping = NetworkTransport.GetRemoteDelayTimeMS(Id, connectionId, wrapper.message.timeStamp, out error);
+                        ParseError(error, NetworkEventType.DataEvent);
 
                         _messages.Enqueue(wrapper);
                         break;
                     }
-
                     case NetworkEventType.BroadcastEvent:
                     {
-                        NetworkTransport.GetBroadcastConnectionMessage(Id, _packet, _packetSize, out int size, out _error);
+                        NetworkTransport.GetBroadcastConnectionMessage(Id, _packet, _packetSize, out int size, out error);
 
                         var wrapper = new MessageWrapper
                         {
                             message = _formatter.Deserialize(_packet),
-                            connection = connectionId,
-                            ping = 0,
                         };
 
-                        NetworkTransport.GetBroadcastConnectionInfo(Id, out wrapper.ip, out wrapper.port, out _error);
-                        ShowErrorIfThrown();
+                        NetworkTransport.GetBroadcastConnectionInfo(Id, out wrapper.ip, out wrapper.port, out error);
+                        ParseError(error, NetworkEventType.BroadcastEvent);
 
                         _messages.Enqueue(wrapper);
                         break;
                     }
-
                     case NetworkEventType.DisconnectEvent:
                     {
                         IncomingCloseConnection(connectionId);
-                        break;
-                    }
-
-                    case NetworkEventType.Nothing:
-                    {
                         break;
                     }
                 }
@@ -325,7 +303,7 @@ namespace Network.Socket
         private void IncomingOpenConnection(int connectionId)
         {
             var connectionObject = Instantiate(_connectionPrefab, transform);
-            var connectionScript = connectionObject.GetComponent<Connection.NetworkConnection>();
+            var connectionScript = connectionObject.GetComponent<Connection>();
             connectionScript.Settings = new ConnectionSettings
             {
                 id = connectionId,
@@ -340,10 +318,14 @@ namespace Network.Socket
         {
             _connections[connectionId].Disconnect(true);
         }
-        private void ShowErrorIfThrown()
+        private void ParseError(byte rawError, NetworkEventType messageType)
         {
-            if ((NetworkError)_error != NetworkError.Ok)
-                Debug.LogErrorFormat("NetworkError {0}", (NetworkError)_error);
+            var error = (NetworkError)rawError;
+            if (error != NetworkError.Ok)
+            {
+                if (error == NetworkError.Timeout) DisconnectError = error;
+                Debug.LogErrorFormat("NetworkError {0}", error);
+            }
         }
     }
 }

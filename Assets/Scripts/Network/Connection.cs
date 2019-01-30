@@ -1,9 +1,10 @@
 ﻿using UnityEngine.Networking;
 using UnityEngine;
+using UnityEngine.Networking.Types;
 
-namespace Network.Connection
+namespace Network
 {
-    public class NetworkConnection : MonoBehaviour
+    public class Connection : MonoBehaviour
     {
         public int Id { get; private set; }
         public int SocketId { get; private set; }
@@ -100,15 +101,19 @@ namespace Network.Connection
                         State = ConnectionState.WaitingDelay;
                         _connect.Discard();
                         _connect.Running = true;
+
+                        NetworkTransport.GetConnectionInfo(SocketId, Id, out string ip, out int port, out NetworkID network, out NodeID end, out _error);
+                        ShowErrorIfThrown();
+
+                        Ip = ip;
+                        Port = port;
                     }
                     break;
                 }
-
                 case ConnectionState.WaitingConfirm:
                 {
                     break;
                 }
-
                 case ConnectionState.WaitingDelay:
                 {
                     if (_connect.Elapsed)
@@ -117,12 +122,10 @@ namespace Network.Connection
                     }
                     break;
                 }
-
                 case ConnectionState.Connected:
                 {
                     break;
                 }
-
                 case ConnectionState.Up:
                 {
                     if (!_send.Elapsed) return;
@@ -135,7 +138,6 @@ namespace Network.Connection
                     }
                     break;
                 }
-
                 case ConnectionState.Disconnecting:
                 {
                     if (!_disconnect.Elapsed) return;
@@ -144,7 +146,6 @@ namespace Network.Connection
                     ShowErrorIfThrown();
                     break;
                 }
-
                 case ConnectionState.Disconnected:
                 {
                     break;

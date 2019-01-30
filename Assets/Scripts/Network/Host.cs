@@ -2,25 +2,24 @@
 using System.Threading;
 using Events;
 using Network.Messages;
-using Network.Socket;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace Network.Host
+namespace Network
 {
-    public class NetworkHost : MonoBehaviour
+    public class Host : MonoBehaviour
     {
         public HostState State { get; private set; }
         public int BroadcastKey { get; set; }
 
         private GameObject _socketPrefab;
 
-        private NetworkSocket _socket;
-        private List<int> _connections;
+        private Socket _socket;
+        private List<int> _clients;
 
         private Timer _discovery;
         private const float _discoveryDuration = 0.1f;
-        private const float _switchDelay = 10f;
+        private const float _switchDelay = 20f;
 
         #region MonoBehaviour
         private void Start()
@@ -30,10 +29,10 @@ namespace Network.Host
 
             _socketPrefab = Resources.Load("Networking/Socket") as GameObject;
 
-            _connections = new List<int>();
+            _clients = new List<int>();
 
             var socketObject = Instantiate(_socketPrefab, gameObject.transform);
-            _socket = socketObject.GetComponent<NetworkSocket>();
+            _socket = socketObject.GetComponent<Socket>();
             _socket.Settings = new SocketSettings
             {
                 channels = new QosType[2] { QosType.Reliable, QosType.Unreliable },
@@ -65,11 +64,6 @@ namespace Network.Host
 
         private void ManageSocket()
         {
-            /**
-             * 
-             * Socket signals parse
-             * 
-             */
             switch (_socket.State)
             {
                 case SocketState.ReadyToOpen:
@@ -77,13 +71,11 @@ namespace Network.Host
                     _socket.Open();
                     break;
                 }
-
                 case SocketState.Opened:
                 {
                     _socket.Up();
                     break;
                 }
-
                 case SocketState.Down:
                 {
                     Destroy(_socket.gameObject);
@@ -93,11 +85,6 @@ namespace Network.Host
         }
         private void ManageHost()
         {
-            /**
-             * 
-             * Host states parse
-             * 
-             */
             switch (State)
             {
                 case HostState.StartingUp:
@@ -112,47 +99,42 @@ namespace Network.Host
                     else
                     {
                         State = HostState.FallingBack;
+                        Debug.LogFormat("HOST::Broadcasting to port {1} with key {0}", BroadcastKey, 8001);
+                        _socket.StartBroadcast(BroadcastKey, 8001, new FallbackHostReady());
                         _discovery.Remains = 5;
                         _discovery.Running = true;
                     }
                     break;
                 }
-
                 case HostState.FallingBack:
                 {
-                    for (var i = 0; i < 60; i++)
-                    {
-                        Thread.Sleep(5);
-                        Debug.LogFormat("HOST::Broadcasting to {1} port with key {0}", BroadcastKey, 8001 + i);
-                        _socket.StartBroadcast(BroadcastKey, 8001 + i, new FallbackHostReady());
-                        Thread.Sleep(100);
-                        _socket.StopBroadcast();
-                    }
-                    // if (!_discovery.Elapsed) return;
-                    // _socket.StopBroadcast();
-                    Debug.Log("HOST::Finished broadcasting");
+                    //for (var i = 0; i < 60; i++)
+                    //{
+                    //    Thread.Sleep(5);
+                    //    Debug.LogFormat("HOST::Broadcasting to port {1} with key {0}", BroadcastKey, 8001 + i);
+                    //    _socket.StartBroadcast(BroadcastKey, 8001 + i, new FallbackHostReady());
+                    //    Thread.Sleep(200);
+                    //    _socket.StopBroadcast();
+                    //}
+                    //Debug.Log("HOST::Finished broadcasting");
+                    //State = HostState.Up;
+                    if (!_discovery.Elapsed) break;
                     State = HostState.Up;
+                    _socket.StopBroadcast();
+                    Debug.Log("HOST::Finished broadcasting");
                     break;
                 }
-
-                /**
-                 * 
-                 * Messanges parse
-                 * 
-                 */
                 case HostState.Up:
                 {
                     ParseMessanges();
                     break;
                 }
-
                 case HostState.ShuttingDown:
                 {
                     if (_socket != null) return;
                     State = HostState.Down;
                     break;
                 }
-
                 case HostState.Down:
                 {
                     Debug.Log("HOST::Shutdown");
@@ -168,24 +150,34 @@ namespace Network.Host
                 {
                     case NetworkMessageType.Higher:
                     {
-                        Debug.Log(string.Format("HOST::Received data from {0}", wrapper.connection));
+                        Debug.Log(string.Format("HOST::Received higher message from {0}:{1}", wrapper.ip, wrapper.port));
                         EventManager.Singleton.Publish(GameEventType.NetworkMessageReceived, wrapper.message);
                         break;
                     }
-
                     case NetworkMessageType.Connect:
                     {
-                        Debug.Log(string.Format("HOST::Client {0} connected to socket {1}", wrapper.connection, _socket.Id));
-                        _connections.Add(wrapper.connection);
+                        Debug.Log(string.Format("HOST::Client {0}:{1} connected", wrapper.ip, wrapper.port));
+                        _clients.Add(wrapper.connection);
 
-                        Send(new FallbackInfo(BroadcastKey, (wrapper.connection - 1) * _switchDelay), wrapper.connection);
+                        Send(new FallbackInfo(BroadcastKey, (_clients.Count - 1) * _switchDelay), wrapper.connection);
                         break;
                     }
-
                     case NetworkMessageType.Disconnect:
                     {
-                        Debug.Log(string.Format("HOST::Client {0} disconnected from socket {1}", wrapper.connection, _socket.Id));
-                        _connections.Remove(wrapper.connection);
+                        if (_socket.DisconnectError == NetworkError.Timeout)
+                        {
+                            Debug.Log(string.Format("HOST::Client {0}:{1} disconnected with timeout", wrapper.ip, wrapper.port));
+                        }
+                        else
+                        {
+                            Debug.Log(string.Format("HOST::Client {0}:{1} disconnected", wrapper.ip, wrapper.port));
+                        }
+                        var disconnectedIndex = _clients.FindIndex(match => match == wrapper.connection);
+                        _clients.Remove(wrapper.connection);
+                        for (var i = disconnectedIndex; i < _clients.Count; i++)
+                        {
+                            Send(new QueueShuffle(i * _switchDelay), _clients[i]);
+                        }
                         break;
                     }
                 }
@@ -199,7 +191,7 @@ namespace Network.Host
         private void Send(object message)
         {
             Debug.Log("HOST::Sending data");
-            for (var i = 0; i < _connections.Count; i++) _socket.Send(_connections[i], 1, message as ANetworkMessage);
+            for (var i = 0; i < _clients.Count; i++) _socket.Send(_clients[i], 1, message as ANetworkMessage);
         }
     }
 }

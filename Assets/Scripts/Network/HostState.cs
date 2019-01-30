@@ -1,4 +1,4 @@
-﻿namespace Network.Host
+﻿namespace Network
 {
     public enum HostState
     {
