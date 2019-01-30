@@ -1,8 +1,8 @@
 ﻿using UnityEngine.Networking;
 
-namespace Network.Configurations
+namespace Network.Socket
 {
-    public struct SocketConfiguration
+    public struct SocketSettings
     {
         public QosType[] channels;
         public int port;

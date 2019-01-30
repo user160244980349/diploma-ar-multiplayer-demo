@@ -1,10 +1,12 @@
-﻿namespace Network.States
+﻿namespace Network.Client
 {
-    public enum HostState
+    public enum ClientState
     {
         StartingUp,
         Up,
+        WaitingReconnect,
         FallingBack,
+        WaitingSwitch,
         ShuttingDown,
         Down,
     }

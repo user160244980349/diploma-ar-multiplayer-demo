@@ -3,6 +3,7 @@ using System.Collections;
 
 public class Timer : MonoBehaviour
 {
+    public float Duration { get; set; }
     public float Remains { get; set; }
     public bool Running { get; set; }
     public bool Elapsed { get; private set; }
@@ -21,4 +22,13 @@ public class Timer : MonoBehaviour
         }
     }
     #endregion
+
+    public void Null()
+    {
+        Remains = 0;
+    }
+    public void Discard()
+    {
+        Remains = Duration;
+    }
 }

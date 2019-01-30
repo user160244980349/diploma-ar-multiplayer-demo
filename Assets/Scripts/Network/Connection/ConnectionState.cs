@@ -1,10 +1,14 @@
-﻿namespace Network.States
+﻿namespace Network.Connection
 {
     public enum ConnectionState
     {
-        Connecting,
+        Down,
+        ReadyToConnect,
+        WaitingDelay,
         WaitingConfirm,
+        Connecting,
         Connected,
+        Up,
         Disconnecting,
         Disconnected,
     }
