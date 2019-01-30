@@ -61,26 +61,25 @@ namespace Network
 
         private void ManageSocket()
         {
-            if (_socket != null)
+            if (_socket == null) return;
+            switch (_socket.State)
             {
-                switch (_socket.State)
+                case SocketState.ReadyToOpen:
                 {
-                    case SocketState.ReadyToOpen:
-                    {
-                        _socket.Open();
-                        break;
-                    }
-                    case SocketState.Opened:
-                    {
-                        _socket.Up();
-                        break;
-                    }
-                    case SocketState.Closed:
-                    {
+                    _socket.Open();
+                    break;
+                }
+                case SocketState.Opened:
+                {
+                    _socket.Up();
+                    break;
+                }
+                case SocketState.Closed:
+                {
+                    if (State != ClientState.FallingBack)
                         State = ClientState.ShuttingDown;
-                        Destroy(_socket.gameObject);
-                        break;
-                    }
+                    Destroy(_socket.gameObject);
+                    break;
                 }
             }
         }
@@ -121,8 +120,8 @@ namespace Network
                 case ClientState.FallingBack:
                 {
                     if (_socket != null) break;
-                    Debug.Log("CLIENT::Waiting switch");
                     State = ClientState.WaitingSwitch;
+                    Debug.Log("CLIENT::Waiting switch");
                     break;
                 }
                 case ClientState.WaitingSwitch:

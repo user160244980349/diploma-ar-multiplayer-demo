@@ -52,7 +52,7 @@ namespace Network
                     {
                         var broadcastKey = _client.BroadcastKey;
                         Destroy(_client.gameObject);
-
+                        
                         var hostObject = Instantiate(_hostPrefab, gameObject.transform);
                         _host = hostObject.GetComponent<Host>();
                         _host.BroadcastKey = broadcastKey;
@@ -74,7 +74,7 @@ namespace Network
                     case HostState.Down:
                     {
                         HostBooted = false;
-                        Destroy(_client.gameObject);
+                        Destroy(_host.gameObject);
                         break;
                     }
                 }
@@ -101,7 +101,8 @@ namespace Network
 
         public void SpawnHost()
         {
-            if (HostBooted) return;
+            if (_host != null) return;
+            HostBooted = true;
             var hostObject = Instantiate(_hostPrefab, gameObject.transform);
             _host = hostObject.GetComponent<Host>();
         }
@@ -111,7 +112,8 @@ namespace Network
         }
         public void SpawnClient()
         {
-            if (ClientBooted) return;
+            if (_client != null) return;
+            ClientBooted = true;
             var clientObject = Instantiate(_clientPrefab, gameObject.transform);
             _client = clientObject.GetComponent<Client>();
         }

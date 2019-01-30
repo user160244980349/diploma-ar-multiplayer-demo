@@ -64,6 +64,7 @@ namespace Network
 
         private void ManageSocket()
         {
+            if (_socket == null) return;
             switch (_socket.State)
             {
                 case SocketState.ReadyToOpen:
@@ -76,8 +77,9 @@ namespace Network
                     _socket.Up();
                     break;
                 }
-                case SocketState.Down:
+                case SocketState.Closed:
                 {
+                    State = HostState.ShuttingDown;
                     Destroy(_socket.gameObject);
                     break;
                 }
@@ -131,7 +133,7 @@ namespace Network
                 }
                 case HostState.ShuttingDown:
                 {
-                    if (_socket != null) return;
+                    if (_socket != null) break;
                     State = HostState.Down;
                     break;
                 }
