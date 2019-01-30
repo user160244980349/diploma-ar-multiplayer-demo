@@ -37,7 +37,7 @@ namespace Network
                 maxConnections = 1,
                 packetSize = 1024,
             };
-            Debug.LogFormat("CLIENT::Boot on port {0}", 8001 + DateTime.Now.Second);
+            Debug.LogFormat("CLIENT::Boot on port {0}", 8001);
 
             gameObject.name = "NetworkClient";
             EventManager.Singleton.RegisterListener(GameEventType.NetworkMessageSend, Send);
