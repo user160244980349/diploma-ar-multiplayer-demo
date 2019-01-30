@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Multiplayer.Messages
 {
     [Serializable]
-    public class Connect : AMultiplayerMessage
+    public class LogIn : AMultiplayerMessage
     {
         public string PlayerName { get; private set; }
         public Color PlayerColor {
@@ -22,7 +22,7 @@ namespace Multiplayer.Messages
         private float _cg;
         private float _cr;
 
-        public Connect(string name, Color color)
+        public LogIn(string name, Color color)
         {
             multiplayerMessageType = MultiplayerMessageType.Connect;
             PlayerName = name;

@@ -60,12 +60,12 @@ namespace Scenes
         private void Connect()
         {
             var playerName = GameObject.Find("PlayerName").GetComponent<InputField>();
-            EventManager.Singleton.Publish(GameEventType.MultiplayerMessageSend, new Connect(playerName.text, Color.blue));
+            EventManager.Singleton.Publish(GameEventType.MultiplayerMessageSend, new LogIn(playerName.text, Color.blue));
             Destroy(GameObject.Find("ConnectDialog"));
         }
         private void Leave()
         {
-            EventManager.Singleton.Publish(GameEventType.MultiplayerMessageSend, new Disconnect(2));
+            EventManager.Singleton.Publish(GameEventType.MultiplayerMessageSend, new LogOut(2));
 
             if (NetworkManager.Singleton.HostBooted)
             {

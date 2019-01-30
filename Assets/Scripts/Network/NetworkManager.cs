@@ -1,7 +1,9 @@
-﻿using System;
-using Network.Configurations;
+﻿using Network.Client;
+using Network.Host;
+using Network.Socket;
 using UnityEngine;
 using UnityEngine.Networking;
+
 
 namespace Network
 {
@@ -14,9 +16,9 @@ namespace Network
         private GameObject _hostPrefab;
         private GameObject _clientPrefab;
 
-        private Host _host;
-        private Client _client;
-        private Socket[] _sockets;
+        private NetworkHost _host;
+        private Client.NetworkClient _client;
+        private NetworkSocket[] _sockets;
         private ushort _maxSockets = 16;
 
         private bool _fallbackMode;
@@ -31,7 +33,7 @@ namespace Network
 
             DontDestroyOnLoad(gameObject);
             gameObject.name = "NetworkManager";
-            _sockets = new Socket[_maxSockets];
+            _sockets = new NetworkSocket[_maxSockets];
 
             var config = new GlobalConfig
             {
@@ -43,22 +45,54 @@ namespace Network
             _hostPrefab = (GameObject)Resources.Load("Networking/NetworkHost");
             _clientPrefab = (GameObject)Resources.Load("Networking/NetworkClient");
         }
+        private void Update()
+        {
+            if (_client != null)
+            {
+                switch (_client.State)
+                {
+                    case ClientState.WaitingSwitch:
+                    {
+                        var broadcastKey = _client.BroadcastKey;
+                        Destroy(_client.gameObject);
+
+                        var hostObject = Instantiate(_hostPrefab, gameObject.transform);
+                        _host = hostObject.GetComponent<NetworkHost>();
+                        _host.BroadcastKey = broadcastKey;
+                        break;
+                    }
+
+                    case ClientState.Down:
+                    {
+                        Destroy(_client.gameObject);
+                        break;
+                    }
+                }
+            }
+
+            if (_host != null)
+            {
+                switch (_host.State)
+                {
+                    case HostState.Down:
+                    {
+                        Destroy(_client.gameObject);
+                        break;
+                    }
+                }
+            }
+        }
         private void OnDestroy()
         {
             NetworkTransport.Shutdown();
         }
         #endregion
 
-        public void OnFallback(int broadcastKey)
-        {
-            _fallbackMode = true;
-            _broadcastKey = broadcastKey;
-        }
-        public void RegisterSocket(Socket socket)
+        public void RegisterSocket(NetworkSocket socket)
         {
             _sockets[socket.Id] = socket;
         }
-        public void UnregisterSocket(Socket socket)
+        public void UnregisterSocket(NetworkSocket socket)
         {
             _sockets[socket.Id] = null;
         }
@@ -72,76 +106,26 @@ namespace Network
             if (HostBooted) return;
 
             var hostObject = Instantiate(_hostPrefab, gameObject.transform);
-            _host = hostObject.GetComponent<Host>();
-            _host.OnStart = OnHostStart;
-            _host.OnShutdown = OnHostShutdown;
-        }
-        public void SpawnHost(int key)
-        {
-            if (HostBooted) return;
-
-            var hostObject = Instantiate(_hostPrefab, gameObject.transform);
-            _host = hostObject.GetComponent<Host>();
-            _host.BroadcastKey = key;
-            _host.OnStart = OnHostStart;
-            _host.OnShutdown = OnHostShutdown;
-            _fallbackMode = false;
+            _host = hostObject.GetComponent<NetworkHost>();
         }
         public void DespawnHost()
         {
             _host.Shutdown();
         }
-        private void OnHostStart(Host networkHost)
-        {
-            if (_fallbackMode)
-            {
-                _fallbackMode = false;
-            }
-            else { }
-            HostBooted = true;
-        }
-        private void OnHostShutdown()
-        {
-            HostBooted = false;
-            _host = null;
-        }
-
-        // ApplicationManager.Singleton.LoadScene("Playground");
-        // ApplicationManager.Singleton.LoadScene("MainMenu");
-        // ApplicationManager.Singleton.LoadScene("Loading");
-
         public void SpawnClient()
         {
             if (ClientBooted) return;
 
             var clientObject = Instantiate(_clientPrefab, gameObject.transform);
-            _client = clientObject.GetComponent<Client>();
-            _client.OnStart = OnClientStart;
-            _client.OnFallback = OnFallback;
-            _client.OnShutdown = OnClientShutdown;
-
-            _client.ConnectionConfig = new ConnectionConfiguration
-            {
-                ip = "192.168.1.2",
-                port = 8000,
-            };
+            _client = clientObject.GetComponent<Client.NetworkClient>();
         }
         public void DespawnClient()
         {
             _client.Shutdown();
         }
-        private void OnClientStart(Client networkClient)
-        {
-            ClientBooted = true;
-        }
-        private void OnClientShutdown()
-        {
-            _client = null;
-            if (_fallbackMode)
-            {
-                SpawnHost(_broadcastKey);
-            }
-            else { }
-        }
+
+        // ApplicationManager.Singleton.LoadScene("Playground");
+        // ApplicationManager.Singleton.LoadScene("MainMenu");
+        // ApplicationManager.Singleton.LoadScene("Loading");
     }
 }

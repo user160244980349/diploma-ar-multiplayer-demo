@@ -69,7 +69,7 @@ public class RBSynchronizator : MonoBehaviour
     private void RBSync(RBSync message)
     {
         _syncTime = Time.time;
-        _interpTime = message.ping / 1000f;
+        // _interpTime = message.ping / 1000f;
         _prevrbpos = _newrbpos;
         _prevrbvel = _newrbvel;
         _prevrbavel = _newrbavel;

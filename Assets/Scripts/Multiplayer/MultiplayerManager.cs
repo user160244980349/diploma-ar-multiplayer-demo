@@ -51,7 +51,7 @@ namespace Multiplayer
                     break;
 
                 case MultiplayerMessageType.Connect:
-                    Connect(message as Connect);
+                    Connect(message as LogIn);
                     break;
 
                 case MultiplayerMessageType.Move:
@@ -63,11 +63,11 @@ namespace Multiplayer
                     break;
 
                 case MultiplayerMessageType.Disconnect:
-                    Disconnect(message as Disconnect);
+                    Disconnect(message as LogOut);
                     break;
             }
         }
-        private void Connect(Connect message)
+        private void Connect(LogIn message)
         {
             if (_spawnId > 3) _spawnId = 0;
 
@@ -92,7 +92,7 @@ namespace Multiplayer
         private void SynchronizeRigidbody(RBSync message)
         {
         }
-        private void Disconnect(Disconnect message)
+        private void Disconnect(LogOut message)
         {
             Debug.LogFormat("Player {0} disconnected", message.PlayerId);
             var player = _players.Find(e => e.playerId == message.PlayerId);
