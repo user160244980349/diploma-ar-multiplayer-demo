@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using Events;
-using Events.EventTypes;
 using Multiplayer.Messages;
 using Network;
 using UnityEngine;
@@ -11,11 +10,6 @@ namespace Multiplayer
     {
         public static MultiplayerManager Singleton { get; private set; }
         public bool Hosting { get; set; }
-
-        private SendNetworkMessage _snm;
-        private ReceiveNetworkMessage _rnm;
-        private SendMultiplayerMessage _smm;
-        private ReceiveMultiplayerMessage _rmm;
 
         private int _spawnId;
         private int _identityCounter;
@@ -34,24 +28,22 @@ namespace Multiplayer
         private void Start()
         {
             _players = new List<LocalPlayer>();
-            _snm = EventManager.Singleton.GetEvent<SendNetworkMessage>();
-            _rnm = EventManager.Singleton.GetEvent<ReceiveNetworkMessage>();
-            _smm = EventManager.Singleton.GetEvent<SendMultiplayerMessage>();
-            _rmm = EventManager.Singleton.GetEvent<ReceiveMultiplayerMessage>();
-            _rnm.Subscribe(PollMM);
-            _smm.Subscribe(SendMM);
+
+            EventManager.Singleton.RegisterListener(GameEventType.NetworkMessageReceived, PollMM);
+            EventManager.Singleton.RegisterListener(GameEventType.MultiplayerMessageSend, SendMM);
         }
         #endregion
 
-        private void SendMM(AMultiplayerMessage message)
+        private void SendMM(object info)
         {
             if (Hosting)
-                PollMM(message);
+                PollMM(info);
             else
-                _snm.Publish(message);
+                EventManager.Singleton.Publish(GameEventType.NetworkMessageSend, info);
         }
-        private void PollMM(AMultiplayerMessage message)
+        private void PollMM(object info)
         {
+            var message = info as AMultiplayerMessage;
             switch (message.multiplayerMessageType)
             {
                 case MultiplayerMessageType.Boop:
@@ -59,30 +51,30 @@ namespace Multiplayer
                     break;
 
                 case MultiplayerMessageType.Connect:
-                    Connect((Connect) message);
+                    Connect(message as LogIn);
                     break;
 
                 case MultiplayerMessageType.Move:
-                    Move((Move) message);
+                    Move(message as Move);
                     break;
 
                 case MultiplayerMessageType.RigidbodySynchronization:
-                    SynchronizeRigidbody((RBSync) message);
+                    SynchronizeRigidbody(message as RBSync);
                     break;
 
                 case MultiplayerMessageType.Disconnect:
-                    Disconnect((Disconnect) message);
+                    Disconnect(message as LogOut);
                     break;
             }
         }
-        private void Connect(Connect message)
+        private void Connect(LogIn message)
         {
             if (_spawnId > 3) _spawnId = 0;
 
             var spawn = GameObject.Find(string.Format("SpawnPoint{0}", ++_spawnId)).GetComponent<Transform>();
             var scene = GameObject.Find("Scene").GetComponent<Transform>();
 
-            var playerObject = Instantiate((GameObject)Resources.Load("Game/Player"), scene.transform);
+            var playerObject = Instantiate(Resources.Load("Game/Player") as GameObject, scene.transform);
             playerObject.transform.position = spawn.position;
             playerObject.name = string.Format("Player<{0}>", message.PlayerName);
 
@@ -92,7 +84,7 @@ namespace Multiplayer
             playerScript.playerColor = message.PlayerColor;
 
             _players.Add(playerScript);
-            Debug.LogFormat("Player {0} connected", playerScript.playerId);
+            Debug.LogFormat("Player {0} connected '{1}'", playerScript.playerId, playerScript.name);
         }
         private void Move(Move message)
         {
@@ -100,7 +92,7 @@ namespace Multiplayer
         private void SynchronizeRigidbody(RBSync message)
         {
         }
-        private void Disconnect(Disconnect message)
+        private void Disconnect(LogOut message)
         {
             Debug.LogFormat("Player {0} disconnected", message.PlayerId);
             var player = _players.Find(e => e.playerId == message.PlayerId);

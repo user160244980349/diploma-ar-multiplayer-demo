@@ -1,12 +1,9 @@
-﻿using Events.EventTypes;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class ApplicationManager : MonoBehaviour
 {
     public static ApplicationManager Singleton { get; private set; }
-
-    private ButtonClicked _buttonClick;
 
     #region MonoBehaviour
     private void Awake()
@@ -15,10 +12,10 @@ public class ApplicationManager : MonoBehaviour
             Singleton = this;
         else if (Singleton == this) Destroy(gameObject);
 
-        var  _eventManager = (GameObject)Resources.Load("Managers/EventManager");
-        var  _networkManager = (GameObject)Resources.Load("Managers/NetworkManager");
-        var  _multiplayerManager = (GameObject)Resources.Load("Managers/MultiplayerManager");
-        var  _consoleManager = (GameObject)Resources.Load("Managers/ConsoleManager");
+        var  _eventManager = Resources.Load("Managers/EventManager") as GameObject;
+        var  _networkManager = Resources.Load("Managers/NetworkManager") as GameObject;
+        var  _multiplayerManager = Resources.Load("Managers/MultiplayerManager") as GameObject;
+        var  _consoleManager = Resources.Load("Managers/ConsoleManager") as GameObject;
 
         DontDestroyOnLoad(gameObject);
 

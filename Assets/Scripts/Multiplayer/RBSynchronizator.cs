@@ -1,13 +1,10 @@
 ﻿using UnityEngine;
-using Events.EventTypes;
 using Multiplayer.Messages;
 using Events;
 using Multiplayer;
 
 public class RBSynchronizator : MonoBehaviour
 {
-    private SendMultiplayerMessage _smm;
-
     private Vector3 _newrbavel;
     private Vector3 _newrbpos;
     private Vector3 _newrbvel;
@@ -29,7 +26,6 @@ public class RBSynchronizator : MonoBehaviour
     #region MonoBehaviour
     void Start()
     {
-        _smm = EventManager.Singleton.GetEvent<SendMultiplayerMessage>();
         _rb = GetComponent<Rigidbody>();
         _t = GetComponent<Transform>();
         _prevrbpos = _rb.position;
@@ -48,7 +44,7 @@ public class RBSynchronizator : MonoBehaviour
             if (Time.time - _lastSyncTime > _syncPeriod)
             {
                 _lastSyncTime = Time.time;
-                _smm.Publish(new RBSync(_rb));
+                EventManager.Singleton.Publish(GameEventType.MultiplayerMessageSend, new RBSync(_rb));
             }
         }
 
@@ -73,7 +69,7 @@ public class RBSynchronizator : MonoBehaviour
     private void RBSync(RBSync message)
     {
         _syncTime = Time.time;
-        _interpTime = message.ping / 1000f;
+        // _interpTime = message.ping / 1000f;
         _prevrbpos = _newrbpos;
         _prevrbvel = _newrbvel;
         _prevrbavel = _newrbavel;

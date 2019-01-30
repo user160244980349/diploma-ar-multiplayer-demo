@@ -3,11 +3,11 @@
 namespace Multiplayer.Messages
 {
     [Serializable]
-    public class Disconnect : AMultiplayerMessage
+    public class LogOut : AMultiplayerMessage
     {
         public int PlayerId { get; private set; }
 
-        public Disconnect(int playerId)
+        public LogOut(int playerId)
         {
             multiplayerMessageType = MultiplayerMessageType.Disconnect;
             PlayerId = playerId;

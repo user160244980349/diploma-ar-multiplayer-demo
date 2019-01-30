@@ -3,7 +3,11 @@ namespace Network.Messages
     public enum NetworkMessageType
     {
         Beep,
-        Service,
+        Connect,
+        Disconnect,
+        FallbackInfo,
+        QueueShuffle,
+        FallbackHostReady,
         Higher,
     }
 }

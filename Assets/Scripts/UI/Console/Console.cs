@@ -19,7 +19,7 @@ namespace UI.Console
         private void Start()
         {
             _messages = new LinkedList<GameObject>();
-            _messageObject = (GameObject)Resources.Load("UI/Console/Message");
+            _messageObject = Resources.Load("UI/Console/Message") as GameObject;
 
             if (previousMessages != null)
                 foreach (var m in previousMessages)

@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.Networking;
 
+
 namespace Network
 {
     public class NetworkManager : MonoBehaviour
@@ -14,8 +15,11 @@ namespace Network
 
         private Host _host;
         private Client _client;
-        private int _maxSockets = 16;
         private Socket[] _sockets;
+        private ushort _maxSockets = 16;
+
+        private bool _fallbackMode;
+        private int _broadcastKey;
 
         #region MonoBehaviour
         private void Awake()
@@ -28,13 +32,51 @@ namespace Network
             gameObject.name = "NetworkManager";
             _sockets = new Socket[_maxSockets];
 
-            var config = new GlobalConfig {
+            var config = new GlobalConfig
+            {
+                MaxHosts = _maxSockets,
                 NetworkEventAvailable = NetworkEventAvailable,
             };
             NetworkTransport.Init(config);
 
             _hostPrefab = (GameObject)Resources.Load("Networking/NetworkHost");
             _clientPrefab = (GameObject)Resources.Load("Networking/NetworkClient");
+        }
+        private void Update()
+        {
+            if (_client != null)
+            {
+                switch (_client.State)
+                {
+                    case ClientState.WaitingSwitch:
+                    {
+                        var broadcastKey = _client.BroadcastKey;
+                        Destroy(_client.gameObject);
+
+                        var hostObject = Instantiate(_hostPrefab, gameObject.transform);
+                        _host = hostObject.GetComponent<Host>();
+                        _host.BroadcastKey = broadcastKey;
+                        break;
+                    }
+                    case ClientState.Down:
+                    {
+                        Destroy(_client.gameObject);
+                        break;
+                    }
+                }
+            }
+
+            if (_host != null)
+            {
+                switch (_host.State)
+                {
+                    case HostState.Down:
+                    {
+                        Destroy(_client.gameObject);
+                        break;
+                    }
+                }
+            }
         }
         private void OnDestroy()
         {
@@ -61,12 +103,6 @@ namespace Network
 
             var hostObject = Instantiate(_hostPrefab, gameObject.transform);
             _host = hostObject.GetComponent<Host>();
-
-            _host.HostConfig = new HostConfiguration
-            {
-                onHostStart = HostStart,
-                onHostShutdown = HostShutdown,
-            };
         }
         public void DespawnHost()
         {
@@ -78,48 +114,14 @@ namespace Network
 
             var clientObject = Instantiate(_clientPrefab, gameObject.transform);
             _client = clientObject.GetComponent<Client>();
-
-            _client.ClientConfig = new ClientConfiguration
-            {
-                onClientStart = ClientStart,
-                onClientShutdown = ClientShutdown,
-            };
-
-            _client.ConnectionConfig = new ConnectionConfiguration
-            {
-                ip = "127.0.0.1",
-                port = 8000,
-            };
         }
         public void DespawnClient()
         {
             _client.Shutdown();
         }
 
-        private void ClientStart(Client networkClient)
-        {
-            ClientBooted = true;
-        }
-        private void ClientShutdown(Client networkClient)
-        {
-            ClientBooted = false;
-            Destroy(_client.gameObject);
-            _client = null;
-
-            ApplicationManager.Singleton.LoadScene("MainMenu");
-        }
-        private void HostStart(Host networkHost)
-        {
-            ApplicationManager.Singleton.LoadScene("Playground");
-            HostBooted = true;
-        }
-        private void HostShutdown(Host networkHost)
-        {
-            HostBooted = false;
-            Destroy(_host.gameObject);
-            _host = null;
-
-            ApplicationManager.Singleton.LoadScene("MainMenu");
-        }
+        // ApplicationManager.Singleton.LoadScene("Playground");
+        // ApplicationManager.Singleton.LoadScene("MainMenu");
+        // ApplicationManager.Singleton.LoadScene("Loading");
     }
 }
