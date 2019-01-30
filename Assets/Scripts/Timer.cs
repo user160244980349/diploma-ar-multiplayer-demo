@@ -26,9 +26,11 @@ public class Timer : MonoBehaviour
     public void Null()
     {
         Remains = 0;
+        Elapsed = true;
     }
     public void Discard()
     {
         Remains = Duration;
+        Elapsed = false;
     }
 }

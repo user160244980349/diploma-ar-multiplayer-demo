@@ -49,6 +49,7 @@ namespace Network
         {
             ManageSocket();
             ManageHost();
+            ManageDiscovery();
         }
         private void OnDestroy()
         {
@@ -93,14 +94,13 @@ namespace Network
                 {
                     if (_socket.State != SocketState.Up) break;
 
+                    State = HostState.Up;
                     if (BroadcastKey == 0)
                     {
-                        State = HostState.Up;
                         BroadcastKey = KeyGenerator.Generate();
                     }
                     else
                     {
-                        State = HostState.FallingBack;
                         Debug.LogFormat("HOST::Broadcasting to port {1} with key {0}", BroadcastKey, 8001);
                         _socket.StartBroadcast(BroadcastKey, 8001, new FallbackHostReady());
                         _discovery.Remains = 5;
@@ -108,27 +108,11 @@ namespace Network
                     }
                     break;
                 }
-                case HostState.FallingBack:
-                {
-                    //for (var i = 0; i < 60; i++)
-                    //{
-                    //    Thread.Sleep(5);
-                    //    Debug.LogFormat("HOST::Broadcasting to port {1} with key {0}", BroadcastKey, 8001 + i);
-                    //    _socket.StartBroadcast(BroadcastKey, 8001 + i, new FallbackHostReady());
-                    //    Thread.Sleep(200);
-                    //    _socket.StopBroadcast();
-                    //}
-                    //Debug.Log("HOST::Finished broadcasting");
-                    //State = HostState.Up;
-                    if (!_discovery.Elapsed) break;
-                    State = HostState.Up;
-                    _socket.StopBroadcast();
-                    Debug.Log("HOST::Finished broadcasting");
-                    break;
-                }
                 case HostState.Up:
                 {
-                    ParseMessanges();
+                    ParseMessages();
+
+
                     break;
                 }
                 case HostState.ShuttingDown:
@@ -144,7 +128,15 @@ namespace Network
                 }
             }
         }
-        private void ParseMessanges()
+        private void ManageDiscovery()
+        {
+            if (!_discovery.Elapsed) return;
+            _socket.StopBroadcast();
+            _discovery.Discard();
+            _discovery.Running = false;
+            Debug.Log("HOST::Finished broadcasting");
+        }
+        private void ParseMessages()
         {
             while (_socket.PollMessage(out MessageWrapper wrapper))
             {
