@@ -62,173 +62,8 @@ namespace Network.Socket
         }
         private void Update()
         {
-            for (var i = 0; i < _maxConnections; i++)
-            {
-                if (_connections[i] == null) continue;
-                switch (_connections[i].State)
-                {
-                    case ConnectionState.ReadyToConnect:
-                    {
-                        _connections[i].Connect();
-                        break;
-                    }
-
-                    case ConnectionState.Connected:
-                    {
-                        _activeConnections++;
-                        var wrapper = new MessageWrapper
-                        {
-                            message = new Connect(),
-                            connection = i,
-                            ip = "",
-                            ping = 0,
-                            port = 0,
-                        };
-                        _messages.Enqueue(wrapper);
-                        _connections[i].Up();
-                        break;
-                    }
-
-                    case ConnectionState.Disconnected:
-                    {
-                        _activeConnections--;
-                        var wrapper = new MessageWrapper
-                        {
-                            message = new Disconnect(),
-                            connection = i,
-                            ip = "",
-                            ping = 0,
-                            port = 0,
-                        };
-                        _messages.Enqueue(wrapper);
-                        Destroy(_connections[i].gameObject);
-                        break;
-                    }
-                }
-            }
-
-            switch (State)
-            {
-                case SocketState.ReadyToOpen:
-                {
-                    break;
-                }
-
-                case SocketState.Opening:
-                {
-                    State = SocketState.Opened;
-                    Id = NetworkTransport.AddHost(_topology, _port);
-                    gameObject.name = string.Format("Socket{0}", Id);
-                    NetworkManager.Singleton.RegisterSocket(this);
-                    break;
-                }
-
-                case SocketState.Opened:
-                {
-                    break;
-                }
-
-                case SocketState.Up:
-                {
-                    if (!EventsReady) return;
-                    EventsReady = false;
-                    NetworkEventType networkEvent;
-                    do
-                    {
-                        networkEvent = NetworkTransport.ReceiveFromHost(
-                            Id,
-                            out int connectionId,
-                            out int channelId,
-                            _packet,
-                            _packetSize,
-                            out int dataSize,
-                            out _error
-                        );
-                        ShowErrorIfThrown();
-
-                        switch (networkEvent)
-                        {
-                            case NetworkEventType.ConnectEvent:
-                            {
-                                if (_connections[0] != null && 
-                                    _connections[0].State == ConnectionState.WaitingConfirm)
-                                {
-                                    _connections[connectionId] = _connections[0];
-                                    _connections[connectionId].Confirm();
-                                    _connections[0] = null;
-                                    break;
-                                }
-                                if (_connections[connectionId] == null)
-                                    IncomingOpenConnection(connectionId);
-                                break;
-                            }
-
-                            case NetworkEventType.DataEvent:
-                            {
-                                var wrapper = new MessageWrapper
-                                {
-                                    message = _formatter.Deserialize(_packet),
-                                    connection = connectionId,
-                                };
-
-                                wrapper.ping = NetworkTransport.GetRemoteDelayTimeMS(Id, connectionId, wrapper.message.timeStamp, out _error);
-                                ShowErrorIfThrown();
-
-                                NetworkTransport.GetConnectionInfo(Id, connectionId, out wrapper.ip, out wrapper.port, out NetworkID network, out NodeID end, out _error);
-                                ShowErrorIfThrown();
-
-                                _messages.Enqueue(wrapper);
-                                break;
-                            }
-
-                            case NetworkEventType.BroadcastEvent:
-                            {
-                                NetworkTransport.GetBroadcastConnectionMessage(Id, _packet, _packetSize, out int size, out _error);
-
-                                var wrapper = new MessageWrapper
-                                {
-                                    message = _formatter.Deserialize(_packet),
-                                    connection = connectionId,
-                                    ping = 0,
-                                };
-
-                                NetworkTransport.GetBroadcastConnectionInfo(Id, out wrapper.ip, out wrapper.port, out _error);
-                                ShowErrorIfThrown();
-
-                                _messages.Enqueue(wrapper);
-                                break;
-                            }
-
-                            case NetworkEventType.DisconnectEvent:
-                            {
-                                IncomingCloseConnection(connectionId);
-                                break;
-                            }
-
-                            case NetworkEventType.Nothing:
-                            {
-                                break;
-                            }
-                        }
-                    }
-                    while (networkEvent != NetworkEventType.Nothing);
-                    break;
-                }
-
-                case SocketState.Closing:
-                {
-                    if (_activeConnections != 0) break;
-                    State = SocketState.Closed;
-                    NetworkManager.Singleton.UnregisterSocket(this);
-                    NetworkTransport.RemoveHost(Id);
-                    break;
-                }
-
-                case SocketState.Closed:
-                {
-                    break;
-                }
-            }
+            ManageConnections();
+            ManageSocket();
         }
         #endregion
         
@@ -311,6 +146,182 @@ namespace Network.Socket
             }
         }
 
+        private void ManageConnections()
+        {
+            for (var i = 0; i < _maxConnections; i++)
+            {
+                if (_connections[i] == null) continue;
+                switch (_connections[i].State)
+                {
+                    case ConnectionState.ReadyToConnect:
+                    {
+                        _connections[i].Connect();
+                        break;
+                    }
+
+                    case ConnectionState.Connected:
+                    {
+                        _activeConnections++;
+                        var wrapper = new MessageWrapper
+                        {
+                            message = new Connect(),
+                            connection = i,
+                            ip = "",
+                            ping = 0,
+                            port = 0,
+                        };
+                        _messages.Enqueue(wrapper);
+                        _connections[i].Up();
+                        break;
+                    }
+
+                    case ConnectionState.Disconnected:
+                    {
+                        _activeConnections--;
+                        var wrapper = new MessageWrapper
+                        {
+                            message = new Disconnect(),
+                            connection = i,
+                            ip = "",
+                            ping = 0,
+                            port = 0,
+                        };
+                        _messages.Enqueue(wrapper);
+                        Destroy(_connections[i].gameObject);
+                        break;
+                    }
+                }
+            }
+        }
+        private void ManageSocket()
+        {
+            switch (State)
+            {
+                case SocketState.ReadyToOpen:
+                {
+                    break;
+                }
+
+                case SocketState.Opening:
+                {
+                    State = SocketState.Opened;
+                    Id = NetworkTransport.AddHost(_topology, _port);
+                    gameObject.name = string.Format("Socket{0}", Id);
+                    NetworkManager.Singleton.RegisterSocket(this);
+                    break;
+                }
+
+                case SocketState.Opened:
+                {
+                    break;
+                }
+
+                case SocketState.Up:
+                {
+                    ParseMessages();
+                    break;
+                }
+
+                case SocketState.Closing:
+                {
+                    if (_activeConnections != 0) break;
+                    State = SocketState.Closed;
+                    NetworkManager.Singleton.UnregisterSocket(this);
+                    NetworkTransport.RemoveHost(Id);
+                    break;
+                }
+
+                case SocketState.Closed:
+                {
+                    break;
+                }
+            }
+        }
+        private void ParseMessages()
+        {
+            if (!EventsReady) return;
+            EventsReady = false;
+            NetworkEventType networkEvent;
+            do
+            {
+                networkEvent = NetworkTransport.ReceiveFromHost(
+                    Id,
+                    out int connectionId,
+                    out int channelId,
+                    _packet,
+                    _packetSize,
+                    out int dataSize,
+                    out _error
+                );
+                ShowErrorIfThrown();
+
+                switch (networkEvent)
+                {
+                    case NetworkEventType.ConnectEvent:
+                    {
+                        if (_connections[0] != null &&
+                            _connections[0].State == ConnectionState.WaitingConfirm)
+                        {
+                            _connections[connectionId] = _connections[0];
+                            _connections[connectionId].Confirm();
+                            _connections[0] = null;
+                            break;
+                        }
+                        if (_connections[connectionId] == null)
+                            IncomingOpenConnection(connectionId);
+                        break;
+                    }
+
+                    case NetworkEventType.DataEvent:
+                    {
+                        var wrapper = new MessageWrapper
+                        {
+                            message = _formatter.Deserialize(_packet),
+                            connection = connectionId,
+                        };
+
+                        wrapper.ping = NetworkTransport.GetRemoteDelayTimeMS(Id, connectionId, wrapper.message.timeStamp, out _error);
+                        ShowErrorIfThrown();
+
+                        NetworkTransport.GetConnectionInfo(Id, connectionId, out wrapper.ip, out wrapper.port, out NetworkID network, out NodeID end, out _error);
+                        ShowErrorIfThrown();
+
+                        _messages.Enqueue(wrapper);
+                        break;
+                    }
+
+                    case NetworkEventType.BroadcastEvent:
+                    {
+                        NetworkTransport.GetBroadcastConnectionMessage(Id, _packet, _packetSize, out int size, out _error);
+
+                        var wrapper = new MessageWrapper
+                        {
+                            message = _formatter.Deserialize(_packet),
+                            connection = connectionId,
+                            ping = 0,
+                        };
+
+                        NetworkTransport.GetBroadcastConnectionInfo(Id, out wrapper.ip, out wrapper.port, out _error);
+                        ShowErrorIfThrown();
+
+                        _messages.Enqueue(wrapper);
+                        break;
+                    }
+
+                    case NetworkEventType.DisconnectEvent:
+                    {
+                        IncomingCloseConnection(connectionId);
+                        break;
+                    }
+
+                    case NetworkEventType.Nothing:
+                    {
+                        break;
+                    }
+                }
+            }
+            while (networkEvent != NetworkEventType.Nothing);
+        }
         private void IncomingOpenConnection(int connectionId)
         {
             var connectionObject = Instantiate(_connectionPrefab, transform);

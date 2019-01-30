@@ -41,6 +41,49 @@ namespace Network.Connection
         }
         private void Update()
         {
+            ManageConnection();
+        }
+        #endregion
+
+        public void Connect()
+        {
+            if (State != ConnectionState.ReadyToConnect) return;
+            State = ConnectionState.Connecting;
+        }
+        public void Confirm()
+        {
+            if (State != ConnectionState.WaitingConfirm) return;
+            State = ConnectionState.Connected;
+        }
+        public void Up()
+        {
+            if (State != ConnectionState.Connected) return;
+            State = ConnectionState.Up;
+            _send.Discard();
+            _send.Running = true;
+        }
+        public void Disconnect(bool incoming)
+        {
+            if (State != ConnectionState.Up) return;
+            if (incoming)
+            {
+                State = ConnectionState.Disconnected;
+                return;
+            }
+            State = ConnectionState.Disconnecting;
+            _disconnect.Discard();
+            _disconnect.Running = true;
+        }
+        public void QueueMessage(int channelId, byte[] packet)
+        {
+            if (State != ConnectionState.Up) return;
+            _queueLength++;
+            NetworkTransport.QueueMessageForSending(SocketId, Id, channelId, packet, packet.Length, out _error);
+            ShowErrorIfThrown();
+        }
+
+        private void ManageConnection()
+        {
             switch (State)
             {
                 case ConnectionState.Connecting:
@@ -108,45 +151,6 @@ namespace Network.Connection
                 }
             }
         }
-        #endregion
-
-        public void Connect()
-        {
-            if (State != ConnectionState.ReadyToConnect) return;
-            State = ConnectionState.Connecting;
-        }
-        public void Confirm()
-        {
-            if (State != ConnectionState.WaitingConfirm) return;
-            State = ConnectionState.Connected;
-        }
-        public void Up()
-        {
-            if (State != ConnectionState.Connected) return;
-            State = ConnectionState.Up;
-            _send.Discard();
-            _send.Running = true;
-        }
-        public void Disconnect(bool incoming)
-        {
-            if (State != ConnectionState.Up) return;
-            if (incoming)
-            {
-                State = ConnectionState.Disconnected;
-                return;
-            }
-            State = ConnectionState.Disconnecting;
-            _disconnect.Discard();
-            _disconnect.Running = true;
-        }
-        public void QueueMessage(int channelId, byte[] packet)
-        {
-            if (State != ConnectionState.Up) return;
-            _queueLength++;
-            NetworkTransport.QueueMessageForSending(SocketId, Id, channelId, packet, packet.Length, out _error);
-            ShowErrorIfThrown();
-        }
-
         private void ShowErrorIfThrown()
         {
             if ((NetworkError)_error != NetworkError.Ok)
