@@ -111,7 +111,7 @@ namespace Network
                             break;
                         }
                     }
-                    if (!_switch.Elapsed) return;
+                    if (!_switch.Elapsed) break;
                     State = ClientState.FallingBack;
                     Debug.Log("CLIENT::Falling back");
                     _socket.Close();
@@ -119,7 +119,7 @@ namespace Network
                 }
                 case ClientState.FallingBack:
                 {
-                    if (_socket != null) return;
+                    if (_socket != null) break;
                     Debug.Log("CLIENT::Waiting switch");
                     State = ClientState.WaitingSwitch;
                     break;
@@ -130,7 +130,7 @@ namespace Network
                 }
                 case ClientState.ShuttingDown:
                 {
-                    if (_socket != null) return;
+                    if (_socket != null) break;
                     State = ClientState.Down;
                     break;
                 }
@@ -185,12 +185,12 @@ namespace Network
                     }
                     case NetworkMessageType.Disconnect:
                     {
-                        if (_socket.DisconnectError == NetworkError.Timeout)
+                        if (_socket.DisconnectError == NetworkError.Timeout && BroadcastKey != 0)
                         {
+                            Debug.LogFormat("CLIENT::Disconnected from {0}:{1} with timeout", wrapper.ip, wrapper.port);
                             State = ClientState.WaitingReconnect;
                             _switch.Discard();
                             _switch.Running = true;
-                            Debug.LogFormat("CLIENT::Disconnected from {0}:{1} with timeout", wrapper.ip, wrapper.port);
                         }
                         else
                         {

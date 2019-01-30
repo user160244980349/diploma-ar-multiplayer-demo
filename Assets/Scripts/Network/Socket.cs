@@ -135,7 +135,6 @@ namespace Network
         }
         public void Close()
         {
-            if (State != SocketState.Up) return;
             State = SocketState.Closing;
             for (var i = 0; i < _maxConnections; i++)
             {
@@ -153,12 +152,12 @@ namespace Network
                 {
                     case ConnectionState.ReadyToConnect:
                     {
+                        _activeConnections++;
                         _connections[i].Connect();
                         break;
                     }
                     case ConnectionState.Connected:
                     {
-                        _activeConnections++;
                         var wrapper = new MessageWrapper
                         {
                             message = new Connect(),
@@ -293,7 +292,15 @@ namespace Network
                     }
                     case NetworkEventType.DisconnectEvent:
                     {
-                        IncomingCloseConnection(connectionId);
+                        if (_connections[connectionId] != null)
+                        {
+                            IncomingCloseConnection(connectionId);
+                            break;
+                        }
+                        if (_connections[0] != null)
+                        {
+                            IncomingCloseConnection(0);
+                        }
                         break;
                     }
                 }

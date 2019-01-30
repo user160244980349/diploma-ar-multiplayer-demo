@@ -10,16 +10,13 @@ namespace Network
         public int SocketId { get; private set; }
         public int Port { get; private set; }
         public string Ip { get; private set; }
-        public ConnectionSettings Settings { get; set; }
-
         public ConnectionState State { get; private set; }
-        public NetworkError Error { get { return (NetworkError)_error; } }
+        public ConnectionSettings Settings { get; set; }
 
         private int _queueLength;
         private Timer _send;
         private Timer _connect;
         private Timer _disconnect;
-        private byte _error;
 
         #region MonoBehaviour
         private void Start()
@@ -65,7 +62,6 @@ namespace Network
         }
         public void Disconnect(bool incoming)
         {
-            if (State != ConnectionState.Up) return;
             if (incoming)
             {
                 State = ConnectionState.Disconnected;
@@ -79,8 +75,8 @@ namespace Network
         {
             if (State != ConnectionState.Up) return;
             _queueLength++;
-            NetworkTransport.QueueMessageForSending(SocketId, Id, channelId, packet, packet.Length, out _error);
-            ShowErrorIfThrown();
+            NetworkTransport.QueueMessageForSending(SocketId, Id, channelId, packet, packet.Length, out byte error);
+            ParseError(error);
         }
 
         private void ManageConnection()
@@ -92,9 +88,9 @@ namespace Network
                     if (Id == 0)
                     {
                         State = ConnectionState.WaitingConfirm;
-                        Id = NetworkTransport.Connect(SocketId, Ip, Port, 0, out _error);
+                        Id = NetworkTransport.Connect(SocketId, Ip, Port, 0, out byte error);
                         gameObject.name = string.Format("Connection{0}", Id);
-                        ShowErrorIfThrown();
+                        ParseError(error);
                     }
                     else
                     {
@@ -102,8 +98,8 @@ namespace Network
                         _connect.Discard();
                         _connect.Running = true;
 
-                        NetworkTransport.GetConnectionInfo(SocketId, Id, out string ip, out int port, out NetworkID network, out NodeID end, out _error);
-                        ShowErrorIfThrown();
+                        NetworkTransport.GetConnectionInfo(SocketId, Id, out string ip, out int port, out NetworkID network, out NodeID end, out byte error);
+                        ParseError(error);
 
                         Ip = ip;
                         Port = port;
@@ -133,8 +129,8 @@ namespace Network
                     if (_queueLength > 0)
                     {
                         _queueLength = 0;
-                        NetworkTransport.SendQueuedMessages(SocketId, Id, out _error);
-                        ShowErrorIfThrown();
+                        NetworkTransport.SendQueuedMessages(SocketId, Id, out byte error);
+                        ParseError(error);
                     }
                     break;
                 }
@@ -142,8 +138,8 @@ namespace Network
                 {
                     if (!_disconnect.Elapsed) return;
                     State = ConnectionState.Disconnected;
-                    NetworkTransport.Disconnect(SocketId, Id, out _error);
-                    ShowErrorIfThrown();
+                    NetworkTransport.Disconnect(SocketId, Id, out byte error);
+                    ParseError(error);
                     break;
                 }
                 case ConnectionState.Disconnected:
@@ -152,10 +148,13 @@ namespace Network
                 }
             }
         }
-        private void ShowErrorIfThrown()
+        private void ParseError(byte rawError)
         {
-            if ((NetworkError)_error != NetworkError.Ok)
-                Debug.LogErrorFormat("NetworkError {0}", (NetworkError)_error);
+            var error = (NetworkError)rawError;
+            if (error != NetworkError.Ok)
+            {
+                Debug.LogErrorFormat("NetworkError {0}", error);
+            }
         }
     }
 }

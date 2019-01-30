@@ -18,8 +18,8 @@ namespace Network
         private List<int> _clients;
 
         private Timer _discovery;
-        private const float _discoveryDuration = 0.1f;
-        private const float _switchDelay = 20f;
+        private const float _discoveryDuration = 1f;
+        private const float _switchDelay = 1f;
 
         #region MonoBehaviour
         private void Start()
