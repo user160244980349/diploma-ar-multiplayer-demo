@@ -57,7 +57,7 @@ namespace UI.Console
         {
             ConsoleMessage message;
 
-            if (withStackTrace && type != LogType.Log)
+            if (withStackTrace && stackTrace.Length > 0 && type != LogType.Log)
                 condition = string.Format("Message: {0}\nStackTrace: {1}", condition, stackTrace);
 
             message.text = condition;
