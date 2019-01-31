@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using Events;
 using Multiplayer.Messages;
-using Network;
 using UnityEngine;
 
 namespace Multiplayer
@@ -13,7 +12,8 @@ namespace Multiplayer
 
         private int _spawnId;
         private int _identityCounter;
-        private List<LocalPlayer> _players;
+        private Dictionary<int, Player> _players;
+        private Dictionary<int, RBSynchronizator> _objects;
 
         #region MonoBehaviour
         private void Awake()
@@ -27,7 +27,8 @@ namespace Multiplayer
         }
         private void Start()
         {
-            _players = new List<LocalPlayer>();
+            _players = new Dictionary<int, Player>();
+            _objects = new Dictionary<int, RBSynchronizator>();
 
             EventManager.Singleton.RegisterListener(GameEventType.NetworkMessageReceived, PollMM);
             EventManager.Singleton.RegisterListener(GameEventType.MultiplayerMessageSend, SendMM);
@@ -46,12 +47,8 @@ namespace Multiplayer
             var message = info as AMultiplayerMessage;
             switch (message.multiplayerMessageType)
             {
-                case MultiplayerMessageType.Boop:
-                    Debug.Log(" > Boop from multiplayer layer");
-                    break;
-
-                case MultiplayerMessageType.Connect:
-                    Connect(message as LogIn);
+                case MultiplayerMessageType.LogIn:
+                    LogIn(message as LogIn);
                     break;
 
                 case MultiplayerMessageType.Move:
@@ -62,12 +59,13 @@ namespace Multiplayer
                     SynchronizeRigidbody(message as RBSync);
                     break;
 
-                case MultiplayerMessageType.Disconnect:
-                    Disconnect(message as LogOut);
+                case MultiplayerMessageType.LogOut:
+                    LogOut(message as LogOut);
                     break;
             }
         }
-        private void Connect(LogIn message)
+
+        private void LogIn(LogIn message)
         {
             if (_spawnId > 3) _spawnId = 0;
 
@@ -78,24 +76,28 @@ namespace Multiplayer
             playerObject.transform.position = spawn.position;
             playerObject.name = string.Format("Player<{0}>", message.PlayerName);
 
-            var playerScript = playerObject.GetComponent<LocalPlayer>();
+            var playerScript = playerObject.GetComponent<Player>();
             playerScript.playerId = ++_identityCounter;
             playerScript.playerName = message.PlayerName;
             playerScript.playerColor = message.PlayerColor;
 
-            _players.Add(playerScript);
-            Debug.LogFormat("Player {0} connected '{1}'", playerScript.playerId, playerScript.name);
+            _players.Add(_players.Count, playerScript);
+            Debug.LogFormat("Player {0} logged in as '{1}'", playerScript.playerId, playerScript.name);
         }
         private void Move(Move message)
         {
+            _players.TryGetValue(message.PlayerId, out Player player);
+            Debug.LogFormat("Player {0} move", message.PlayerId);
         }
         private void SynchronizeRigidbody(RBSync message)
         {
+            _objects.TryGetValue(message.ObjectId, out RBSynchronizator rbobject);
+            Debug.LogFormat("Object {0} sync rigidbody", message.ObjectId);
         }
-        private void Disconnect(LogOut message)
+        private void LogOut(LogOut message)
         {
-            Debug.LogFormat("Player {0} disconnected", message.PlayerId);
-            var player = _players.Find(e => e.playerId == message.PlayerId);
+            Debug.LogFormat("Player {0} logged out", message.PlayerId);
+            _players.TryGetValue(message.PlayerId, out Player player);
         }
     }
 }

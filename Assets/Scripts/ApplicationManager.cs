@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class ApplicationManager : MonoBehaviour
 {
@@ -12,10 +11,11 @@ public class ApplicationManager : MonoBehaviour
             Singleton = this;
         else if (Singleton == this) Destroy(gameObject);
 
-        var  _eventManager = Resources.Load("Managers/EventManager") as GameObject;
-        var  _networkManager = Resources.Load("Managers/NetworkManager") as GameObject;
-        var  _multiplayerManager = Resources.Load("Managers/MultiplayerManager") as GameObject;
-        var  _consoleManager = Resources.Load("Managers/ConsoleManager") as GameObject;
+        var _eventManager = Resources.Load("Managers/EventManager") as GameObject;
+        var _networkManager = Resources.Load("Managers/NetworkManager") as GameObject;
+        var _multiplayerManager = Resources.Load("Managers/MultiplayerManager") as GameObject;
+        var _consoleManager = Resources.Load("Managers/ConsoleManager") as GameObject;
+        var _sceneManager = Resources.Load("Managers/SceneManager") as GameObject;
 
         DontDestroyOnLoad(gameObject);
 
@@ -23,17 +23,9 @@ public class ApplicationManager : MonoBehaviour
         Instantiate(_networkManager);
         Instantiate(_multiplayerManager);
         Instantiate(_consoleManager);
-    }
-    private void Start()
-    {
-        LoadScene("MainMenu");
+        Instantiate(_sceneManager);
     }
     #endregion
-
-    public void LoadScene(string sceneName)
-    {
-        SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
-    }
 }
 
 /**
@@ -69,10 +61,10 @@ public class ApplicationManager : MonoBehaviour
  *
  * - Network:
  *
- *     x Replace delegates in configs and do them public
+ *     + Replace delegates in configs and do them public
  *     + Sending messages by groups (queueing)
  *     + Almost all errors fixed
- *     - Objects configs correction
+ *     + Objects configs correction
  *     - Network discovery for lobby's
  *     - Falling back system
  *     - (OPTIONAL) Channel management if game will be laggy

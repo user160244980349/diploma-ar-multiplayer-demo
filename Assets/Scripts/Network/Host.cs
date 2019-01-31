@@ -13,10 +13,8 @@ namespace Network
         public int BroadcastKey { get; set; }
 
         private GameObject _socketPrefab;
-
         private Socket _socket;
         private List<int> _clients;
-
         private Timer _discovery;
         private const float _discoveryDuration = 1f;
         private const float _switchDelay = 1f;
@@ -98,6 +96,7 @@ namespace Network
                     if (BroadcastKey == 0)
                     {
                         BroadcastKey = KeyGenerator.Generate();
+                        EventManager.Singleton.Publish(GameEventType.Connected, null);
                     }
                     else
                     {
@@ -106,24 +105,24 @@ namespace Network
                         _discovery.Remains = 5;
                         _discovery.Running = true;
                     }
+
                     break;
                 }
                 case HostState.Up:
                 {
                     ParseMessages();
-
-
                     break;
                 }
                 case HostState.ShuttingDown:
                 {
                     if (_socket != null) break;
                     State = HostState.Down;
+                    EventManager.Singleton.Publish(GameEventType.Disconnected, null);
+                    Debug.Log("HOST::Shutdown");
                     break;
                 }
                 case HostState.Down:
                 {
-                    Debug.Log("HOST::Shutdown");
                     break;
                 }
             }

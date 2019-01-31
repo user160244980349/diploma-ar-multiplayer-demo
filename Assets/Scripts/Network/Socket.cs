@@ -15,7 +15,6 @@ namespace Network
         public SocketSettings Settings { get; set; }
 
         private GameObject _connectionPrefab;
-
         private Queue<MessageWrapper> _messages;
         private Formatter _formatter;
         private HostTopology _topology;

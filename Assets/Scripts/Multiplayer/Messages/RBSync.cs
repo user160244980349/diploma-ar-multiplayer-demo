@@ -6,6 +6,7 @@ namespace Multiplayer.Messages
     [Serializable]
     public class RBSync : AMultiplayerMessage
     {
+        public int ObjectId { get; private set; }
         public Vector3 Position {
             get => new Vector3(_px, _py, _pz);
             private set {
@@ -54,9 +55,10 @@ namespace Multiplayer.Messages
         private float _vy;
         private float _vz;
 
-        public RBSync(Rigidbody rb)
+        public RBSync(int objectId, Rigidbody rb)
         {
             multiplayerMessageType = MultiplayerMessageType.RigidbodySynchronization;
+            ObjectId = objectId;
             Position = rb.position;
             Velocity = rb.velocity;
             AngularVelocity = rb.angularVelocity;

@@ -12,11 +12,9 @@ namespace Network
         public int BroadcastKey { get; set; }
 
         private GameObject _socketPrefab;
-
         private Socket _socket;
         private int _host;
         private NetworkError _disconnectError;
-
         private Timer _switch;
         private const float _switchDelay = 10f;
 
@@ -97,24 +95,7 @@ namespace Network
                 case ClientState.Up:
                 {
                     ParseMessages();
-                    break;
-                }
-                case ClientState.WaitingReconnect:
-                {
-                    while (_socket.PollMessage(out MessageWrapper wrapper))
-                    {
-                        if (wrapper.message.networkMessageType == NetworkMessageType.FallbackHostReady)
-                        {
-                            State = ClientState.Up;
-                            _socket.OpenConnection(wrapper.ip, wrapper.port);
-                            Debug.LogFormat("CLIENT::Connecting to fallback {0}:{1} with key {2}", wrapper.ip, wrapper.port, BroadcastKey);
-                            break;
-                        }
-                    }
-                    if (!_switch.Elapsed) break;
-                    State = ClientState.FallingBack;
-                    Debug.Log("CLIENT::Falling back");
-                    _socket.Close();
+                    SwitchManage();
                     break;
                 }
                 case ClientState.FallingBack:
@@ -132,11 +113,11 @@ namespace Network
                 {
                     if (_socket != null) break;
                     State = ClientState.Down;
+                    Debug.Log("CLIENT::Shutdown");
                     break;
                 }
                 case ClientState.Down:
                 {
-                    Debug.Log("CLIENT::Shutdown");
                     break;
                 }
             }
@@ -170,6 +151,13 @@ namespace Network
                         Debug.LogFormat("CLIENT::Got broadcast key {0}, fallback delay {1}", BroadcastKey, _switch.Duration);
                         break;
                     }
+                    case NetworkMessageType.FallbackHostReady:
+                    {
+                        State = ClientState.Up;
+                        _socket.OpenConnection(wrapper.ip, wrapper.port);
+                        Debug.LogFormat("CLIENT::Connecting to fallback {0}:{1} with key {2}", wrapper.ip, wrapper.port, BroadcastKey);
+                        break;
+                    }
                     case NetworkMessageType.QueueShuffle:
                     {
                         var fallbackInfo = wrapper.message as QueueShuffle;
@@ -188,7 +176,6 @@ namespace Network
                         if (_socket.DisconnectError == NetworkError.Timeout && BroadcastKey != 0)
                         {
                             Debug.LogFormat("CLIENT::Disconnected from {0}:{1} with timeout", wrapper.ip, wrapper.port);
-                            State = ClientState.WaitingReconnect;
                             _switch.Discard();
                             _switch.Running = true;
                         }
@@ -202,6 +189,13 @@ namespace Network
                     }
                 }
             }
+        }
+        private void SwitchManage()
+        {
+            if (!_switch.Elapsed) return;
+            State = ClientState.FallingBack;
+            Debug.Log("CLIENT::Falling back");
+            _socket.Close();
         }
         private void Send(object message)
         {

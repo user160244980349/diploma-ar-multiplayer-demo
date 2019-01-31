@@ -1,6 +1,4 @@
-﻿using UnityEngine.Networking;
-
-namespace Network.Messages
+﻿namespace Network.Messages
 {
     public struct MessageWrapper
     {

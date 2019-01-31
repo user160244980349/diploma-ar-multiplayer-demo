@@ -9,8 +9,7 @@ namespace Events
         public delegate void Listener(object info);
 
         private Dictionary<GameEventType, Listener> _listeners;
-        private Queue<GameEventType> _events;
-        private Queue<object> _infos;
+        private Queue<EventWrapper> _events;
 
         #region MonoBehaviour
         private void Awake()
@@ -22,32 +21,32 @@ namespace Events
             DontDestroyOnLoad(gameObject);
             gameObject.name = "EventManager";
 
-            Init();
+            _listeners = new Dictionary<GameEventType, Listener>();
+            _events = new Queue<EventWrapper>();
         }
-        private void LateUpdate()
+        private void Update()
         {
             while (_events.Count > 0)
             {
                 var queuedEvent = _events.Dequeue();
-                var queuedInfo = _infos.Dequeue();
-                if (_listeners.ContainsKey(queuedEvent))
-                {
-                    _listeners.TryGetValue(queuedEvent, out Listener listener);
-                    listener(queuedInfo);
-                }
+                if (!_listeners.ContainsKey(queuedEvent.type)) continue;
+                _listeners.TryGetValue(queuedEvent.type, out Listener listener);
+                listener(queuedEvent.info);
             }
         }
         #endregion
 
         public void Publish(GameEventType type, object info)
         {
-            _events.Enqueue(type);
-            _infos.Enqueue(info);
+            _events.Enqueue(new EventWrapper {
+                type = type,
+                info = info,
+            });
         }
         public void ImmediatePublish(GameEventType type, object info)
         {
-            if (_listeners.TryGetValue(type, out Listener listener))
-                listener(info);
+            if (!_listeners.TryGetValue(type, out Listener listener)) return;
+            listener(info);
         }
         public void RegisterListener(GameEventType type, Listener newListener)
         {
@@ -63,15 +62,8 @@ namespace Events
         }
         public void UnregisterListener(GameEventType type, Listener newListener)
         {
-            if (_listeners.TryGetValue(type, out Listener listener))
-                listener -= newListener;
-        }
-
-        private void Init()
-        {
-            _listeners = new Dictionary<GameEventType, Listener>();
-            _events = new Queue<GameEventType>();
-            _infos = new Queue<object>();
+            if (!_listeners.TryGetValue(type, out Listener listener)) return;
+            listener -= newListener;
         }
     }
 }
