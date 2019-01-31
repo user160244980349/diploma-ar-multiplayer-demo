@@ -153,8 +153,9 @@ namespace Network
                     }
                     case NetworkMessageType.FallbackHostReady:
                     {
-                        _socket.ReceiveBroadcast(0); // may be exists more cute way
                         _socket.OpenConnection(wrapper.ip, wrapper.port);
+                        _switch.Discard();
+                        _switch.Running = false;
                         Debug.LogFormat("CLIENT::Connecting to fallback {0}:{1} with key {2}", wrapper.ip, wrapper.port, BroadcastKey);
                         break;
                     }
@@ -194,8 +195,6 @@ namespace Network
         {
             if (!_switch.Elapsed) return;
             State = ClientState.FallingBack;
-            _switch.Discard();
-            _switch.Running = false;
             _socket.Close();
             Debug.Log("CLIENT::Falling back");
         }
