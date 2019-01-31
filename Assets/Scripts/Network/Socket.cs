@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Networking;
-using UnityEngine.Networking.Types;
 
 namespace Network
 {
@@ -285,12 +284,12 @@ namespace Network
                     }
                     case NetworkEventType.BroadcastEvent:
                     {
-                        NetworkTransport.GetBroadcastConnectionMessage(Id, _packet, _packetSize, out int size, out error);
+                        var broadcastPacket = new byte[_packetSize];
+                        NetworkTransport.GetBroadcastConnectionMessage(Id, broadcastPacket, _packetSize, out int size, out error);
                         ParseError(error, NetworkEventType.BroadcastEvent);
 
-                        Debug.Log(_broadcastPacket.SequenceEqual(_packet));
-                        if (_broadcastPacket.SequenceEqual(_packet)) break;
-                        _packet.CopyTo(_broadcastPacket, 0);
+                        if (_broadcastPacket.SequenceEqual(broadcastPacket)) break;
+                        broadcastPacket.CopyTo(_broadcastPacket, 0);
 
                         var wrapper = new MessageWrapper
                         {
