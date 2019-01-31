@@ -288,6 +288,7 @@ namespace Network
                         NetworkTransport.GetBroadcastConnectionMessage(Id, _packet, _packetSize, out int size, out error);
                         ParseError(error, NetworkEventType.BroadcastEvent);
 
+                        Debug.Log(_broadcastPacket.SequenceEqual(_packet));
                         if (_broadcastPacket.SequenceEqual(_packet)) break;
                         _packet.CopyTo(_broadcastPacket, 0);
 
