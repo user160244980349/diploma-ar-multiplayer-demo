@@ -1,5 +1,6 @@
 using Network.Messages;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.Networking.Types;
@@ -287,7 +288,7 @@ namespace Network
                         NetworkTransport.GetBroadcastConnectionMessage(Id, _packet, _packetSize, out int size, out error);
                         ParseError(error, NetworkEventType.BroadcastEvent);
 
-                        if (_broadcastPacket.Equals(_packet)) break;
+                        if (_broadcastPacket.SequenceEqual(_packet)) break;
                         _packet.CopyTo(_broadcastPacket, 0);
 
                         var wrapper = new MessageWrapper
