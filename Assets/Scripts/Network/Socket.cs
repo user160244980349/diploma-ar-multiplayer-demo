@@ -321,8 +321,8 @@ namespace Network
                 id = connectionId,
                 socketId = Id,
                 sendRate = 0.02f,
-                connectDelay = 0.5f,
-                disconnectDelay = 0.5f,
+                connectDelay = 0f,
+                disconnectDelay = 0f,
             };
             _connections[connectionId] = connectionScript;
         }

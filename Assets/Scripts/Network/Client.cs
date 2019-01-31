@@ -16,7 +16,7 @@ namespace Network
         private int _host;
         private NetworkError _disconnectError;
         private Timer _switch;
-        private const float _switchDelay = 10f;
+        private const float _switchDelay = 1f;
 
         #region MonoBehaviour
         private void Start()
