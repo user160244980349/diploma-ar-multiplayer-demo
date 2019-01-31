@@ -41,6 +41,7 @@ namespace Network
             _maxConnections = (ushort)(Settings.maxConnections + 1);
             _packetSize = Settings.packetSize;
             _packet = new byte[_packetSize];
+            _broadcastPacket = new byte[_packetSize];
             _connections = new Connection[_maxConnections];
 
             _connectionConfig = new ConnectionConfig
@@ -287,7 +288,7 @@ namespace Network
                         ParseError(error, NetworkEventType.BroadcastEvent);
 
                         if (_broadcastPacket.Equals(_packet)) break;
-                        _broadcastPacket = _packet;
+                        _packet.CopyTo(_broadcastPacket, 0);
 
                         var wrapper = new MessageWrapper
                         {
