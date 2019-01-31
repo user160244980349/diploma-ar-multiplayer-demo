@@ -194,8 +194,10 @@ namespace Network
         {
             if (!_switch.Elapsed) return;
             State = ClientState.FallingBack;
-            Debug.Log("CLIENT::Falling back");
+            _switch.Discard();
+            _switch.Running = false;
             _socket.Close();
+            Debug.Log("CLIENT::Falling back");
         }
         private void Send(object message)
         {

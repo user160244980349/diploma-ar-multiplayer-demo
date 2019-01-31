@@ -47,7 +47,6 @@ namespace Network
         {
             ManageSocket();
             ManageHost();
-            ManageDiscovery();
         }
         private void OnDestroy()
         {
@@ -111,6 +110,7 @@ namespace Network
                 case HostState.Up:
                 {
                     ParseMessages();
+                    ManageDiscovery();
                     break;
                 }
                 case HostState.ShuttingDown:
