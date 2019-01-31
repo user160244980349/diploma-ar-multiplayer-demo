@@ -154,6 +154,7 @@ namespace Network
                     case NetworkMessageType.FallbackHostReady:
                     {
                         State = ClientState.Up;
+                        _socket.ReceiveBroadcast(0); // may be exists more cute way
                         _socket.OpenConnection(wrapper.ip, wrapper.port);
                         Debug.LogFormat("CLIENT::Connecting to fallback {0}:{1} with key {2}", wrapper.ip, wrapper.port, BroadcastKey);
                         break;
