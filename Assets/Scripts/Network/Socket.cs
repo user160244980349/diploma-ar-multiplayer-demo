@@ -25,6 +25,7 @@ namespace Network
         private int _port;
         private int _packetSize;
         private byte[] _packet;
+        private byte[] _broadcastPacket;
         private int _activeConnections;
 
         #region MonoBehaviour
@@ -283,6 +284,10 @@ namespace Network
                     case NetworkEventType.BroadcastEvent:
                     {
                         NetworkTransport.GetBroadcastConnectionMessage(Id, _packet, _packetSize, out int size, out error);
+                        ParseError(error, NetworkEventType.BroadcastEvent);
+
+                        if (_broadcastPacket.Equals(_packet)) break;
+                        _broadcastPacket = _packet;
 
                         var wrapper = new MessageWrapper
                         {
