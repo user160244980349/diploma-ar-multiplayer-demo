@@ -31,11 +31,10 @@ namespace Scenes
         }
         #endregion
 
-        public void LoadScene(string sceneName)
+        private void LoadScene(string sceneName)
         {
             UnityEngine.SceneManagement.SceneManager.LoadScene(sceneName, UnityEngine.SceneManagement.LoadSceneMode.Single);
         }
-
         private void OnConnecting(object info)
         {
             LoadScene("Loading");

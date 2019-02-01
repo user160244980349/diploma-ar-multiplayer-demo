@@ -88,11 +88,6 @@ namespace Network
         {
             _sockets[socket.Id] = null;
         }
-        private void NetworkEventAvailable(int socketId)
-        {
-            _sockets[socketId].EventsReady = true;
-        }
-
         public void SpawnHost()
         {
             var hostObject = Instantiate(_hostPrefab, gameObject.transform);
@@ -111,5 +106,11 @@ namespace Network
         {
             _client.Shutdown();
         }
+
+        private void NetworkEventAvailable(int socketId)
+        {
+            _sockets[socketId].EventsReady = true;
+        }
+
     }
 }

@@ -1,6 +1,5 @@
 ﻿using Events;
 using Network.Messages;
-using System;
 using UnityEngine;
 using UnityEngine.Networking;
 
