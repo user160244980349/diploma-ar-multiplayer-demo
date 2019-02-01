@@ -77,8 +77,6 @@ namespace Network
                 ip = ip,
                 port = port,
                 sendRate = 0.02f,
-                connectDelay = 0.5f,
-                disconnectDelay = 0.5f,
             };
             _connections[0] = connectionScript;
             return true;
