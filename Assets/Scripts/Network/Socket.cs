@@ -65,7 +65,7 @@ namespace Network
             ManageSocket();
         }
         #endregion
-        
+
         public bool OpenConnection(string ip, int port)
         {
             if (_connections[0] != null && State != SocketState.Up) return false;
@@ -77,6 +77,8 @@ namespace Network
                 ip = ip,
                 port = port,
                 sendRate = 0.02f,
+                connectDelay = 0.5f,
+                disconnectDelay = 0.5f,
             };
             _connections[0] = connectionScript;
             return true;
@@ -144,6 +146,12 @@ namespace Network
                 if (_connections[i] == null) continue;
                 _connections[i].Disconnect(false);
             }
+        }
+        public bool ConnectionReadyForSend(int connectionId)
+        {
+            if (_connections[connectionId] != null && State != SocketState.Up) return false;
+            _connections[connectionId].ReadyForSend = true;
+            return true;
         }
 
         private void ManageConnections()

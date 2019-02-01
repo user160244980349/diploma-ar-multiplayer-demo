@@ -9,14 +9,12 @@ namespace Network
         public int Id { get; private set; }
         public int SocketId { get; private set; }
         public int Port { get; private set; }
+        public bool ReadyForSend { get; set; }
         public string Ip { get; private set; }
         public ConnectionState State { get; private set; }
         public ConnectionSettings Settings { get; set; }
 
         private int _queueLength;
-        private Timer _send;
-        private Timer _connect;
-        private Timer _disconnect;
 
         #region MonoBehaviour
         private void Start()
@@ -25,13 +23,6 @@ namespace Network
             SocketId = Settings.socketId;
             Ip = Settings.ip;
             Port = Settings.port;
-
-            _send = gameObject.AddComponent<Timer>();
-            _send.Duration = Settings.sendRate;
-            _connect = gameObject.AddComponent<Timer>();
-            _connect.Duration = Settings.sendRate;
-            _disconnect = gameObject.AddComponent<Timer>();
-            _disconnect.Duration = Settings.sendRate;
 
             gameObject.name = string.Format("Connection{0}", Id);
             State = ConnectionState.ReadyToConnect;
@@ -46,8 +37,6 @@ namespace Network
         {
             if (State != ConnectionState.ReadyToConnect) return false;
             State = ConnectionState.Connecting;
-            _connect.Discard();
-            _connect.Running = true;
             return true;
         }
         public bool Confirm()
@@ -60,8 +49,7 @@ namespace Network
         {
             if (State != ConnectionState.Connected) return false;
             State = ConnectionState.Up;
-            _send.Discard();
-            _send.Running = true;
+            ReadyForSend = true;
             return true;
         }
         public void Disconnect(bool incoming)
@@ -71,17 +59,18 @@ namespace Network
                 State = ConnectionState.Disconnected;
                 return;
             }
-            _disconnect.Discard();
-            _disconnect.Running = true;
             State = ConnectionState.Disconnecting;
         }
         public bool QueueMessage(int channelId, byte[] packet)
         {
             if (State != ConnectionState.Up) return false;
-            _queueLength++;
-            NetworkTransport.QueueMessageForSending(SocketId, Id, channelId, packet, packet.Length, out byte error);
+            var queued = NetworkTransport.QueueMessageForSending(SocketId, Id, channelId, packet, packet.Length, out byte error);
             ParseError(error);
-            return true;
+            if (!queued)
+                State = ConnectionState.WrongConnection;
+            else
+                _queueLength++;
+            return queued;
         }
 
         private void ManageConnection()
@@ -99,34 +88,33 @@ namespace Network
                         gameObject.name = string.Format("Connection{0}", Id);
                         break;
                     }
-                    State = ConnectionState.WaitingDelay;
+                    State = ConnectionState.Connected;
                     NetworkTransport.GetConnectionInfo(SocketId, Id, out string ip, out int port, out NetworkID network, out NodeID end, out error);
                     ParseError(error);
                     Ip = ip;
                     Port = port;
                     break;
                 }
-                case ConnectionState.WaitingDelay:
-                {
-                    if (!_connect.Elapsed) break;
-                    State = ConnectionState.Connected;
-                    _connect.Discard();
-                    _connect.Running = false;
-                    break;
-                }
                 case ConnectionState.Up:
                 {
-                    if (!_send.Elapsed) break;
-                    _send.Discard();
-                    if (_queueLength < 0) break;
-                    _queueLength = 0;
-                    NetworkTransport.SendQueuedMessages(SocketId, Id, out byte error);
+                    if (!ReadyForSend) break;
+                    if (_queueLength == 0) break;
+                    ReadyForSend = NetworkTransport.SendQueuedMessages(SocketId, Id, out byte error);
                     ParseError(error);
+                    if (ReadyForSend)
+                    {
+                        _queueLength = 0;
+                        break;
+                    }
+                    var notify = NetworkTransport.NotifyWhenConnectionReadyForSend(SocketId, Id, _queueLength, out error);
+                    ParseError(error);
+                    if (!notify) {
+                        State = ConnectionState.WrongConnection;
+                    }
                     break;
                 }
                 case ConnectionState.Disconnecting:
                 {
-                    if (!_disconnect.Elapsed) break;
                     State = ConnectionState.Disconnected;
                     NetworkTransport.Disconnect(SocketId, Id, out byte error);
                     ParseError(error);

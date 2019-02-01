@@ -10,11 +10,6 @@ namespace Multiplayer
         public static MultiplayerManager Singleton { get; private set; }
         public bool Hosting { get; set; }
 
-        //private int _spawnId;
-        //private int _identityCounter;
-        //private Dictionary<int, Player> _players;
-        //private Dictionary<int, RBSynchronizator> _objects;
-
         #region MonoBehaviour
         private void Awake()
         {
@@ -83,22 +78,6 @@ namespace Multiplayer
             {
                 EventManager.Singleton.Publish(GameEventType.LoggedIn, new LoggedIn(1));
             }
-            //if (_spawnId > 3) _spawnId = 0;
-
-            //var spawn = GameObject.Find(string.Format("SpawnPoint{0}", ++_spawnId)).GetComponent<Transform>();
-            //var scene = GameObject.Find("Scene").GetComponent<Transform>();
-
-            //var playerObject = Instantiate(Resources.Load("Game/Player") as GameObject, scene.transform);
-            //playerObject.transform.position = spawn.position;
-            //playerObject.name = string.Format("Player<{0}>", message.PlayerName);
-
-            //var playerScript = playerObject.GetComponent<Player>();
-            //playerScript.playerId = ++_identityCounter;
-            //playerScript.playerName = message.PlayerName;
-            //playerScript.playerColor = message.PlayerColor;
-
-            //_players.Add(_players.Count, playerScript);
-            //Debug.LogFormat("Player {0} logged in as '{1}'", playerScript.playerId, playerScript.name);
         }
         private void LoggedIn(LoggedIn message)
         {
@@ -106,18 +85,15 @@ namespace Multiplayer
         }
         private void Move(Move message)
         {
-            //_players.TryGetValue(message.PlayerId, out Player player);
-            //Debug.LogFormat("Player {0} move", message.PlayerId);
+
         }
         private void SynchronizeRigidbody(RBSync message)
         {
-            //_objects.TryGetValue(message.ObjectId, out RBSynchronizator rbobject);
-            //Debug.LogFormat("Object {0} sync rigidbody", message.ObjectId);
+
         }
         private void LogOut(LogOut message)
         {
-            //Debug.LogFormat("Player {0} logged out", message.PlayerId);
-            //_players.TryGetValue(message.PlayerId, out Player player);
+
         }
     }
 }

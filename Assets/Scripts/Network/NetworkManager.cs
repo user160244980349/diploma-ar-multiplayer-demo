@@ -32,6 +32,7 @@ namespace Network
             {
                 MaxHosts = _maxSockets,
                 NetworkEventAvailable = NetworkEventAvailable,
+                ConnectionReadyForSend = ConnectionReadyForSend,
             };
             NetworkTransport.Init(config);
 
@@ -110,6 +111,10 @@ namespace Network
         private void NetworkEventAvailable(int socketId)
         {
             _sockets[socketId].EventsReady = true;
+        }
+        private void ConnectionReadyForSend(int socketId, int connectionId)
+        {
+            _sockets[socketId].ConnectionReadyForSend(connectionId);
         }
 
     }

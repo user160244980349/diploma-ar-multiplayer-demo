@@ -4,12 +4,12 @@
     {
         StartingUp,
         ReadyToConnect,
-        WaitingConfirm,
-        WaitingDelay,
         Connecting,
+        WaitingConfirm,
         Connected,
         Up,
         Disconnecting,
+        WrongConnection,
         Disconnected,
     }
 }

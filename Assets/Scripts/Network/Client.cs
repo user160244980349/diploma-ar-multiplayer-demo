@@ -100,18 +100,10 @@ namespace Network
                     State = ClientState.DownWithError;
                     break;
                 }
-                case ClientState.DownWithError:
-                {
-                    break;
-                }
                 case ClientState.ShuttingDown:
                 {
                     if (_socket != null) break;
                     State = ClientState.Down;
-                    break;
-                }
-                case ClientState.Down:
-                {
                     break;
                 }
             }
@@ -162,7 +154,7 @@ namespace Network
                     case NetworkMessageType.Higher:
                     {
                         EventManager.Singleton.Publish(GameEventType.NetworkMessageReceived, wrapper.message);
-                        Debug.LogFormat("CLIENT::Received higher message from {0}:{1} with ping {2}", wrapper.ip, wrapper.port, wrapper.ping);
+                        // Debug.LogFormat("CLIENT::Received higher message from {0}:{1} with ping {2}", wrapper.ip, wrapper.port, wrapper.ping);
                         break;
                     }
                     case NetworkMessageType.Disconnect:
@@ -190,7 +182,7 @@ namespace Network
         }
         private void Send(object message)
         {
-            Debug.Log("CLIENT::Sending data");
+            // Debug.Log("CLIENT::Sending data");
             _socket.Send(_host, 0, message as ANetworkMessage);
         }
     }

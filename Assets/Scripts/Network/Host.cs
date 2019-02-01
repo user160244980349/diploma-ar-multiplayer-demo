@@ -116,10 +116,6 @@ namespace Network
                     Debug.Log("HOST::Shutdown");
                     break;
                 }
-                case HostState.Down:
-                {
-                    break;
-                }
             }
         }
         private void ManageDiscovery()
@@ -138,7 +134,7 @@ namespace Network
                 {
                     case NetworkMessageType.Higher:
                     {
-                        Debug.Log(string.Format("HOST::Received higher message from {0}:{1}", wrapper.ip, wrapper.port));
+                        // Debug.Log(string.Format("HOST::Received higher message from {0}:{1}", wrapper.ip, wrapper.port));
                         EventManager.Singleton.Publish(GameEventType.NetworkMessageReceived, wrapper.message);
                         break;
                     }
@@ -173,12 +169,12 @@ namespace Network
         }
         private void Send(object message, int connectionId)
         {
-            Debug.Log("HOST::Sending data");
+            // Debug.Log("HOST::Sending data");
             _socket.Send(connectionId, 1, message as ANetworkMessage);
         }
         private void Send(object message)
         {
-            Debug.Log("HOST::Sending data");
+            // Debug.Log("HOST::Sending data");
             for (var i = 0; i < _clients.Count; i++) _socket.Send(_clients[i], 1, message as ANetworkMessage);
         }
     }
