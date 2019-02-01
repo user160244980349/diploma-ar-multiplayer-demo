@@ -16,7 +16,6 @@ namespace Network
         private int _host;
         private NetworkError _disconnectError;
         private Timer _switch;
-        private const float _switchDelay = 10f;
 
         #region MonoBehaviour
         private void Start()
@@ -24,7 +23,6 @@ namespace Network
             _socketPrefab = Resources.Load("Networking/Socket") as GameObject;
 
             _switch = gameObject.AddComponent<Timer>();
-            _switch.Duration = _switchDelay;
 
             var socketObject = Instantiate(_socketPrefab, gameObject.transform);
             _socket = socketObject.GetComponent<Socket>();

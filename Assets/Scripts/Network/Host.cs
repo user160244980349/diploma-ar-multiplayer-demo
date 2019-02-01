@@ -16,8 +16,8 @@ namespace Network
         private Socket _socket;
         private List<int> _clients;
         private Timer _discovery;
-        private const float _discoveryDuration = 1f;
-        private const float _switchDelay = 1f;
+        private const float _discoveryDuration = 5f;
+        private const float _switchDelay = 5f;
 
         #region MonoBehaviour
         private void Start()
