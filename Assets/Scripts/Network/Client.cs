@@ -151,6 +151,7 @@ namespace Network
                     }
                     case NetworkMessageType.FallbackHostReady:
                     {
+                        if (!_switch.Running) break;
                         _socket.OpenConnection(wrapper.ip, wrapper.port);
                         _switch.Discard();
                         _switch.Running = false;

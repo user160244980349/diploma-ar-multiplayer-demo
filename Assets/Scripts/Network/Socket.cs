@@ -26,7 +26,6 @@ namespace Network
         private int _packetSize;
         private byte[] _packet;
         private byte[] _broadcastPacket;
-        private byte[] _oldBroadcastPacket;
         private int _activeConnections;
 
         #region MonoBehaviour
@@ -43,7 +42,6 @@ namespace Network
             _packetSize = Settings.packetSize;
             _packet = new byte[_packetSize];
             _broadcastPacket = new byte[_packetSize];
-            _oldBroadcastPacket = new byte[_packetSize];
             _connections = new Connection[_maxConnections];
 
             _connectionConfig = new ConnectionConfig
@@ -288,9 +286,6 @@ namespace Network
                     {
                         NetworkTransport.GetBroadcastConnectionMessage(Id, _broadcastPacket, _packetSize, out int size, out error);
                         ParseError(error, NetworkEventType.BroadcastEvent);
-
-                        if (_broadcastPacket.SequenceEqual(_oldBroadcastPacket)) break;
-                        _broadcastPacket.CopyTo(_oldBroadcastPacket, 0);
 
                         var wrapper = new MessageWrapper
                         {
