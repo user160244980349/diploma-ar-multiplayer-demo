@@ -274,6 +274,8 @@ namespace Network
                         {
                             message = _formatter.Deserialize(_packet),
                             connection = connectionId,
+                            ip = _connections[connectionId].Ip,
+                            port = _connections[connectionId].Port,
                         };
 
                         wrapper.ping = NetworkTransport.GetRemoteDelayTimeMS(Id, connectionId, wrapper.message.timeStamp, out error);

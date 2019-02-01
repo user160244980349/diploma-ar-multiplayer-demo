@@ -8,7 +8,7 @@ namespace Events
         public static EventManager Singleton { get; private set; }
         public delegate void Listener(object info);
 
-        private Dictionary<GameEventType, Listener> _listeners;
+        private Dictionary<GameEventType, List<Listener>> _map;
         private Queue<EventWrapper> _events;
 
         #region MonoBehaviour
@@ -21,7 +21,7 @@ namespace Events
             DontDestroyOnLoad(gameObject);
             gameObject.name = "EventManager";
 
-            _listeners = new Dictionary<GameEventType, Listener>();
+            _map = new Dictionary<GameEventType, List<Listener>>();
             _events = new Queue<EventWrapper>();
         }
         private void Update()
@@ -29,9 +29,12 @@ namespace Events
             while (_events.Count > 0)
             {
                 var queuedEvent = _events.Dequeue();
-                if (!_listeners.ContainsKey(queuedEvent.type)) continue;
-                _listeners.TryGetValue(queuedEvent.type, out Listener listener);
-                listener(queuedEvent.info);
+                if (!_map.ContainsKey(queuedEvent.type)) continue;
+                _map.TryGetValue(queuedEvent.type, out List<Listener> listeners);
+                for (var i = 0; i < listeners.Count; i++)
+                {
+                    listeners[i](queuedEvent.info);
+                }
             }
         }
         #endregion
@@ -45,25 +48,30 @@ namespace Events
         }
         public void ImmediatePublish(GameEventType type, object info)
         {
-            if (!_listeners.TryGetValue(type, out Listener listener)) return;
-            listener(info);
+            if (!_map.TryGetValue(type, out List<Listener> listeners)) return;
+            for (var i = 0; i < listeners.Count; i++)
+            {
+                listeners[i](info);
+            }
         }
         public void RegisterListener(GameEventType type, Listener newListener)
         {
-            if (_listeners.ContainsKey(type))
+            if (_map.ContainsKey(type))
             {
-                _listeners.TryGetValue(type, out Listener listener);
-                listener += newListener;
+                _map.TryGetValue(type, out List<Listener> listeners);
+                listeners.Add(newListener);
             }
             else
             {
-                _listeners.Add(type, newListener);
+                var listeners = new List<Listener>();
+                listeners.Add(newListener);
+                _map.Add(type, listeners);
             }
         }
-        public void UnregisterListener(GameEventType type, Listener newListener)
+        public void UnregisterListener(GameEventType type, Listener removingListener)
         {
-            if (!_listeners.TryGetValue(type, out Listener listener)) return;
-            listener -= newListener;
+            if (!_map.TryGetValue(type, out List<Listener> listeners)) return;
+            listeners.Remove(removingListener);
         }
     }
 }

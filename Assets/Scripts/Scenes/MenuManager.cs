@@ -66,11 +66,13 @@ namespace Scenes
         }
         private void Hosting()
         {
+            EventManager.Singleton.Publish(GameEventType.Connecting, null);
             MultiplayerManager.Singleton.Hosting = true;
             NetworkManager.Singleton.SpawnHost();
         }
         private void Connecting()
         {
+            EventManager.Singleton.Publish(GameEventType.Connecting, null);
             MultiplayerManager.Singleton.Hosting = false;
             NetworkManager.Singleton.SpawnClient();
         }

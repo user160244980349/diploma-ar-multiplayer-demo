@@ -10,7 +10,7 @@ namespace Scenes
     {
         public static LogInManager Singleton { get; private set; }
 
-        private Text _name;
+        private InputField _name;
 
         #region MonoBehaviour
         private void Awake()
@@ -23,7 +23,7 @@ namespace Scenes
         {
             ConsoleManager.Singleton.InstantiateConsole();
             EventManager.Singleton.RegisterListener(GameEventType.ButtonClicked, OnButtonClick);
-            _name = GameObject.Find("PlayerName").GetComponent<Text>();
+            _name = GameObject.Find("PlayerName").GetComponent<InputField>();
         }
         private void OnDestroy()
         {
@@ -33,7 +33,6 @@ namespace Scenes
 
         private void OnButtonClick(object info)
         {
-            Debug.Log("ON_CLICK");
             var button = info as Button;
             switch (button.name)
             {
@@ -44,6 +43,7 @@ namespace Scenes
         }
         private void LogIn()
         {
+            EventManager.Singleton.Publish(GameEventType.LoggingIn, null);
             EventManager.Singleton.Publish(GameEventType.MultiplayerMessageSend, new LogIn(_name.text, Color.green));
         }
     }

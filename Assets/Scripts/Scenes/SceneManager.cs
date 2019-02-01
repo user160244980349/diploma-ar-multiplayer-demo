@@ -25,7 +25,8 @@ namespace Scenes
             EventManager.Singleton.RegisterListener(GameEventType.Connected, OnConnected);
             EventManager.Singleton.RegisterListener(GameEventType.LoggingIn, OnLoggingIn);
             EventManager.Singleton.RegisterListener(GameEventType.LoggedIn, OnLoggedIn);
-            EventManager.Singleton.RegisterListener(GameEventType.LoggedIn, OnLoggingOut);
+            EventManager.Singleton.RegisterListener(GameEventType.LoggingOut, OnLoggingOut);
+            EventManager.Singleton.RegisterListener(GameEventType.LoggedOut, OnLoggedOut);
             EventManager.Singleton.RegisterListener(GameEventType.Disconnected, OnDisconnected);
         }
         #endregion
@@ -46,7 +47,6 @@ namespace Scenes
         private void OnLoggingIn(object info)
         {
             LoadScene("Loading");
-            EventManager.Singleton.Publish(GameEventType.LoggedIn, null);
         }
         private void OnLoggedIn(object info)
         {

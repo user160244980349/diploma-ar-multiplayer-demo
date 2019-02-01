@@ -1,14 +1,13 @@
 ﻿using UnityEngine;
 using UnityEngine.Networking;
 
-
 namespace Network
 {
     public class NetworkManager : MonoBehaviour
     {
         public static NetworkManager Singleton { get; private set; }
-        public bool HostBooted { get; private set; }
-        public bool ClientBooted { get; private set; }
+        public bool HostBooted { get { if (_host != null) return true; return false; } }
+        public bool ClientBooted { get { if (_client != null) return true; return false; } }
 
         private GameObject _hostPrefab;
         private GameObject _clientPrefab;
@@ -17,9 +16,6 @@ namespace Network
         private Client _client;
         private Socket[] _sockets;
         private ushort _maxSockets = 16;
-
-        private bool _fallbackMode;
-        private int _broadcastKey;
 
         #region MonoBehaviour
         private void Awake()
@@ -60,7 +56,6 @@ namespace Network
                     }
                     case ClientState.Down:
                     {
-                        ClientBooted = false;
                         Destroy(_client.gameObject);
                         break;
                     }
@@ -73,7 +68,6 @@ namespace Network
                 {
                     case HostState.Down:
                     {
-                        HostBooted = false;
                         Destroy(_host.gameObject);
                         break;
                     }
@@ -101,8 +95,6 @@ namespace Network
 
         public void SpawnHost()
         {
-            if (_host != null) return;
-            HostBooted = true;
             var hostObject = Instantiate(_hostPrefab, gameObject.transform);
             _host = hostObject.GetComponent<Host>();
         }
@@ -112,8 +104,6 @@ namespace Network
         }
         public void SpawnClient()
         {
-            if (_client != null) return;
-            ClientBooted = true;
             var clientObject = Instantiate(_clientPrefab, gameObject.transform);
             _client = clientObject.GetComponent<Client>();
         }
@@ -121,9 +111,5 @@ namespace Network
         {
             _client.Shutdown();
         }
-
-        // ApplicationManager.Singleton.LoadScene("Playground");
-        // ApplicationManager.Singleton.LoadScene("MainMenu");
-        // ApplicationManager.Singleton.LoadScene("Loading");
     }
 }

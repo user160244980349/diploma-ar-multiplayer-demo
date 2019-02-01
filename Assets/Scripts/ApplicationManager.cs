@@ -38,7 +38,7 @@ public class ApplicationManager : MonoBehaviour
  * 
  * - Multiplayer:
  * 
- *     - Messages:
+ *     + Messages:
  *         + Connection
  *         + Disconnection
  *         + Serialize/Deserialize in formatter
@@ -66,7 +66,7 @@ public class ApplicationManager : MonoBehaviour
  *     + Almost all errors fixed
  *     + Objects configs correction
  *     - Network discovery for lobby's
- *     - Falling back system
+ *     + Falling back system
  *     - (OPTIONAL) Channel management if game will be laggy
  *
  * - UI:
