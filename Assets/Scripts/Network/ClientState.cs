@@ -5,7 +5,7 @@
         StartingUp,
         Up,
         FallingBack,
-        WaitingSwitch,
+        DownWithError,
         ShuttingDown,
         Down,
     }

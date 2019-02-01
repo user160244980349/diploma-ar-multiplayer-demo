@@ -85,9 +85,8 @@ namespace Network
             {
                 case ClientState.StartingUp:
                 {
-                    if (_socket.State != SocketState.Up) break;
+                    if (!_socket.OpenConnection("192.168.1.2", 8000)) break;
                     State = ClientState.Up;
-                    _socket.OpenConnection("192.168.1.2", 8000);
                     break;
                 }
                 case ClientState.Up:
@@ -99,11 +98,10 @@ namespace Network
                 case ClientState.FallingBack:
                 {
                     if (_socket != null) break;
-                    State = ClientState.WaitingSwitch;
-                    Debug.Log("CLIENT::Waiting switch");
+                    State = ClientState.DownWithError;
                     break;
                 }
-                case ClientState.WaitingSwitch:
+                case ClientState.DownWithError:
                 {
                     break;
                 }
@@ -111,7 +109,6 @@ namespace Network
                 {
                     if (_socket != null) break;
                     State = ClientState.Down;
-                    Debug.Log("CLIENT::Shutdown");
                     break;
                 }
                 case ClientState.Down:
@@ -132,12 +129,10 @@ namespace Network
                         if (_socket.DisconnectError == NetworkError.Timeout)
                         {
                             Debug.LogFormat("CLIENT::Connection recovered to {0}:{1}", wrapper.ip, wrapper.port);
+                            break;
                         }
-                        else
-                        {
-                            EventManager.Singleton.Publish(GameEventType.Connected, null);
-                            Debug.LogFormat("CLIENT::Connected to {0}:{1}", wrapper.ip, wrapper.port);
-                        }
+                        EventManager.Singleton.Publish(GameEventType.Connected, null);
+                        Debug.LogFormat("CLIENT::Connected to {0}:{1}", wrapper.ip, wrapper.port);
                         break;
                     }
                     case NetworkMessageType.FallbackInfo:
@@ -178,13 +173,11 @@ namespace Network
                             Debug.LogFormat("CLIENT::Disconnected from {0}:{1} with timeout", wrapper.ip, wrapper.port);
                             _switch.Discard();
                             _switch.Running = true;
+                            break;
                         }
-                        else
-                        {
-                            Shutdown();
-                            EventManager.Singleton.Publish(GameEventType.Disconnected, null);
-                            Debug.LogFormat("CLIENT::Disconnected from {0}:{1}", wrapper.ip, wrapper.port);
-                        }
+                        Shutdown();
+                        EventManager.Singleton.Publish(GameEventType.Disconnected, null);
+                        Debug.LogFormat("CLIENT::Disconnected from {0}:{1}", wrapper.ip, wrapper.port);
                         break;
                     }
                 }

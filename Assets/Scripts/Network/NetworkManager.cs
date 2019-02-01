@@ -44,7 +44,7 @@ namespace Network
             {
                 switch (_client.State)
                 {
-                    case ClientState.WaitingSwitch:
+                    case ClientState.DownWithError:
                     {
                         var broadcastKey = _client.BroadcastKey;
                         Destroy(_client.gameObject);

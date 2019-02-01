@@ -90,21 +90,17 @@ namespace Network
                 case HostState.StartingUp:
                 {
                     if (_socket.State != SocketState.Up) break;
-
                     State = HostState.Up;
                     if (BroadcastKey == 0)
                     {
                         BroadcastKey = KeyGenerator.Generate();
                         EventManager.Singleton.Publish(GameEventType.Connected, null);
+                        break;
                     }
-                    else
-                    {
-                        Debug.LogFormat("HOST::Broadcasting to port {1} with key {0}", BroadcastKey, 8001);
-                        _socket.StartBroadcast(BroadcastKey, 8001, new FallbackHostReady());
-                        _discovery.Remains = 5;
-                        _discovery.Running = true;
-                    }
-
+                    Debug.LogFormat("HOST::Broadcasting to port {1} with key {0}", BroadcastKey, 8001);
+                    _socket.StartBroadcast(BroadcastKey, 8001, new FallbackHostReady());
+                    _discovery.Remains = 5;
+                    _discovery.Running = true;
                     break;
                 }
                 case HostState.Up:
