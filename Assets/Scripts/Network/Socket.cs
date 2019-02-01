@@ -57,6 +57,7 @@ namespace Network
             _topology = new HostTopology(_connectionConfig, _maxConnections);
 
             gameObject.name = string.Format("Socket{0}", Id);
+            State = SocketState.ReadyToOpen;
         }
         private void Update()
         {

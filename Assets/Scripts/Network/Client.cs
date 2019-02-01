@@ -187,7 +187,6 @@ namespace Network
             if (!_switch.Elapsed) return;
             State = ClientState.FallingBack;
             _socket.Close();
-            Debug.Log("CLIENT::Falling back");
         }
         private void Send(object message)
         {

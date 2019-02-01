@@ -15,6 +15,8 @@ namespace Network
 
         private int _queueLength;
         private Timer _send;
+        private Timer _connect;
+        private Timer _disconnect;
 
         #region MonoBehaviour
         private void Start()
@@ -26,8 +28,13 @@ namespace Network
 
             _send = gameObject.AddComponent<Timer>();
             _send.Duration = Settings.sendRate;
+            _connect = gameObject.AddComponent<Timer>();
+            _connect.Duration = Settings.sendRate;
+            _disconnect = gameObject.AddComponent<Timer>();
+            _disconnect.Duration = Settings.sendRate;
 
             gameObject.name = string.Format("Connection{0}", Id);
+            State = ConnectionState.ReadyToConnect;
         }
         private void Update()
         {
@@ -39,6 +46,8 @@ namespace Network
         {
             if (State != ConnectionState.ReadyToConnect) return false;
             State = ConnectionState.Connecting;
+            _connect.Discard();
+            _connect.Running = true;
             return true;
         }
         public bool Confirm()
@@ -62,6 +71,8 @@ namespace Network
                 State = ConnectionState.Disconnected;
                 return;
             }
+            _disconnect.Discard();
+            _disconnect.Running = true;
             State = ConnectionState.Disconnecting;
         }
         public bool QueueMessage(int channelId, byte[] packet)
@@ -79,30 +90,28 @@ namespace Network
             {
                 case ConnectionState.Connecting:
                 {
+                    byte error;
                     if (Id == 0)
                     {
                         State = ConnectionState.WaitingConfirm;
-
-                        Id = NetworkTransport.Connect(SocketId, Ip, Port, 0, out byte error);
+                        Id = NetworkTransport.Connect(SocketId, Ip, Port, 0, out error);
                         ParseError(error);
-
                         gameObject.name = string.Format("Connection{0}", Id);
                         break;
                     }
-                    else
-                    {
-                        State = ConnectionState.Connected;
-
-                        NetworkTransport.GetConnectionInfo(SocketId, Id, out string ip, out int port, out NetworkID network, out NodeID end, out byte error);
-                        ParseError(error);
-
-                        Ip = ip;
-                        Port = port;
-                    }
+                    State = ConnectionState.WaitingDelay;
+                    NetworkTransport.GetConnectionInfo(SocketId, Id, out string ip, out int port, out NetworkID network, out NodeID end, out error);
+                    ParseError(error);
+                    Ip = ip;
+                    Port = port;
                     break;
                 }
-                case ConnectionState.Connected:
+                case ConnectionState.WaitingDelay:
                 {
+                    if (!_connect.Elapsed) break;
+                    State = ConnectionState.Connected;
+                    _connect.Discard();
+                    _connect.Running = false;
                     break;
                 }
                 case ConnectionState.Up:
@@ -117,13 +126,10 @@ namespace Network
                 }
                 case ConnectionState.Disconnecting:
                 {
+                    if (!_disconnect.Elapsed) break;
                     State = ConnectionState.Disconnected;
                     NetworkTransport.Disconnect(SocketId, Id, out byte error);
                     ParseError(error);
-                    break;
-                }
-                case ConnectionState.Disconnected:
-                {
                     break;
                 }
             }
