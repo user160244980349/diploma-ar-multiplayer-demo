@@ -25,7 +25,6 @@ public class RBSynchronizator : MonoBehaviour
     private float _interpTime;
     private float _lastSyncTime;
 
-    #region MonoBehaviour
     void Start()
     {
         _rb = GetComponent<Rigidbody>();
@@ -66,7 +65,6 @@ public class RBSynchronizator : MonoBehaviour
             _rb.angularVelocity = Vector3.Lerp(_prevrbavel, _newrbavel, percentage);
         }
     }
-    #endregion
 
     private void RBSync(RBSync message)
     {

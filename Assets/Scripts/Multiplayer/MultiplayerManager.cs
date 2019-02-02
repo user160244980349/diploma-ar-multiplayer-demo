@@ -10,7 +10,6 @@ namespace Multiplayer
         public static MultiplayerManager Singleton { get; private set; }
         public bool Hosting { get; set; }
 
-        #region MonoBehaviour
         private void Awake()
         {
             if (Singleton == null)
@@ -28,7 +27,6 @@ namespace Multiplayer
             EventManager.Singleton.RegisterListener(GameEventType.NetworkMessageReceived, PollMM);
             EventManager.Singleton.RegisterListener(GameEventType.MultiplayerMessageSend, SendMM);
         }
-        #endregion
 
         private void SendMM(object info)
         {

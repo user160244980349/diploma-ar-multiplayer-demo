@@ -7,7 +7,6 @@ namespace Scenes
     {
         public static LoadingManager Singleton { get; private set; }
 
-        #region MonoBehaviour
         private void Awake()
         {
             if (Singleton == null)
@@ -18,6 +17,5 @@ namespace Scenes
         {
             ConsoleManager.Singleton.InstantiateConsole();
         }
-        #endregion
     }
 }

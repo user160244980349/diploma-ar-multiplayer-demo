@@ -7,7 +7,6 @@ namespace Scenes
     {
         public static SceneManager Singleton { get; private set; }
 
-        #region MonoBehaviour
         private void Awake()
         {
             if (Singleton == null)
@@ -29,7 +28,6 @@ namespace Scenes
             EventManager.Singleton.RegisterListener(GameEventType.LoggedOut, OnLoggedOut);
             EventManager.Singleton.RegisterListener(GameEventType.Disconnected, OnDisconnected);
         }
-        #endregion
 
         private void LoadScene(string sceneName)
         {

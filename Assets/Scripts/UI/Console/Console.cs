@@ -15,7 +15,6 @@ namespace UI.Console
         private LinkedList<GameObject> _messages;
         private GameObject _messageObject;
 
-        #region MonoBehaviour
         private void Start()
         {
             _messages = new LinkedList<GameObject>();
@@ -27,7 +26,6 @@ namespace UI.Console
 
             Started = true;
         }
-        #endregion
 
         public void WriteMessage(ConsoleMessage m)
         {

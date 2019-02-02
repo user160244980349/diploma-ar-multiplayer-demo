@@ -8,7 +8,17 @@ public class Timer : MonoBehaviour
     public bool Running { get; set; }
     public bool Elapsed { get; private set; }
 
-    #region MonoBehaviour
+    public void Null()
+    {
+        Remains = 0;
+        Elapsed = true;
+    }
+    public void Discard()
+    {
+        Remains = Duration;
+        Elapsed = false;
+    }
+
     private void Update()
     {
         if (Running)
@@ -20,17 +30,5 @@ public class Timer : MonoBehaviour
             else
                 Elapsed = false;
         }
-    }
-    #endregion
-
-    public void Null()
-    {
-        Remains = 0;
-        Elapsed = true;
-    }
-    public void Discard()
-    {
-        Remains = Duration;
-        Elapsed = false;
     }
 }

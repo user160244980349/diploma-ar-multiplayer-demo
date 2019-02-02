@@ -10,14 +10,7 @@ namespace Scenes
     public class MenuManager : MonoBehaviour
     {
         public static MenuManager Singleton { get; private set; }
-
-        private Text _ip;
-        private Text _port;
-
-        private GameObject _hostObject;
-        private GameObject _clientObject;
-
-        #region MonoBehaviour
+        
         private void Awake()
         {
             if (Singleton == null)
@@ -27,20 +20,12 @@ namespace Scenes
         private void Start()
         {
             ConsoleManager.Singleton.InstantiateConsole();
-
-            _hostObject = Resources.Load("Networking/NetworkHost") as GameObject;
-            _clientObject = Resources.Load("Networking/NetworkClient") as GameObject;
-
-            _ip = GameObject.Find("Ip").GetComponentInChildren<Text>();
-            _port = GameObject.Find("Port").GetComponentInChildren<Text>();
-
             EventManager.Singleton.RegisterListener(GameEventType.ButtonClicked, OnButtonClick);
         }
         private void OnDestroy()
         {
             EventManager.Singleton.UnregisterListener(GameEventType.ButtonClicked, OnButtonClick);
         }
-        #endregion
 
         private void OnButtonClick(object info)
         {

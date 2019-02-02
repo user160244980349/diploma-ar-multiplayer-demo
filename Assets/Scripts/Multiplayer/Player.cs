@@ -10,7 +10,6 @@ namespace Multiplayer
         public string playerName;
         public Color playerColor;
 
-        #region MonoBehaviour
         private void Update()
         {
             if (Input.GetKey(KeyCode.W))
@@ -49,6 +48,5 @@ namespace Multiplayer
                 EventManager.Singleton.Publish(GameEventType.MultiplayerMessageSend, new Move(playerId, v));
             }
         }
-        #endregion
     }
 }

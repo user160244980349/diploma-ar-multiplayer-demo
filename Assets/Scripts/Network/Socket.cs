@@ -28,44 +28,6 @@ namespace Network
         private byte[] _broadcastPacket;
         private int _connectionsCount;
 
-        #region MonoBehaviour
-        private void Start()
-        {
-            _formatter = new Formatter();
-            _messages = new Queue<MessageWrapper>();
-
-            _connectionPrefab = Resources.Load("Networking/Connection") as GameObject;
-
-            _channels = Settings.channels;
-            _port = Settings.port;
-            _maxConnections = (ushort)(Settings.maxConnections + 1);
-            _packetSize = Settings.packetSize;
-            _packet = new byte[_packetSize];
-            _broadcastPacket = new byte[_packetSize];
-            _connections = new Connection[_maxConnections];
-
-            _connectionConfig = new ConnectionConfig
-            {
-                ConnectTimeout = 100,
-                MaxConnectionAttempt = 20,
-                DisconnectTimeout = 2000,
-            };
-
-            for (var i = 0; i < _channels.Length; i++)
-                _connectionConfig.AddChannel(_channels[i]);
-
-            _topology = new HostTopology(_connectionConfig, _maxConnections);
-
-            gameObject.name = string.Format("Socket{0}", Id);
-            State = SocketState.ReadyToOpen;
-        }
-        private void Update()
-        {
-            ManageConnections();
-            ManageSocket();
-        }
-        #endregion
-
         public bool OpenConnection(string ip, int port)
         {
             if (_connections[0] != null && State != SocketState.Up) return false;
@@ -150,6 +112,42 @@ namespace Network
             if (_connections[connectionId] != null && State != SocketState.Up) return false;
             _connections[connectionId].ReadyForSend = true;
             return true;
+        }
+
+        private void Start()
+        {
+            _formatter = new Formatter();
+            _messages = new Queue<MessageWrapper>();
+
+            _connectionPrefab = Resources.Load("Networking/Connection") as GameObject;
+
+            _channels = Settings.channels;
+            _port = Settings.port;
+            _maxConnections = (ushort)(Settings.maxConnections + 1);
+            _packetSize = Settings.packetSize;
+            _packet = new byte[_packetSize];
+            _broadcastPacket = new byte[_packetSize];
+            _connections = new Connection[_maxConnections];
+
+            _connectionConfig = new ConnectionConfig
+            {
+                ConnectTimeout = 100,
+                MaxConnectionAttempt = 20,
+                DisconnectTimeout = 2000,
+            };
+
+            for (var i = 0; i < _channels.Length; i++)
+                _connectionConfig.AddChannel(_channels[i]);
+
+            _topology = new HostTopology(_connectionConfig, _maxConnections);
+
+            gameObject.name = string.Format("Socket{0}", Id);
+            State = SocketState.ReadyToOpen;
+        }
+        private void Update()
+        {
+            ManageConnections();
+            ManageSocket();
         }
 
         private void ManageConnections()

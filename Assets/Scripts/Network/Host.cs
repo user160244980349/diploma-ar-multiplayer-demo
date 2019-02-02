@@ -18,7 +18,12 @@ namespace Network
         private const float _discoveryDuration = 5f;
         private const float _switchDelay = 5f;
 
-        #region MonoBehaviour
+        public void Shutdown()
+        {
+            State = HostState.ShuttingDown;
+            _socket.Close();
+        }
+
         private void Start()
         {
             _discovery = gameObject.AddComponent<Timer>();
@@ -50,13 +55,6 @@ namespace Network
         private void OnDestroy()
         {
             EventManager.Singleton.UnregisterListener(GameEventType.NetworkMessageSend, Send);
-        }
-        #endregion
-
-        public void Shutdown()
-        {
-            State = HostState.ShuttingDown;
-            _socket.Close();
         }
 
         private void ManageSocket()

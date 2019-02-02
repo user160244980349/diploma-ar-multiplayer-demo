@@ -17,7 +17,33 @@ namespace Network
         private Socket[] _sockets;
         private ushort _maxSockets = 16;
 
-        #region MonoBehaviour
+        public void RegisterSocket(Socket socket)
+        {
+            _sockets[socket.Id] = socket;
+        }
+        public void UnregisterSocket(Socket socket)
+        {
+            _sockets[socket.Id] = null;
+        }
+        public void SpawnHost()
+        {
+            var hostObject = Instantiate(_hostPrefab, gameObject.transform);
+            _host = hostObject.GetComponent<Host>();
+        }
+        public void DespawnHost()
+        {
+            _host.Shutdown();
+        }
+        public void SpawnClient()
+        {
+            var clientObject = Instantiate(_clientPrefab, gameObject.transform);
+            _client = clientObject.GetComponent<Client>();
+        }
+        public void DespawnClient()
+        {
+            _client.Shutdown();
+        }
+
         private void Awake()
         {
             if (Singleton == null)
@@ -79,34 +105,6 @@ namespace Network
         {
             NetworkTransport.Shutdown();
         }
-        #endregion
-
-        public void RegisterSocket(Socket socket)
-        {
-            _sockets[socket.Id] = socket;
-        }
-        public void UnregisterSocket(Socket socket)
-        {
-            _sockets[socket.Id] = null;
-        }
-        public void SpawnHost()
-        {
-            var hostObject = Instantiate(_hostPrefab, gameObject.transform);
-            _host = hostObject.GetComponent<Host>();
-        }
-        public void DespawnHost()
-        {
-            _host.Shutdown();
-        }
-        public void SpawnClient()
-        {
-            var clientObject = Instantiate(_clientPrefab, gameObject.transform);
-            _client = clientObject.GetComponent<Client>();
-        }
-        public void DespawnClient()
-        {
-            _client.Shutdown();
-        }
 
         private void NetworkEventAvailable(int socketId)
         {
@@ -116,6 +114,5 @@ namespace Network
         {
             _sockets[socketId].ConnectionReadyForSend(connectionId);
         }
-
     }
 }

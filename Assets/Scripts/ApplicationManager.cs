@@ -4,7 +4,6 @@ public class ApplicationManager : MonoBehaviour
 {
     public static ApplicationManager Singleton { get; private set; }
 
-    #region MonoBehaviour
     private void Awake()
     {
         if (Singleton == null)
@@ -25,7 +24,6 @@ public class ApplicationManager : MonoBehaviour
         Instantiate(_consoleManager);
         Instantiate(_sceneManager);
     }
-    #endregion
 }
 
 /**

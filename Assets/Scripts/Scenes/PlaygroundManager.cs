@@ -11,7 +11,6 @@ namespace Scenes
 
         private GameObject _menu;
 
-        #region MonoBehaviour
         private void Awake()
         {
             if (Singleton == null)
@@ -31,7 +30,6 @@ namespace Scenes
         {
             EventManager.Singleton.UnregisterListener(GameEventType.ButtonClicked, OnButtonClick);
         }
-        #endregion
 
         private void OnButtonClick(object info)
         {

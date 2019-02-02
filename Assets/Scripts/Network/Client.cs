@@ -16,7 +16,12 @@ namespace Network
         private NetworkError _disconnectError;
         private Timer _switch;
 
-        #region MonoBehaviour
+        public void Shutdown()
+        {
+            State = ClientState.ShuttingDown;
+            _socket.Close();
+        }
+
         private void Start()
         {
             _socketPrefab = Resources.Load("Networking/Socket") as GameObject;
@@ -45,13 +50,6 @@ namespace Network
         private void OnDestroy()
         {
             EventManager.Singleton.UnregisterListener(GameEventType.NetworkMessageSend, Send);
-        }
-        #endregion
-
-        public void Shutdown()
-        {
-            State = ClientState.ShuttingDown;
-            _socket.Close();
         }
 
         private void ManageSocket()

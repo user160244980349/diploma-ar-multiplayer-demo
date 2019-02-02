@@ -8,14 +8,12 @@ namespace UI.Buttons
     {
         private Button _button;
 
-        #region MonoBehaviour
         private void Start()
         {
             _button = GetComponent<Button>();
 
             _button.onClick.AddListener(Click);
         }
-        #endregion
 
         private void Click()
         {

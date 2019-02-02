@@ -16,23 +16,6 @@ namespace Network
 
         private int _queueLength;
 
-        #region MonoBehaviour
-        private void Start()
-        {
-            Id = Settings.id;
-            SocketId = Settings.socketId;
-            Ip = Settings.ip;
-            Port = Settings.port;
-
-            gameObject.name = string.Format("Connection{0}", Id);
-            State = ConnectionState.ReadyToConnect;
-        }
-        private void Update()
-        {
-            ManageConnection();
-        }
-        #endregion
-
         public bool Connect()
         {
             if (State != ConnectionState.ReadyToConnect) return false;
@@ -71,6 +54,21 @@ namespace Network
             else
                 _queueLength++;
             return queued;
+        }
+
+        private void Start()
+        {
+            Id = Settings.id;
+            SocketId = Settings.socketId;
+            Ip = Settings.ip;
+            Port = Settings.port;
+
+            gameObject.name = string.Format("Connection{0}", Id);
+            State = ConnectionState.ReadyToConnect;
+        }
+        private void Update()
+        {
+            ManageConnection();
         }
 
         private void ManageConnection()
