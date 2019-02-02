@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Threading;
 using Events;
 using Network.Messages;
 using UnityEngine;
@@ -13,15 +12,18 @@ namespace Network
         public int BroadcastKey { get; set; }
 
         private GameObject _socketPrefab;
-
         private Socket _socket;
         private List<int> _clients;
-
         private Timer _discovery;
-        private const float _discoveryDuration = 1f;
-        private const float _switchDelay = 1f;
+        private const float _discoveryDuration = 5f;
+        private const float _switchDelay = 5f;
 
-        #region MonoBehaviour
+        public void Shutdown()
+        {
+            State = HostState.ShuttingDown;
+            _socket.Close();
+        }
+
         private void Start()
         {
             _discovery = gameObject.AddComponent<Timer>();
@@ -54,16 +56,10 @@ namespace Network
         {
             EventManager.Singleton.UnregisterListener(GameEventType.NetworkMessageSend, Send);
         }
-        #endregion
-
-        public void Shutdown()
-        {
-            State = HostState.ShuttingDown;
-            _socket.Close();
-        }
 
         private void ManageSocket()
         {
+            if (_socket == null) return;
             switch (_socket.State)
             {
                 case SocketState.ReadyToOpen:
@@ -76,8 +72,9 @@ namespace Network
                     _socket.Up();
                     break;
                 }
-                case SocketState.Down:
+                case SocketState.Closed:
                 {
+                    State = HostState.ShuttingDown;
                     Destroy(_socket.gameObject);
                     break;
                 }
@@ -90,59 +87,44 @@ namespace Network
                 case HostState.StartingUp:
                 {
                     if (_socket.State != SocketState.Up) break;
-
+                    State = HostState.Up;
                     if (BroadcastKey == 0)
                     {
-                        State = HostState.Up;
                         BroadcastKey = KeyGenerator.Generate();
+                        EventManager.Singleton.Publish(GameEventType.Connected, null);
+                        break;
                     }
-                    else
-                    {
-                        State = HostState.FallingBack;
-                        Debug.LogFormat("HOST::Broadcasting to port {1} with key {0}", BroadcastKey, 8001);
-                        _socket.StartBroadcast(BroadcastKey, 8001, new FallbackHostReady());
-                        _discovery.Remains = 5;
-                        _discovery.Running = true;
-                    }
-                    break;
-                }
-                case HostState.FallingBack:
-                {
-                    //for (var i = 0; i < 60; i++)
-                    //{
-                    //    Thread.Sleep(5);
-                    //    Debug.LogFormat("HOST::Broadcasting to port {1} with key {0}", BroadcastKey, 8001 + i);
-                    //    _socket.StartBroadcast(BroadcastKey, 8001 + i, new FallbackHostReady());
-                    //    Thread.Sleep(200);
-                    //    _socket.StopBroadcast();
-                    //}
-                    //Debug.Log("HOST::Finished broadcasting");
-                    //State = HostState.Up;
-                    if (!_discovery.Elapsed) break;
-                    State = HostState.Up;
-                    _socket.StopBroadcast();
-                    Debug.Log("HOST::Finished broadcasting");
+                    Debug.LogFormat("HOST::Broadcasting to port {1} with key {0}", BroadcastKey, 8001);
+                    _socket.StartBroadcast(BroadcastKey, 8001, new FallbackHostReady());
+                    _discovery.Remains = 5;
+                    _discovery.Running = true;
                     break;
                 }
                 case HostState.Up:
                 {
-                    ParseMessanges();
+                    ParseMessages();
+                    ManageDiscovery();
                     break;
                 }
                 case HostState.ShuttingDown:
                 {
-                    if (_socket != null) return;
+                    if (_socket != null) break;
                     State = HostState.Down;
-                    break;
-                }
-                case HostState.Down:
-                {
+                    EventManager.Singleton.Publish(GameEventType.Disconnected, null);
                     Debug.Log("HOST::Shutdown");
                     break;
                 }
             }
         }
-        private void ParseMessanges()
+        private void ManageDiscovery()
+        {
+            if (!_discovery.Elapsed) return;
+            _socket.StopBroadcast();
+            _discovery.Discard();
+            _discovery.Running = false;
+            Debug.Log("HOST::Finished broadcasting");
+        }
+        private void ParseMessages()
         {
             while (_socket.PollMessage(out MessageWrapper wrapper))
             {
@@ -150,7 +132,7 @@ namespace Network
                 {
                     case NetworkMessageType.Higher:
                     {
-                        Debug.Log(string.Format("HOST::Received higher message from {0}:{1}", wrapper.ip, wrapper.port));
+                        // Debug.Log(string.Format("HOST::Received higher message from {0}:{1}", wrapper.ip, wrapper.port));
                         EventManager.Singleton.Publish(GameEventType.NetworkMessageReceived, wrapper.message);
                         break;
                     }
@@ -185,12 +167,12 @@ namespace Network
         }
         private void Send(object message, int connectionId)
         {
-            Debug.Log("HOST::Sending data");
+            // Debug.Log("HOST::Sending data");
             _socket.Send(connectionId, 1, message as ANetworkMessage);
         }
         private void Send(object message)
         {
-            Debug.Log("HOST::Sending data");
+            // Debug.Log("HOST::Sending data");
             for (var i = 0; i < _clients.Count; i++) _socket.Send(_clients[i], 1, message as ANetworkMessage);
         }
     }

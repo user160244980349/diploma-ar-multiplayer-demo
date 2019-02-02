@@ -2,14 +2,14 @@
 {
     public enum ConnectionState
     {
-        Down,
+        StartingUp,
         ReadyToConnect,
-        WaitingDelay,
-        WaitingConfirm,
         Connecting,
+        WaitingConfirm,
         Connected,
         Up,
         Disconnecting,
+        WrongConnection,
         Disconnected,
     }
 }

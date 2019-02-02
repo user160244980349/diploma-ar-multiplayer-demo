@@ -4,9 +4,8 @@
     {
         StartingUp,
         Up,
-        WaitingReconnect,
         FallingBack,
-        WaitingSwitch,
+        DownWithError,
         ShuttingDown,
         Down,
     }

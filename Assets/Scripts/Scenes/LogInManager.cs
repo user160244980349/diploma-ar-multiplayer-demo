@@ -1,15 +1,16 @@
-using Events;
+﻿using Events;
+using Multiplayer.Messages;
 using UI.Console;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Scenes
 {
-    public class PlaygroundManager : MonoBehaviour
+    public class LogInManager : MonoBehaviour
     {
-        public static PlaygroundManager Singleton { get; private set; }
+        public static LogInManager Singleton { get; private set; }
 
-        private GameObject _menu;
+        private InputField _name;
 
         private void Awake()
         {
@@ -20,11 +21,8 @@ namespace Scenes
         private void Start()
         {
             ConsoleManager.Singleton.InstantiateConsole();
-
-            _menu = GameObject.Find("Menu");
-            _menu.SetActive(false);
-
             EventManager.Singleton.RegisterListener(GameEventType.ButtonClicked, OnButtonClick);
+            _name = GameObject.Find("PlayerName").GetComponent<InputField>();
         }
         private void OnDestroy()
         {
@@ -36,22 +34,15 @@ namespace Scenes
             var button = info as Button;
             switch (button.name)
             {
-                case "Resume":
-                    _menu.SetActive(false);
-                    break;
-
-                case "Leave":
-                    Leave();
-                    break;
-
-                case "ShowMenu":
-                    _menu.SetActive(true);
+                case "LogIn":
+                    LogIn();
                     break;
             }
         }
-        private void Leave()
+        private void LogIn()
         {
-
+            EventManager.Singleton.Publish(GameEventType.LoggingIn, null);
+            EventManager.Singleton.Publish(GameEventType.MultiplayerMessageSend, new LogIn(_name.text, Color.green));
         }
     }
 }

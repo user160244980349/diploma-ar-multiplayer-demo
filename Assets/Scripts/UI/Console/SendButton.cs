@@ -8,13 +8,11 @@ namespace UI.Console
         public Console console;
         public InputField input;
 
-        # region MonoBehaviour
         private void Start()
         {
             var button = GetComponent<Button>();
             button.onClick.AddListener(Click);
         }
-        #endregion
 
         private void Click()
         {

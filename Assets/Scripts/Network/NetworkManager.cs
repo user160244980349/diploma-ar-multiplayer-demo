@@ -1,14 +1,13 @@
 ﻿using UnityEngine;
 using UnityEngine.Networking;
 
-
 namespace Network
 {
     public class NetworkManager : MonoBehaviour
     {
         public static NetworkManager Singleton { get; private set; }
-        public bool HostBooted { get; private set; }
-        public bool ClientBooted { get; private set; }
+        public bool HostBooted { get { if (_host != null) return true; return false; } }
+        public bool ClientBooted { get { if (_client != null) return true; return false; } }
 
         private GameObject _hostPrefab;
         private GameObject _clientPrefab;
@@ -18,10 +17,33 @@ namespace Network
         private Socket[] _sockets;
         private ushort _maxSockets = 16;
 
-        private bool _fallbackMode;
-        private int _broadcastKey;
+        public void RegisterSocket(Socket socket)
+        {
+            _sockets[socket.Id] = socket;
+        }
+        public void UnregisterSocket(Socket socket)
+        {
+            _sockets[socket.Id] = null;
+        }
+        public void SpawnHost()
+        {
+            var hostObject = Instantiate(_hostPrefab, gameObject.transform);
+            _host = hostObject.GetComponent<Host>();
+        }
+        public void DespawnHost()
+        {
+            _host.Shutdown();
+        }
+        public void SpawnClient()
+        {
+            var clientObject = Instantiate(_clientPrefab, gameObject.transform);
+            _client = clientObject.GetComponent<Client>();
+        }
+        public void DespawnClient()
+        {
+            _client.Shutdown();
+        }
 
-        #region MonoBehaviour
         private void Awake()
         {
             if (Singleton == null)
@@ -36,6 +58,7 @@ namespace Network
             {
                 MaxHosts = _maxSockets,
                 NetworkEventAvailable = NetworkEventAvailable,
+                ConnectionReadyForSend = ConnectionReadyForSend,
             };
             NetworkTransport.Init(config);
 
@@ -48,11 +71,11 @@ namespace Network
             {
                 switch (_client.State)
                 {
-                    case ClientState.WaitingSwitch:
+                    case ClientState.DownWithError:
                     {
                         var broadcastKey = _client.BroadcastKey;
                         Destroy(_client.gameObject);
-
+                        
                         var hostObject = Instantiate(_hostPrefab, gameObject.transform);
                         _host = hostObject.GetComponent<Host>();
                         _host.BroadcastKey = broadcastKey;
@@ -72,7 +95,7 @@ namespace Network
                 {
                     case HostState.Down:
                     {
-                        Destroy(_client.gameObject);
+                        Destroy(_host.gameObject);
                         break;
                     }
                 }
@@ -82,46 +105,14 @@ namespace Network
         {
             NetworkTransport.Shutdown();
         }
-        #endregion
 
-        public void RegisterSocket(Socket socket)
-        {
-            _sockets[socket.Id] = socket;
-        }
-        public void UnregisterSocket(Socket socket)
-        {
-            _sockets[socket.Id] = null;
-        }
         private void NetworkEventAvailable(int socketId)
         {
             _sockets[socketId].EventsReady = true;
         }
-
-        public void SpawnHost()
+        private void ConnectionReadyForSend(int socketId, int connectionId)
         {
-            if (HostBooted) return;
-
-            var hostObject = Instantiate(_hostPrefab, gameObject.transform);
-            _host = hostObject.GetComponent<Host>();
+            _sockets[socketId].ConnectionReadyForSend(connectionId);
         }
-        public void DespawnHost()
-        {
-            _host.Shutdown();
-        }
-        public void SpawnClient()
-        {
-            if (ClientBooted) return;
-
-            var clientObject = Instantiate(_clientPrefab, gameObject.transform);
-            _client = clientObject.GetComponent<Client>();
-        }
-        public void DespawnClient()
-        {
-            _client.Shutdown();
-        }
-
-        // ApplicationManager.Singleton.LoadScene("Playground");
-        // ApplicationManager.Singleton.LoadScene("MainMenu");
-        // ApplicationManager.Singleton.LoadScene("Loading");
     }
 }

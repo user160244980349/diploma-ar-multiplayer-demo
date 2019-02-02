@@ -2,7 +2,7 @@
 {
     public enum SocketState
     {
-        Down,
+        StartingUp,
         ReadyToOpen,
         Opening,
         Opened,

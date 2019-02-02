@@ -1,8 +1,8 @@
 using Network.Messages;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Networking;
-using UnityEngine.Networking.Types;
 
 namespace Network
 {
@@ -15,7 +15,6 @@ namespace Network
         public SocketSettings Settings { get; set; }
 
         private GameObject _connectionPrefab;
-
         private Queue<MessageWrapper> _messages;
         private Formatter _formatter;
         private HostTopology _topology;
@@ -26,9 +25,95 @@ namespace Network
         private int _port;
         private int _packetSize;
         private byte[] _packet;
-        private int _activeConnections;
+        private byte[] _broadcastPacket;
+        private int _connectionsCount;
 
-        #region MonoBehaviour
+        public bool OpenConnection(string ip, int port)
+        {
+            if (_connections[0] != null && State != SocketState.Up) return false;
+            var connectionObject = Instantiate(_connectionPrefab, transform);
+            var connectionScript = connectionObject.GetComponent<Connection>();
+            connectionScript.Settings = new ConnectionSettings
+            {
+                socketId = Id,
+                ip = ip,
+                port = port,
+                sendRate = 0.02f,
+            };
+            _connections[0] = connectionScript;
+            return true;
+        }
+        public bool CloseConnection(int connectionId)
+        {
+            if (_connections[connectionId] != null) return false;
+            _connections[connectionId].Disconnect(false);
+            return true;
+        }
+        public bool Send(int connectionId, int channelId, ANetworkMessage message)
+        {
+            if (_connections[connectionId] != null && State != SocketState.Up) return false;
+            message.timeStamp = NetworkTransport.GetNetworkTimestamp();
+            var packet = _formatter.Serialize(message);
+            return _connections[connectionId].QueueMessage(channelId, packet);
+        }
+        public bool PollMessage(out MessageWrapper wrapper)
+        {
+            if (_messages.Count == 0)
+            {
+                wrapper = new MessageWrapper();
+                return false;
+            }
+            wrapper = _messages.Dequeue();
+            return true;
+        }
+        public void ReceiveBroadcast(int key)
+        {
+            NetworkTransport.SetBroadcastCredentials(Id, key, 1, 0, out byte error);
+            ParseError(error, NetworkEventType.BroadcastEvent);
+        }
+        public bool StartBroadcast(int key, int port, ANetworkMessage message)
+        {
+            if (State != SocketState.Up) return false;
+            message.timeStamp = NetworkTransport.GetNetworkTimestamp();
+            var packet = _formatter.Serialize(message);
+            var broabcastAccepted = NetworkTransport.StartBroadcastDiscovery(Id, port, key, 1, 0, packet, packet.Length, 10, out byte error);
+            ParseError(error, NetworkEventType.BroadcastEvent);
+            return broabcastAccepted;
+        }
+        public bool StopBroadcast()
+        {
+            if (State != SocketState.Up && !NetworkTransport.IsBroadcastDiscoveryRunning()) return false;
+            NetworkTransport.StopBroadcastDiscovery();
+            return true;
+        }
+        public bool Open()
+        {
+            if (State != SocketState.ReadyToOpen) return false;
+            State = SocketState.Opening;
+            return true;
+        }
+        public bool Up()
+        {
+            if (State != SocketState.Opened) return false;
+            State = SocketState.Up;
+            return true;
+        }
+        public void Close()
+        {
+            State = SocketState.Closing;
+            for (var i = 0; i < _maxConnections; i++)
+            {
+                if (_connections[i] == null) continue;
+                _connections[i].Disconnect(false);
+            }
+        }
+        public bool ConnectionReadyForSend(int connectionId)
+        {
+            if (_connections[connectionId] != null && State != SocketState.Up) return false;
+            _connections[connectionId].ReadyForSend = true;
+            return true;
+        }
+
         private void Start()
         {
             _formatter = new Formatter();
@@ -41,6 +126,7 @@ namespace Network
             _maxConnections = (ushort)(Settings.maxConnections + 1);
             _packetSize = Settings.packetSize;
             _packet = new byte[_packetSize];
+            _broadcastPacket = new byte[_packetSize];
             _connections = new Connection[_maxConnections];
 
             _connectionConfig = new ConnectionConfig
@@ -63,85 +149,6 @@ namespace Network
             ManageConnections();
             ManageSocket();
         }
-        #endregion
-        
-        public void OpenConnection(string ip, int port)
-        {
-            if (_connections[0] != null && State != SocketState.Up) return;
-            var connectionObject = Instantiate(_connectionPrefab, transform);
-            var connectionScript = connectionObject.GetComponent<Connection>();
-            connectionScript.Settings = new ConnectionSettings
-            {
-                socketId = Id,
-                ip = ip,
-                port = port,
-                sendRate = 0.02f,
-                connectDelay = 0.5f,
-                disconnectDelay = 0.5f,
-            };
-            _connections[0] = connectionScript;
-        }
-        public void CloseConnection(int connectionId)
-        {
-            if (State != SocketState.Up) return;
-            if (_connections[connectionId].State != ConnectionState.Up) return;
-            _connections[connectionId].Disconnect(false);
-        }
-        public void Send(int connectionId, int channelId, ANetworkMessage message)
-        {
-            if (State != SocketState.Up) return;
-            if (_connections[connectionId].State != ConnectionState.Up) return;
-            message.timeStamp = NetworkTransport.GetNetworkTimestamp();
-            var packet = _formatter.Serialize(message);
-            _connections[connectionId].QueueMessage(channelId, packet);
-        }
-        public bool PollMessage(out MessageWrapper wrapper)
-        {
-            if (_messages.Count == 0)
-            {
-                wrapper = new MessageWrapper();
-                return false;
-            }
-            wrapper = _messages.Dequeue();
-            return true;
-        }
-        public void ReceiveBroadcast(int key)
-        {
-            NetworkTransport.SetBroadcastCredentials(Id, key, 1, 0, out byte error);
-            ParseError(error, NetworkEventType.BroadcastEvent);
-        }
-        public void StartBroadcast(int key, int port, ANetworkMessage message)
-        {
-            if (State != SocketState.Up) return;
-            message.timeStamp = NetworkTransport.GetNetworkTimestamp();
-            var packet = _formatter.Serialize(message);
-            NetworkTransport.StartBroadcastDiscovery(Id, port, key, 1, 0, packet, packet.Length, 10, out byte error);
-            ParseError(error, NetworkEventType.BroadcastEvent);
-        }
-        public void StopBroadcast()
-        {
-            if (State != SocketState.Up) return;
-            NetworkTransport.StopBroadcastDiscovery();
-        }
-        public void Open()
-        {
-            if (State != SocketState.ReadyToOpen) return;
-            State = SocketState.Opening;
-        }
-        public void Up()
-        {
-            if (State != SocketState.Opened) return;
-            State = SocketState.Up;
-        }
-        public void Close()
-        {
-            State = SocketState.Closing;
-            for (var i = 0; i < _maxConnections; i++)
-            {
-                if (_connections[i] == null) continue;
-                _connections[i].Disconnect(false);
-            }
-        }
 
         private void ManageConnections()
         {
@@ -152,7 +159,7 @@ namespace Network
                 {
                     case ConnectionState.ReadyToConnect:
                     {
-                        _activeConnections++;
+                        _connectionsCount++;
                         _connections[i].Connect();
                         break;
                     }
@@ -171,7 +178,7 @@ namespace Network
                     }
                     case ConnectionState.Disconnected:
                     {
-                        _activeConnections--;
+                        _connectionsCount--;
                         var wrapper = new MessageWrapper
                         {
                             message = new Disconnect(),
@@ -196,8 +203,13 @@ namespace Network
                 }
                 case SocketState.Opening:
                 {
-                    State = SocketState.Opened;
                     Id = NetworkTransport.AddHost(_topology, _port);
+                    if (Id < 0)
+                    {
+                        State = SocketState.Closed;
+                        break;
+                    }
+                    State = SocketState.Opened;
                     gameObject.name = string.Format("Socket{0}", Id);
                     NetworkManager.Singleton.RegisterSocket(this);
                     break;
@@ -213,7 +225,7 @@ namespace Network
                 }
                 case SocketState.Closing:
                 {
-                    if (_activeConnections != 0) break;
+                    if (_connectionsCount != 0) break;
                     State = SocketState.Closed;
                     NetworkManager.Singleton.UnregisterSocket(this);
                     NetworkTransport.RemoveHost(Id);
@@ -255,10 +267,7 @@ namespace Network
                             _connections[0] = null;
                             break;
                         }
-                        if (_connections[connectionId] == null)
-                        {
-                            IncomingOpenConnection(connectionId);
-                        }
+                        IncomingOpenConnection(connectionId);
                         break;
                     }
                     case NetworkEventType.DataEvent:
@@ -267,26 +276,24 @@ namespace Network
                         {
                             message = _formatter.Deserialize(_packet),
                             connection = connectionId,
+                            ip = _connections[connectionId].Ip,
+                            port = _connections[connectionId].Port,
                         };
-
                         wrapper.ping = NetworkTransport.GetRemoteDelayTimeMS(Id, connectionId, wrapper.message.timeStamp, out error);
                         ParseError(error, NetworkEventType.DataEvent);
-
                         _messages.Enqueue(wrapper);
                         break;
                     }
                     case NetworkEventType.BroadcastEvent:
                     {
-                        NetworkTransport.GetBroadcastConnectionMessage(Id, _packet, _packetSize, out int size, out error);
-
+                        NetworkTransport.GetBroadcastConnectionMessage(Id, _broadcastPacket, _packetSize, out int size, out error);
+                        ParseError(error, NetworkEventType.BroadcastEvent);
                         var wrapper = new MessageWrapper
                         {
-                            message = _formatter.Deserialize(_packet),
+                            message = _formatter.Deserialize(_broadcastPacket),
                         };
-
                         NetworkTransport.GetBroadcastConnectionInfo(Id, out wrapper.ip, out wrapper.port, out error);
                         ParseError(error, NetworkEventType.BroadcastEvent);
-
                         _messages.Enqueue(wrapper);
                         break;
                     }
@@ -297,10 +304,7 @@ namespace Network
                             IncomingCloseConnection(connectionId);
                             break;
                         }
-                        if (_connections[0] != null)
-                        {
-                            IncomingCloseConnection(0);
-                        }
+                        IncomingCloseConnection(0);
                         break;
                     }
                 }
@@ -316,8 +320,6 @@ namespace Network
                 id = connectionId,
                 socketId = Id,
                 sendRate = 0.02f,
-                connectDelay = 0.5f,
-                disconnectDelay = 0.5f,
             };
             _connections[connectionId] = connectionScript;
         }

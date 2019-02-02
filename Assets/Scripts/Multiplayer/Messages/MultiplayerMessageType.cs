@@ -3,9 +3,11 @@ namespace Multiplayer.Messages
     public enum MultiplayerMessageType
     {
         Boop,
-        Connect,
+        LogIn,
+        LoggedIn,
         Move,
-        Disconnect,
+        LogOut,
+        LoggedOut,
         RigidbodySynchronization
     }
 }

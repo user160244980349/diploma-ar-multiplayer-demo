@@ -24,7 +24,7 @@ namespace Multiplayer.Messages
 
         public LogIn(string name, Color color)
         {
-            multiplayerMessageType = MultiplayerMessageType.Connect;
+            multiplayerMessageType = MultiplayerMessageType.LogIn;
             PlayerName = name;
             PlayerColor = color;
         }

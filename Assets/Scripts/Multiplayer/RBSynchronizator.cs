@@ -5,6 +5,8 @@ using Multiplayer;
 
 public class RBSynchronizator : MonoBehaviour
 {
+    public  int objectId;
+
     private Vector3 _newrbavel;
     private Vector3 _newrbpos;
     private Vector3 _newrbvel;
@@ -23,7 +25,6 @@ public class RBSynchronizator : MonoBehaviour
     private float _interpTime;
     private float _lastSyncTime;
 
-    #region MonoBehaviour
     void Start()
     {
         _rb = GetComponent<Rigidbody>();
@@ -44,7 +45,7 @@ public class RBSynchronizator : MonoBehaviour
             if (Time.time - _lastSyncTime > _syncPeriod)
             {
                 _lastSyncTime = Time.time;
-                EventManager.Singleton.Publish(GameEventType.MultiplayerMessageSend, new RBSync(_rb));
+                EventManager.Singleton.Publish(GameEventType.MultiplayerMessageSend, new RBSync(objectId, _rb));
             }
         }
 
@@ -64,7 +65,6 @@ public class RBSynchronizator : MonoBehaviour
             _rb.angularVelocity = Vector3.Lerp(_prevrbavel, _newrbavel, percentage);
         }
     }
-    #endregion
 
     private void RBSync(RBSync message)
     {

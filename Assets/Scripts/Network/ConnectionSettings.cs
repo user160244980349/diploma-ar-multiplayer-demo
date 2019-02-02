@@ -6,8 +6,6 @@
         public int socketId;
         public string ip;
         public int port;
-        public float connectDelay;
-        public float disconnectDelay;
         public float sendRate;
     }
 }

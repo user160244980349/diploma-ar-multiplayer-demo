@@ -8,11 +8,45 @@ namespace Events
         public static EventManager Singleton { get; private set; }
         public delegate void Listener(object info);
 
-        private Dictionary<GameEventType, Listener> _listeners;
-        private Queue<GameEventType> _events;
-        private Queue<object> _infos;
+        private Dictionary<GameEventType, List<Listener>> _map;
+        private Queue<EventWrapper> _events;
 
-        #region MonoBehaviour
+        public void Publish(GameEventType type, object info)
+        {
+            _events.Enqueue(new EventWrapper
+            {
+                type = type,
+                info = info,
+            });
+        }
+        public void ImmediatePublish(GameEventType type, object info)
+        {
+            if (!_map.TryGetValue(type, out List<Listener> listeners)) return;
+            for (var i = 0; i < listeners.Count; i++)
+            {
+                listeners[i](info);
+            }
+        }
+        public void RegisterListener(GameEventType type, Listener newListener)
+        {
+            if (_map.ContainsKey(type))
+            {
+                _map.TryGetValue(type, out List<Listener> listeners);
+                listeners.Add(newListener);
+            }
+            else
+            {
+                var listeners = new List<Listener>();
+                listeners.Add(newListener);
+                _map.Add(type, listeners);
+            }
+        }
+        public void UnregisterListener(GameEventType type, Listener removingListener)
+        {
+            if (!_map.TryGetValue(type, out List<Listener> listeners)) return;
+            listeners.Remove(removingListener);
+        }
+
         private void Awake()
         {
             if (Singleton == null)
@@ -22,56 +56,21 @@ namespace Events
             DontDestroyOnLoad(gameObject);
             gameObject.name = "EventManager";
 
-            Init();
+            _map = new Dictionary<GameEventType, List<Listener>>();
+            _events = new Queue<EventWrapper>();
         }
-        private void LateUpdate()
+        private void Update()
         {
             while (_events.Count > 0)
             {
                 var queuedEvent = _events.Dequeue();
-                var queuedInfo = _infos.Dequeue();
-                if (_listeners.ContainsKey(queuedEvent))
+                if (!_map.ContainsKey(queuedEvent.type)) continue;
+                _map.TryGetValue(queuedEvent.type, out List<Listener> listeners);
+                for (var i = 0; i < listeners.Count; i++)
                 {
-                    _listeners.TryGetValue(queuedEvent, out Listener listener);
-                    listener(queuedInfo);
+                    listeners[i](queuedEvent.info);
                 }
             }
-        }
-        #endregion
-
-        public void Publish(GameEventType type, object info)
-        {
-            _events.Enqueue(type);
-            _infos.Enqueue(info);
-        }
-        public void ImmediatePublish(GameEventType type, object info)
-        {
-            if (_listeners.TryGetValue(type, out Listener listener))
-                listener(info);
-        }
-        public void RegisterListener(GameEventType type, Listener newListener)
-        {
-            if (_listeners.ContainsKey(type))
-            {
-                _listeners.TryGetValue(type, out Listener listener);
-                listener += newListener;
-            }
-            else
-            {
-                _listeners.Add(type, newListener);
-            }
-        }
-        public void UnregisterListener(GameEventType type, Listener newListener)
-        {
-            if (_listeners.TryGetValue(type, out Listener listener))
-                listener -= newListener;
-        }
-
-        private void Init()
-        {
-            _listeners = new Dictionary<GameEventType, Listener>();
-            _events = new Queue<GameEventType>();
-            _infos = new Queue<object>();
         }
     }
 }

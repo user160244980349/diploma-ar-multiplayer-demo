@@ -12,7 +12,26 @@ namespace UI.Console
         private Console _console;
         private LinkedList<ConsoleMessage> _messages;
 
-        #region MonoBehaviour
+        public void InstantiateConsole()
+        {
+            var canvas = GameObject.Find("Canvas");
+            var consolePanel = Instantiate(Resources.Load("UI/Console/Console") as GameObject, canvas.transform);
+            consolePanel.name = "Console";
+
+            _console = consolePanel.GetComponent<Console>();
+            _console.previousMessages = _messages;
+            _console.maxMessages = MaxMessages;
+        }
+        public void SendMessage(ConsoleMessage message)
+        {
+            if (_messages.Count >= MaxMessages) _messages.Remove(_messages.First);
+            _messages.AddLast(message);
+
+            if (_console != null)
+                if (_console.Started)
+                    _console.WriteMessage(message);
+        }
+
         private void Awake()
         {
             if (Singleton == null)
@@ -33,31 +52,12 @@ namespace UI.Console
         {
             Application.logMessageReceivedThreaded -= SendLog;
         }
-        #endregion
 
-        public void InstantiateConsole()
-        {
-            var canvas = GameObject.Find("Canvas");
-            var consolePanel = Instantiate(Resources.Load("UI/Console/Console") as GameObject, canvas.transform);
-
-            _console = consolePanel.GetComponent<Console>();
-            _console.previousMessages = _messages;
-            _console.maxMessages = MaxMessages;
-        }
-        public void SendMessage(ConsoleMessage message)
-        {
-            if (_messages.Count >= MaxMessages) _messages.Remove(_messages.First);
-            _messages.AddLast(message);
-
-            if (_console != null)
-                if (_console.Started)
-                    _console.WriteMessage(message);
-        }
         private void SendLog(string condition, string stackTrace, LogType type)
         {
             ConsoleMessage message;
 
-            if (withStackTrace && type != LogType.Log)
+            if (withStackTrace && stackTrace.Length > 0 && type != LogType.Log)
                 condition = string.Format("Message: {0}\nStackTrace: {1}", condition, stackTrace);
 
             message.text = condition;
