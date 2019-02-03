@@ -10,7 +10,7 @@ namespace Network.Messages
         public FoundLobby(string name)
         {
             lobbyName = name;
-            networkMessageType = NetworkMessageType.FoundLobby;
+            lowType = NetworkMessageType.FoundLobby;
         }
     }
 }

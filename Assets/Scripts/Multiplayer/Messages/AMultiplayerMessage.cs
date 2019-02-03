@@ -6,11 +6,11 @@ namespace Multiplayer.Messages
     [Serializable]
     public abstract class AMultiplayerMessage : ANetworkMessage
     {
-        public MultiplayerMessageType multiplayerMessageType;
+        public MultiplayerMessageType highType;
 
         public AMultiplayerMessage()
         {
-            networkMessageType = NetworkMessageType.Higher;
+            lowType = NetworkMessageType.Higher;
         }
     }
 }

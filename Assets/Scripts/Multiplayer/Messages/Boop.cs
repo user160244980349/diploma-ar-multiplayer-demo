@@ -7,7 +7,7 @@ namespace Multiplayer.Messages
     {
         public Boop()
         {
-            multiplayerMessageType = MultiplayerMessageType.Boop;
+            highType = MultiplayerMessageType.Boop;
         }
     }
 }

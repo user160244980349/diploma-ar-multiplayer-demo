@@ -1,6 +1,4 @@
-﻿using UnityEngine.Networking;
-
-namespace Network.Messages
+﻿namespace Network.Messages
 {
     public class MessageWrapper
     {
@@ -9,6 +7,5 @@ namespace Network.Messages
         public int port;
         public int connection;
         public int ping;
-        public NetworkError error;
     }
 }

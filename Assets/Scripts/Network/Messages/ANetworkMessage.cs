@@ -5,7 +5,7 @@ namespace Network.Messages
     [Serializable]
     public abstract class ANetworkMessage
     {
-        public NetworkMessageType networkMessageType;
+        public NetworkMessageType lowType;
         public int timeStamp;
     }
 }

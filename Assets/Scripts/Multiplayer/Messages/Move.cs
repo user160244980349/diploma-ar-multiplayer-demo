@@ -22,7 +22,7 @@ namespace Multiplayer.Messages
 
         public Move(int playerId, Vector3 v)
         {
-            multiplayerMessageType = MultiplayerMessageType.Move;
+            highType = MultiplayerMessageType.Move;
             PlayerId = playerId;
             Vector = v;
         }

@@ -68,7 +68,7 @@ namespace Network
 
             while (_socket.PollMessage(out MessageWrapper wrapper))
             {
-                switch (wrapper.message.networkMessageType)
+                switch (wrapper.message.lowType)
                 {
                     case NetworkMessageType.Connect:
                     {
@@ -114,7 +114,7 @@ namespace Network
                     }
                     case NetworkMessageType.Higher:
                     {
-                        EventManager.Singleton.Publish(GameEventType.ReceiveNetworkMessage, wrapper.message);
+                        EventManager.Singleton.Publish(GameEventType.ReceiveNetworkMessage, wrapper);
                         break;
                     }
                     case NetworkMessageType.Disconnect:

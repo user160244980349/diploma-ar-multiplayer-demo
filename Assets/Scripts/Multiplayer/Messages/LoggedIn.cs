@@ -10,7 +10,7 @@ namespace Multiplayer.Messages
 
         public LoggedIn(int playerId)
         {
-            multiplayerMessageType = MultiplayerMessageType.LoggedIn;
+            highType = MultiplayerMessageType.LoggedIn;
             PlayerId = playerId;
         }
     }

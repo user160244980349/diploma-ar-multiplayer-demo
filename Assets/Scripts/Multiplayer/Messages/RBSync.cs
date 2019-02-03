@@ -57,7 +57,7 @@ namespace Multiplayer.Messages
 
         public RBSync(int objectId, Rigidbody rb)
         {
-            multiplayerMessageType = MultiplayerMessageType.RigidbodySynchronization;
+            highType = MultiplayerMessageType.RigidbodySynchronization;
             ObjectId = objectId;
             Position = rb.position;
             Velocity = rb.velocity;

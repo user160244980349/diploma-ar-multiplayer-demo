@@ -51,6 +51,8 @@
         SendMultiplayerMessage,
         ReceiveNetworkMessage,
         SendNetworkMessage,
+        SendNetworkReplyMessage,
+        SendNetworkExceptMessage,
 
         // Multiplayer triggers
         LoggingIn,

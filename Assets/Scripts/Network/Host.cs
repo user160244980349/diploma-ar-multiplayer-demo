@@ -65,6 +65,8 @@ namespace Network
             }
 
             EventManager.Singleton.Subscribe(GameEventType.SendNetworkMessage, Send);
+            EventManager.Singleton.Subscribe(GameEventType.SendNetworkReplyMessage, SendReply);
+            EventManager.Singleton.Subscribe(GameEventType.SendNetworkExceptMessage, SendExcept);
             EventManager.Singleton.Subscribe(GameEventType.StartLobbyBroadcast, OnStartLobbyBroadcast);
             EventManager.Singleton.Subscribe(GameEventType.StopLobbyBroadcast, OnStopLobbyBroadcast);
         }
@@ -85,11 +87,11 @@ namespace Network
 
             while (_socket.PollMessage(out MessageWrapper wrapper))
             {
-                switch (wrapper.message.networkMessageType)
+                switch (wrapper.message.lowType)
                 {
                     case NetworkMessageType.Higher:
                     {
-                        EventManager.Singleton.Publish(GameEventType.ReceiveNetworkMessage, wrapper.message);
+                        EventManager.Singleton.Publish(GameEventType.ReceiveNetworkMessage, wrapper);
                         break;
                     }
                     case NetworkMessageType.Connect:
@@ -118,6 +120,8 @@ namespace Network
         private void OnDestroy()
         {
             EventManager.Singleton.Unsubscribe(GameEventType.SendNetworkMessage, Send);
+            EventManager.Singleton.Unsubscribe(GameEventType.SendNetworkReplyMessage, SendReply);
+            EventManager.Singleton.Unsubscribe(GameEventType.SendNetworkExceptMessage, SendExcept);
             EventManager.Singleton.Unsubscribe(GameEventType.StartLobbyBroadcast, OnStartLobbyBroadcast);
             EventManager.Singleton.Unsubscribe(GameEventType.StopLobbyBroadcast, OnStopLobbyBroadcast);
             EventManager.Singleton.Publish(GameEventType.HostDestroyed, null);
@@ -133,6 +137,20 @@ namespace Network
         {
             // Debug.Log("HOST::Sending data");
             for (var i = 0; i < _clients.Count; i++) _socket.Send(_clients[i], 1, message as ANetworkMessage);
+        }
+        private void SendReply(object message)
+        {
+            var reply = message as ReplyWrapper;
+            _socket.Send(reply.connection, 1, reply.message as ANetworkMessage);
+        }
+        private void SendExcept(object message)
+        {
+            var except = message as ExceptWrapper;
+            for (var i = 0; i < _clients.Count; i++)
+            {
+                if (i == except.connection) continue;
+                _socket.Send(_clients[i], 1, except.message as ANetworkMessage);
+            }
         }
         private void OnStartLobbyBroadcast(object info)
         {

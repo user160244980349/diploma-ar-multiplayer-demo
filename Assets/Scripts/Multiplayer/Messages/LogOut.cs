@@ -9,7 +9,7 @@ namespace Multiplayer.Messages
 
         public LogOut(int playerId)
         {
-            multiplayerMessageType = MultiplayerMessageType.LogOut;
+            highType = MultiplayerMessageType.LogOut;
             PlayerId = playerId;
         }
     }

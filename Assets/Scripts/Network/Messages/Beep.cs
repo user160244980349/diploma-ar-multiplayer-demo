@@ -7,7 +7,7 @@ namespace Network.Messages
     {
         public Beep()
         {
-            networkMessageType = NetworkMessageType.Beep;
+            lowType = NetworkMessageType.Beep;
         }
     }
 }

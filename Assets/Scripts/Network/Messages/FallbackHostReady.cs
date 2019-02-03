@@ -7,7 +7,7 @@ namespace Network.Messages
     {
         public FallbackHostReady()
         {
-            networkMessageType = NetworkMessageType.FallbackHostReady;
+            lowType = NetworkMessageType.FallbackHostReady;
         }
     }
 }

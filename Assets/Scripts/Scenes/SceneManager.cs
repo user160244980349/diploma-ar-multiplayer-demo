@@ -23,10 +23,8 @@ namespace Scenes
             EventManager.Singleton.Subscribe(GameEventType.BecomeClient, OnBecomeClient);
             EventManager.Singleton.Subscribe(GameEventType.ConnectToLobby, OnConnectToLobby);
             EventManager.Singleton.Subscribe(GameEventType.LogIntoLobby, OnLogIntoLobby);
-            EventManager.Singleton.Subscribe(GameEventType.LoggingIn, OnLoggingIn);
             EventManager.Singleton.Subscribe(GameEventType.LoggedIn, OnLoggedIn);
             EventManager.Singleton.Subscribe(GameEventType.LogOutLobby, OnLogOutLobby);
-            EventManager.Singleton.Subscribe(GameEventType.LoggingOut, OnLoggingOut);
             EventManager.Singleton.Subscribe(GameEventType.LoggedOut, OnLoggedOut);
             EventManager.Singleton.Subscribe(GameEventType.ExitToMainMenu, OnExitToMainMenu);
 
@@ -66,11 +64,6 @@ namespace Scenes
             EventManager.Singleton.Publish(GameEventType.StopLobbyBroadcast, null);
             LoadScene("Loading");
         }
-        private void OnLoggingIn(object info)
-        {
-            EventManager.Singleton.Publish(GameEventType.LoggedIn, null);
-            LoadScene("Loading");
-        }
         private void OnLoggedIn(object info)
         {
             LoadScene("Playground");
@@ -80,12 +73,9 @@ namespace Scenes
             EventManager.Singleton.Publish(GameEventType.LoggingOut, null);
             LoadScene("Loading");
         }
-        private void OnLoggingOut(object info)
-        {
-            EventManager.Singleton.Publish(GameEventType.LoggedOut, null);
-        }
         private void OnLoggedOut(object info)
         {
+            EventManager.Singleton.Publish(GameEventType.ResetMultiplayerManager, null);
             EventManager.Singleton.Publish(GameEventType.DestroyClient, null);
             EventManager.Singleton.Publish(GameEventType.DestroyHost, null);
         }
