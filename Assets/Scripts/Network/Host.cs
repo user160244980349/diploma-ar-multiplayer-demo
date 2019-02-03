@@ -36,13 +36,18 @@ namespace Network
 
             var socketObject = Instantiate(_socketPrefab, gameObject.transform);
             _socket = socketObject.GetComponent<Socket>();
-            _socket.ImmediateStart(new SocketSettings
+            var started = _socket.ImmediateStart(new SocketSettings
             {
                 channels = new QosType[2] { QosType.Reliable, QosType.Unreliable },
                 port = 8000,
                 maxConnections = 16,
                 packetSize = 1024,
             });
+            if (!started)
+            {
+                Destroy(gameObject);
+                return;
+            }
 
             Debug.Log("HOST::Boot on port 8000");
             if (BroadcastKey != 0)

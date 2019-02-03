@@ -231,7 +231,7 @@ namespace Network
         }
         private void OnDestroy()
         {
-            NetworkManager.Singleton.UnregisterSocket(this);
+            if (Id >= 0) NetworkManager.Singleton.UnregisterSocket(this);
             NetworkTransport.RemoveHost(Id);
         }
 

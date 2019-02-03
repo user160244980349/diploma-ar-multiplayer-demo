@@ -38,7 +38,12 @@ namespace Network
                 maxConnections = 1,
                 packetSize = 1024,
             });
-            if (!started) Destroy(gameObject);
+            if (!started)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
             _socket.ReceiveBroadcast(1);
             Debug.Log("CLIENT::Boot on port 8001");
             
