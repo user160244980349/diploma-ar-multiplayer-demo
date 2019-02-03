@@ -71,23 +71,23 @@ public class ApplicationManager : MonoBehaviour
  *     - Color picker for login dialog
  *     + Non-controllable physical objects (cube pyramid)
  *
- * - MainMenu:
+ * + MainMenu:
  *
- *     - UI for lobby discovery results to connect
+ *     + UI for lobby discovery results to connect
  *
- * - Network:
+ * + Network:
  *
  *     + Replace delegates in configs and do them public
  *     + Sending messages by groups (queueing)
- *     + Almost all errors fixed
+ *     + All errors fixed
  *     + Objects configs correction
- *     - Network discovery for lobby's
+ *     + Network discovery for lobby's
  *     + Falling back system
  *     - (OPTIONAL) Channel management if game will be laggy
  *
  * - UI:
  * 
- *     - (OPTIONAL) Divide console prefab on parts and hide all fields
+ *     + (OPTIONAL) Divide console prefab on parts and hide all fields
  * 
  * - AR:
  *
