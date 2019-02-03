@@ -63,7 +63,7 @@ namespace Network
             Id = NetworkTransport.AddHost(topology, _port);
             if (Id >= 0)
             {
-                EventManager.Singleton.Publish(GameEventType.RegisterSocket, this);
+                NetworkManager.Singleton.RegisterSocket(this);
                 return true;
             }
             Destroy(gameObject);
@@ -231,7 +231,7 @@ namespace Network
         }
         private void OnDestroy()
         {
-            EventManager.Singleton.Publish(GameEventType.UnregisterSocket, this);
+            NetworkManager.Singleton.UnregisterSocket(this);
             NetworkTransport.RemoveHost(Id);
         }
 
