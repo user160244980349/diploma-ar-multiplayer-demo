@@ -28,6 +28,7 @@ namespace Scenes
             EventManager.Singleton.Subscribe(GameEventType.LogOutLobby, OnLogOutLobby);
             EventManager.Singleton.Subscribe(GameEventType.LoggingOut, OnLoggingOut);
             EventManager.Singleton.Subscribe(GameEventType.LoggedOut, OnLoggedOut);
+            EventManager.Singleton.Subscribe(GameEventType.ExitToMainMenu, OnExitToMainMenu);
 
             // Host events
             EventManager.Singleton.Subscribe(GameEventType.HostStarted, OnHostStarted);
@@ -85,6 +86,12 @@ namespace Scenes
         }
         private void OnLoggedOut(object info)
         {
+            EventManager.Singleton.Publish(GameEventType.DestroyClient, null);
+            EventManager.Singleton.Publish(GameEventType.DestroyHost, null);
+        }
+        private void OnExitToMainMenu(object info)
+        {
+            EventManager.Singleton.Publish(GameEventType.StopLobbyBroadcast, null);
             EventManager.Singleton.Publish(GameEventType.DestroyClient, null);
             EventManager.Singleton.Publish(GameEventType.DestroyHost, null);
         }

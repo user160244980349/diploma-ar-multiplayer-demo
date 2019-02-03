@@ -3231,7 +3231,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_BackGroundColor: {r: 1, g: 1, b: 1, a: 0}
   m_projectionMatrixMode: 1
   m_SensorSize: {x: 36, y: 24}
   m_LensShift: {x: 0, y: 0}
@@ -3999,7 +3999,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "\u041F\u043E\u043A\u0438\u043D\u0443\u0442\u044C"
+  m_Text: "\u041F\u043E\u043A\u0438\u043D\u0443\u0442\u044C \u043B\u043E\u0431\u0431\u0438"
 --- !u!222 &1936171004
 CanvasRenderer:
   m_ObjectHideFlags: 0

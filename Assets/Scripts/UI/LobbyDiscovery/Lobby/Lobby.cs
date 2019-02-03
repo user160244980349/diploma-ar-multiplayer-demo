@@ -19,7 +19,7 @@ namespace UI.LobbyDiscovery
             _wrapper = wrapper;
             _lobbyName = (_wrapper.message as FoundLobby).lobbyName;
             _destroy = gameObject.AddComponent<Timer>();
-            _destroy.Duration = 2f;
+            _destroy.Duration = 1f;
             _destroy.Discard();
             _destroy.Running = true;
         }

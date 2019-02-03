@@ -25,7 +25,8 @@ namespace UI.LobbyDiscovery
             Lobby lobbyScript;
             if (_lobbys.ContainsKey(wrapper.ip))
             {
-                if (!_lobbys.TryGetValue(wrapper.ip, out lobbyScript))
+                _lobbys.TryGetValue(wrapper.ip, out lobbyScript);
+                if (lobbyScript == null)
                 {
                     _lobbys.Remove(wrapper.ip);
                     return;

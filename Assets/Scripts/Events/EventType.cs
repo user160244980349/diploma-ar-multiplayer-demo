@@ -44,6 +44,7 @@
         ConnectToLobby,
         LogIntoLobby,
         LogOutLobby,
+        ExitToMainMenu,
 
         // Network
         ReceiveMultiplayerMessage,
