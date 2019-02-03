@@ -1,11 +1,14 @@
-﻿namespace Network.Messages
+﻿using UnityEngine.Networking;
+
+namespace Network.Messages
 {
-    public struct MessageWrapper
+    public class MessageWrapper
     {
         public ANetworkMessage message;
         public string ip;
         public int port;
         public int connection;
         public int ping;
+        public NetworkError error;
     }
 }

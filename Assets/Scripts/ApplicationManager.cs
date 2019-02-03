@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using Events;
+using Multiplayer;
+using UnityEngine;
 
 public class ApplicationManager : MonoBehaviour
 {
@@ -6,6 +8,7 @@ public class ApplicationManager : MonoBehaviour
 
     private void Awake()
     {
+        name = "ApplicationManager";
         if (Singleton == null)
             Singleton = this;
         else if (Singleton == this) Destroy(gameObject);
@@ -23,6 +26,21 @@ public class ApplicationManager : MonoBehaviour
         Instantiate(_multiplayerManager);
         Instantiate(_consoleManager);
         Instantiate(_sceneManager);
+    }
+    private void Start()
+    {
+        EventManager.Singleton.Subscribe(GameEventType.ResetMultiplayerManager, ResetMultiplayerManager);
+    }
+    private void OnDestroy()
+    {
+        EventManager.Singleton.Unsubscribe(GameEventType.ResetMultiplayerManager, ResetMultiplayerManager);
+    }
+
+    private void ResetMultiplayerManager(object info)
+    {
+        Destroy(MultiplayerManager.Singleton.gameObject);
+        var _multiplayerManager = Resources.Load("Managers/MultiplayerManager") as GameObject;
+        Instantiate(_multiplayerManager);
     }
 }
 

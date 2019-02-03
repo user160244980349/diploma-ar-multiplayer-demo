@@ -6,43 +6,41 @@ namespace UI.Console
 {
     public class Console : MonoBehaviour
     {
-        public bool Started { get; private set; }
+        public GameObject content;
+        public GameObject message;
 
-        public GameObject consoleSurface;
-        public int maxMessages;
-        public LinkedList<ConsoleMessage> previousMessages;
-
+        private int _maxMessages;
         private LinkedList<GameObject> _messages;
-        private GameObject _messageObject;
+        private LinkedList<Message> _previousMessages;
 
         private void Start()
         {
             _messages = new LinkedList<GameObject>();
-            _messageObject = Resources.Load("UI/Console/Message") as GameObject;
+            message = Resources.Load("UI/Console/Message") as GameObject;
 
-            if (previousMessages != null)
-                foreach (var m in previousMessages)
-                    WriteMessage(m);
-
-            Started = true;
+            foreach (var m in _previousMessages)
+                WriteMessage(m);
         }
-
-        public void WriteMessage(ConsoleMessage m)
+        public void Init(int maxMessages, LinkedList<Message> previousMessages)
         {
-            if (_messages.Count >= maxMessages)
-            {
-                Destroy(_messages.First.Value);
-                _messages.Remove(_messages.First);
-            }
-
-            var newMessageInstance = Instantiate(_messageObject, consoleSurface.transform);
-
+            _maxMessages = maxMessages;
+            _previousMessages = previousMessages;
+        }
+        public void WriteMessage(Message m)
+        {
+            var newMessageInstance = Instantiate(message, content.transform);
             var newMessageText = newMessageInstance.GetComponent<Text>();
 
             newMessageText.text = m.text;
             newMessageText.color = m.color;
 
             _messages.AddLast(newMessageInstance);
+
+            if (_messages.Count >= _maxMessages)
+            {
+                Destroy(_messages.First.Value);
+                _messages.Remove(_messages.First);
+            }
         }
     }
 }

@@ -40,30 +40,30 @@ public class RBSynchronizator : MonoBehaviour
     }
     private void Update()
     {
-        if (MultiplayerManager.Singleton.Hosting)
-        {
-            if (Time.time - _lastSyncTime > _syncPeriod)
-            {
-                _lastSyncTime = Time.time;
-                EventManager.Singleton.Publish(GameEventType.MultiplayerMessageSend, new RBSync(objectId, _rb));
-            }
-        }
+        //if (MultiplayerManager.Singleton.Hosting)
+        //{
+        //    if (Time.time - _lastSyncTime > _syncPeriod)
+        //    {
+        //        _lastSyncTime = Time.time;
+        //        EventManager.Singleton.Publish(GameEventType.MultiplayerMessageSend, new RBSync(objectId, _rb));
+        //    }
+        //}
 
-        if (!MultiplayerManager.Singleton.Hosting)
-        {
-            var percentage = (Time.time - _syncTime) / (_syncPeriod + _interpTime);
-            _t.position = Vector3.Lerp(_prevrbpos, _newrbpos, percentage);
-            _t.rotation = Quaternion.Lerp(_prevrbrot, _newrbrot, percentage);
-        }
+        //if (!MultiplayerManager.Singleton.Hosting)
+        //{
+        //    var percentage = (Time.time - _syncTime) / (_syncPeriod + _interpTime);
+        //    _t.position = Vector3.Lerp(_prevrbpos, _newrbpos, percentage);
+        //    _t.rotation = Quaternion.Lerp(_prevrbrot, _newrbrot, percentage);
+        //}
     }
     private void FixedUpdate()
     {
-        if (!MultiplayerManager.Singleton.Hosting)
-        {
-            var percentage = (Time.time - _syncTime) / (_syncPeriod + _interpTime);
-            _rb.velocity = Vector3.Lerp(_prevrbvel, _newrbvel, percentage);
-            _rb.angularVelocity = Vector3.Lerp(_prevrbavel, _newrbavel, percentage);
-        }
+        //if (!MultiplayerManager.Singleton.Hosting)
+        //{
+        //    var percentage = (Time.time - _syncTime) / (_syncPeriod + _interpTime);
+        //    _rb.velocity = Vector3.Lerp(_prevrbvel, _newrbvel, percentage);
+        //    _rb.angularVelocity = Vector3.Lerp(_prevrbavel, _newrbavel, percentage);
+        //}
     }
 
     private void RBSync(RBSync message)
