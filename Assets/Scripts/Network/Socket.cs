@@ -233,6 +233,7 @@ namespace Network
         {
             if (Id >= 0) NetworkManager.Singleton.UnregisterSocket(this);
             NetworkTransport.RemoveHost(Id);
+            Debug.LogFormat("SOCKET<{0}>::Destroyed", Id);
         }
 
         private void ParseError(string message, byte rawError)
@@ -240,7 +241,7 @@ namespace Network
             var error = (NetworkError)rawError;
             if (error != NetworkError.Ok)
             {
-                Debug.LogErrorFormat("SOCKET_{0}::{1}: {2}", Id, error, message);
+                Debug.LogErrorFormat("SOCKET<{0}>::{1}: {2}", Id, error, message);
             }
         }
     }

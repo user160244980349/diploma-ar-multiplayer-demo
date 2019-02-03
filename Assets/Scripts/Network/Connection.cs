@@ -69,12 +69,16 @@ namespace Network
             NetworkTransport.NotifyWhenConnectionReadyForSend(_socketId, Id, _queueLength, out error);
             ParseError("Failed to request notify", error);
         }
+        private void OnDestroy()
+        {
+            Debug.LogFormat("SOCKET<{0}>::CONNECTION<{1}>::Destroyed", _socketId, Id);
+        }
         private void ParseError(string message, byte rawError)
         {
             var error = (NetworkError)rawError;
             if (error != NetworkError.Ok)
             {
-                Debug.LogErrorFormat("CONNECTION_{0}::{1}: {2}", Id, error, message);
+                Debug.LogErrorFormat("SOCKET<{0}>::CONNECTION<{1}>::{2}: {3}", _socketId, Id, error, message);
             }
         }
     }
