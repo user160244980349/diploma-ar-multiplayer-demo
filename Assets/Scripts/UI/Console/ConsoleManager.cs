@@ -37,12 +37,12 @@ namespace UI.Console
             _queue = new Queue<Message>();
 
             Application.logMessageReceivedThreaded += SendLog;
-            UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
+            SceneManager.sceneLoaded += OnSceneLoaded;
         }
         private void OnDisable()
         {
             Application.logMessageReceivedThreaded -= SendLog;
-            UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
+            SceneManager.sceneLoaded -= OnSceneLoaded;
         }
         private void Update()
         {

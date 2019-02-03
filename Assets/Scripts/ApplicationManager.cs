@@ -50,7 +50,7 @@ public class ApplicationManager : MonoBehaviour
  * 
  * + Refactor
  * 
- * - Event based interfaces
+ * + Event based interfaces
  * 
  * - Multiplayer:
  * 
