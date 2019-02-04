@@ -40,7 +40,10 @@ namespace Network
         }
         private void OnDestroyHost(object info)
         {
-            if (_host != null) _host.Close();
+            if (_host != null)
+                _host.Close();
+            else
+                EventManager.Singleton.Publish(GameEventType.HostDestroyed, null);
         }
         private void OnStartClient(object info)
         {
@@ -49,7 +52,10 @@ namespace Network
         }
         private void OnDestroyClient(object info)
         {
-            if (_client != null) _client.Close();
+            if (_client != null)
+                _client.Close();
+            else
+                EventManager.Singleton.Publish(GameEventType.ClientDestroyed, null);
         }
 
         private void Awake()

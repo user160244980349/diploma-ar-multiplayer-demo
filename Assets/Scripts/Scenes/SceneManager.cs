@@ -30,7 +30,7 @@ namespace Scenes
 
             // Host events
             EventManager.Singleton.Subscribe(GameEventType.HostStarted, OnHostStarted);
-            EventManager.Singleton.Subscribe(GameEventType.DestroyHost, OnDestroyHost);
+            EventManager.Singleton.Subscribe(GameEventType.HostDestroyed, OnHostDestroyed);
 
             // Client events
             EventManager.Singleton.Subscribe(GameEventType.ClientStarted, OnClientStarted);
@@ -91,7 +91,7 @@ namespace Scenes
         {
             LoadScene("LobbyCreation");
         }
-        private void OnDestroyHost(object info)
+        private void OnHostDestroyed(object info)
         {
             LoadScene("MainMenu");
         }

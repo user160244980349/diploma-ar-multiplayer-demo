@@ -33,12 +33,12 @@ namespace Multiplayer
             EventManager.Singleton.Subscribe(GameEventType.SendMultiplayerMessage, OnSendMultiplayerMessage);
             EventManager.Singleton.Subscribe(GameEventType.ReceiveNetworkMessage, OnReceiveNetworkMessage);
             EventManager.Singleton.Subscribe(GameEventType.HostStarted, OnHostStarted);
+            EventManager.Singleton.Subscribe(GameEventType.HostStartedInFallback, OnHostStarted);
             EventManager.Singleton.Subscribe(GameEventType.ClientStarted, OnClientStarted);
         }
         private void Update()
         {
-            if (_loggedIn)
-                EventManager.Singleton.Publish(GameEventType.SendNetworkMessage, new Boop());
+            
         }
         private void OnDestroy()
         {
@@ -46,8 +46,9 @@ namespace Multiplayer
             EventManager.Singleton.Unsubscribe(GameEventType.LoggingOut, OnLoggingOut);
             EventManager.Singleton.Unsubscribe(GameEventType.SendMultiplayerMessage, OnSendMultiplayerMessage);
             EventManager.Singleton.Unsubscribe(GameEventType.ReceiveNetworkMessage, OnReceiveNetworkMessage);
-            EventManager.Singleton.Subscribe(GameEventType.HostStarted, OnHostStarted);
-            EventManager.Singleton.Subscribe(GameEventType.ClientStarted, OnClientStarted);
+            EventManager.Singleton.Unsubscribe(GameEventType.HostStarted, OnHostStarted);
+            EventManager.Singleton.Unsubscribe(GameEventType.HostStartedInFallback, OnHostStarted);
+            EventManager.Singleton.Unsubscribe(GameEventType.ClientStarted, OnClientStarted);
         }
 
         private void OnHostStarted(object info)
