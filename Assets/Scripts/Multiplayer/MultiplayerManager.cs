@@ -126,7 +126,6 @@ namespace Multiplayer
                 }
                 case MultiplayerMessageType.LogOut:
                 {
-                    _loggedIn = false;
                     var logOut = message as LogOut;
                     if (_hosting)
                     {
@@ -157,6 +156,7 @@ namespace Multiplayer
                 }
                 case MultiplayerMessageType.LoggedOut:
                 {
+                    _loggedIn = false;
                     EventManager.Singleton.Publish(GameEventType.LoggedOut, null);
                     break;
                 }
