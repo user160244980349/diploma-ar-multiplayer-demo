@@ -60,7 +60,7 @@ namespace Scenes
         }
         private void OnLogIntoLobby(object info)
         {
-            EventManager.Singleton.Publish(GameEventType.LoggingIn, null);
+            EventManager.Singleton.Publish(GameEventType.LoggingIn, info);
             EventManager.Singleton.Publish(GameEventType.StopLobbyBroadcast, null);
             LoadScene("Loading");
         }

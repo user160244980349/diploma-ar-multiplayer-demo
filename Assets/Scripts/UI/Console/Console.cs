@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -31,7 +32,7 @@ namespace UI.Console
             var newMessageInstance = Instantiate(message, content.transform);
             var newMessageText = newMessageInstance.GetComponent<Text>();
 
-            newMessageText.text = m.text;
+            newMessageText.text = string.Format("[{0}] {1}", DateTime.Now.ToString("HH:mm:ss"), m.text);
             newMessageText.color = m.color;
 
             _messages.AddLast(newMessageInstance);
