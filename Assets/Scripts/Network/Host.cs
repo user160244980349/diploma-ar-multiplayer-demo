@@ -1,7 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using Events;
 using Network.Messages;
-using Tools;
+using Network.Messages.Wrappers;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -12,11 +13,9 @@ namespace Network
         public int BroadcastKey { get; set; }
 
         private bool _closing;
-
         private GameObject _socketPrefab;
         private Socket _socket;
         private List<int> _clients;
-        private Timer _discovery;
         private const float _discoveryDuration = 5f;
         private const float _switchDelay = 5f;
 
@@ -26,13 +25,17 @@ namespace Network
             _socket.Close();
         }
 
+        private IEnumerator StopDiscovery()
+        {
+            yield return new WaitForSeconds(_discoveryDuration);
+            _socket.StopBroadcast();
+            Debug.Log("HOST::Finished broadcasting");
+        }
         private void Start()
         {
             name = "NetworkHost";
             _socketPrefab = Resources.Load("Networking/Socket") as GameObject;
             _clients = new List<int>();
-            _discovery = gameObject.AddComponent<Timer>();
-            _discovery.Duration = _discoveryDuration;
 
             var socketObject = Instantiate(_socketPrefab, gameObject.transform);
             _socket = socketObject.GetComponent<Socket>();
@@ -52,9 +55,8 @@ namespace Network
             Debug.Log("HOST::Boot on port 8000");
             if (BroadcastKey != 0)
             {
-                _discovery.Discard();
-                _discovery.Running = true;
                 _socket.StartBroadcast(BroadcastKey, 8001, new FallbackHostReady());
+                StartCoroutine(StopDiscovery());
                 EventManager.Singleton.Publish(GameEventType.HostStartedInFallback, null);
                 Debug.Log("HOST::Broadcasting to 8001 port");
             }
@@ -75,14 +77,6 @@ namespace Network
             if (_closing && _socket == null)
             {
                 Destroy(gameObject);
-            }
-
-            if (_discovery.Elapsed)
-            {
-                _discovery.Discard();
-                _discovery.Running = false;
-                _socket.StopBroadcast();
-                Debug.Log("HOST::Finished broadcasting");
             }
 
             while (_socket.PollMessage(out MessageWrapper wrapper))

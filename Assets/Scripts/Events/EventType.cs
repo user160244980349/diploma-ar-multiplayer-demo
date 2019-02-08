@@ -59,5 +59,11 @@
         LoggedIn,
         LoggingOut,
         LoggedOut,
+
+        // Scene loaded
+        SessionStarted,
+        SessionEnded,
+        StartGame,
+        StartEnded,
     }
 }

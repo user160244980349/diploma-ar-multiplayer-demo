@@ -1,5 +1,6 @@
 using Events;
 using Network.Messages;
+using Network.Messages.Wrappers;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -83,6 +84,7 @@ namespace Network
         }
         public bool Send(int connection, int channel, ANetworkMessage message)
         {
+            message.timeStamp = NetworkTransport.GetNetworkTimestamp();
             var packet = _formatter.Serialize(message);
             return _connections[connection].QueueMessage(channel, packet);
         }

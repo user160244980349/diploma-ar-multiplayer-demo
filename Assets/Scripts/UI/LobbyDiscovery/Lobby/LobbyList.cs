@@ -1,5 +1,5 @@
 ﻿using Events;
-using Network.Messages;
+using Network.Messages.Wrappers;
 using System.Collections.Generic;
 using UnityEngine;
 

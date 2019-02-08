@@ -1,6 +1,7 @@
 ﻿using Events;
 using Network.Messages;
-using Tools;
+using Network.Messages.Wrappers;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -11,11 +12,12 @@ namespace Network
         public int BroadcastKey { get; set; }
 
         private bool _closing;
-
+        private bool _switching;
         private GameObject _socketPrefab;
         private Socket _socket;
         private int _host;
-        private Timer _switch;
+        private Coroutine _switch;
+        private float _switchDuration;
 
         public void Close()
         {
@@ -23,11 +25,16 @@ namespace Network
             _socket.Close();
         }
 
+        private IEnumerator Switch()
+        {
+            _switching = true;
+            yield return new WaitForSeconds(_switchDuration);
+            EventManager.Singleton.Publish(GameEventType.Switch, BroadcastKey);
+        }
         private void Start()
         {
             name = "NetworkClient";
             _socketPrefab = Resources.Load("Networking/Socket") as GameObject;
-            _switch = gameObject.AddComponent<Timer>();
 
             var socketObject = Instantiate(_socketPrefab, gameObject.transform);
             _socket = socketObject.GetComponent<Socket>();
@@ -59,13 +66,6 @@ namespace Network
                 Destroy(gameObject);
             }
 
-            if (_switch.Elapsed)
-            {
-                _switch.Discard();
-                _switch.Running = false;
-                EventManager.Singleton.Publish(GameEventType.Switch, BroadcastKey);
-            }
-
             while (_socket.PollMessage(out MessageWrapper wrapper))
             {
                 switch (wrapper.message.lowType)
@@ -86,25 +86,25 @@ namespace Network
                     {
                         var fallbackInfo = wrapper.message as FallbackInfo;
                         BroadcastKey = fallbackInfo.netKey;
-                        _switch.Duration = fallbackInfo.switchDelay;
+                        _switchDuration = fallbackInfo.switchDelay;
                         _socket.ReceiveBroadcast(BroadcastKey);
-                        Debug.LogFormat("CLIENT::Got broadcast key {0}, fallback delay {1}", BroadcastKey, _switch.Duration);
+                        Debug.LogFormat("CLIENT::Got broadcast key {0}, fallback delay {1}", BroadcastKey, _switchDuration);
                         break;
                     }
                     case NetworkMessageType.FallbackHostReady:
                     {
-                        if (!_switch.Running) break;
+                        if (!_switching) break;
+                        _switching = false;
                         _socket.Connect(wrapper.ip, wrapper.port);
-                        _switch.Discard();
-                        _switch.Running = false;
+                        StopCoroutine(_switch);
                         Debug.LogFormat("CLIENT::Connecting to fallback {0}:{1} with key {2}", wrapper.ip, wrapper.port, BroadcastKey);
                         break;
                     }
                     case NetworkMessageType.QueueShuffle:
                     {
                         var fallbackInfo = wrapper.message as QueueShuffle;
-                        _switch.Duration = fallbackInfo.switchDelay;
-                        Debug.LogFormat("CLIENT::Queue shuffled, fallback delay {0}", _switch.Duration);
+                        _switchDuration = fallbackInfo.switchDelay;
+                        Debug.LogFormat("CLIENT::Queue shuffled, fallback delay {0}", _switchDuration);
                         break;
                     }
                     case NetworkMessageType.FoundLobby:
@@ -121,8 +121,7 @@ namespace Network
                     {
                         if (_socket.DisconnectError == NetworkError.Timeout && BroadcastKey != 0)
                         {
-                            _switch.Discard();
-                            _switch.Running = true;
+                            _switch = StartCoroutine(Switch());
                             EventManager.Singleton.Publish(GameEventType.DisconnectedFromHostInFallback, null);
                             break;
                         }
@@ -141,6 +140,7 @@ namespace Network
             EventManager.Singleton.Publish(GameEventType.ClientDestroyed, null);
             Debug.Log("CLIENT::Destroyed");
         }
+
         private void Send(object message)
         {
             _socket.Send(_host, 0, message as ANetworkMessage);

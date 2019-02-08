@@ -5,9 +5,11 @@ namespace Multiplayer.Messages
         Boop,
         LogIn,
         LoggedIn,
+        SessionStarted,
         Move,
+        RBSync,
+        SessionEnded,
         LogOut,
         LoggedOut,
-        RigidbodySynchronization
     }
 }
