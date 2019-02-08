@@ -1,7 +1,6 @@
 ﻿using Events;
 using Multiplayer.Messages.Requests;
 using Multiplayer.Messages.Responses;
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -22,6 +21,8 @@ namespace Multiplayer
         }
         private void Start()
         {
+            Debug.Log("MULTIPLAYER_SCENE::Instantiating");
+
             _playerPrefab = Resources.Load("Game/Player") as GameObject;
             _playerViews = new Dictionary<int, PlayerView>();
             _objectViews = new Dictionary<int, ObjectView>();
@@ -29,6 +30,14 @@ namespace Multiplayer
             EventManager.Singleton.Subscribe(GameEventType.HostStarted, OnHostStarted);
             EventManager.Singleton.Subscribe(GameEventType.HostStartedInFallback, OnHostStarted);
             EventManager.Singleton.Subscribe(GameEventType.ClientStarted, OnClientStarted);
+        }
+        private void OnDestroy()
+        {
+            Debug.Log("MULTIPLAYER_SCENE::Destroying");
+
+            EventManager.Singleton.Unsubscribe(GameEventType.HostStarted, OnHostStarted);
+            EventManager.Singleton.Unsubscribe(GameEventType.HostStartedInFallback, OnHostStarted);
+            EventManager.Singleton.Unsubscribe(GameEventType.ClientStarted, OnClientStarted);
         }
 
         public void RegisterObject(ObjectView objectRepresentation)

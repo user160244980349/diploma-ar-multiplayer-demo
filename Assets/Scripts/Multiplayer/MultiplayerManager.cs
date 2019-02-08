@@ -52,7 +52,8 @@ namespace Multiplayer
         }
         private void OnDestroy()
         {
-            Debug.Log("MULTIPLAYER_MANAGER::Destroyed");
+            Debug.Log("MULTIPLAYER_MANAGER::Destroying");
+
             EventManager.Singleton.Unsubscribe(GameEventType.SendMultiplayerMessage, OnSendMultiplayerMessage);
             EventManager.Singleton.Unsubscribe(GameEventType.ReceiveNetworkMessage, OnReceiveNetworkMessage);
             EventManager.Singleton.Unsubscribe(GameEventType.HostStarted, OnHostStarted);

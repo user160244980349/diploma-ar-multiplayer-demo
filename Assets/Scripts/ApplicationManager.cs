@@ -189,12 +189,13 @@ public class ApplicationManager : MonoBehaviour
  * + Event based interfaces
  * 
  * - Bugs:
- *     - Reset multiplayer manager
- *     - finish players list in a lobby
- *     - Replace some of classes with structs
- *     - Add prefered channel to message types
- *     - Maybe event manager rework
- *     - Errors queue
+ *     + Reset multiplayer manager
+ *     - Finish players list in a lobby
+ *     - Use logout on timed out players
+ *     - (OPTIONAL) Replace some of classes with structs
+ *     - (OPTIONAL) Add prefered channel to message types
+ *     - (OPTIONAL) Maybe event manager rework
+ *     - (OPTIONAL) Errors queue
  * 
  * - Multiplayer:
  * 

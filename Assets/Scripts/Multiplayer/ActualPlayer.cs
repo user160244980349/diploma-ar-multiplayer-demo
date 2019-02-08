@@ -9,12 +9,14 @@ public class ActualPlayer : MonoBehaviour
     public string Name;
     public bool Logged;
 
-    void Start()
+    private void Start()
     {
+        Debug.Log("LOCAL_PLAYER::Instantiating");
+
         EventManager.Singleton.Subscribe(GameEventType.LoggingIn, LogIn);
         EventManager.Singleton.Subscribe(GameEventType.LoggingOut, LogOut);
     }
-    void Update()
+    private void Update()
     {
         if (!Logged) return;
 
@@ -49,18 +51,14 @@ public class ActualPlayer : MonoBehaviour
             EventManager.Singleton.Publish(GameEventType.SendMultiplayerMessage, new Move(Id, v));
         }
     }
+    private void OnDestroy()
+    {
+        Debug.Log("LOCAL_PLAYER::Destroying");
 
-    private void LogIn(object info)
-    {
-        Name = info as string;
-        EventManager.Singleton.Publish(GameEventType.SendMultiplayerMessage, new LogIn(Name));
-        Debug.Log("LOCAL_PLAYER::Sending login message");
+        EventManager.Singleton.Unsubscribe(GameEventType.LoggingIn, LogIn);
+        EventManager.Singleton.Unsubscribe(GameEventType.LoggingOut, LogOut);
     }
-    private void LogOut(object info)
-    {
-        EventManager.Singleton.Publish(GameEventType.SendMultiplayerMessage, new LogOut(Id));
-        Debug.Log("LOCAL_PLAYER::Sending logout message");
-    }
+
     public void LoggedIn(LoggedIn message)
     {
         Logged = true;
@@ -73,5 +71,16 @@ public class ActualPlayer : MonoBehaviour
         Logged = false;
         EventManager.Singleton.Publish(GameEventType.LoggedOut, null);
         Debug.Log("LOCAL_PLAYER::Got loggedout message");
+    }
+    private void LogIn(object info)
+    {
+        Name = info as string;
+        EventManager.Singleton.Publish(GameEventType.SendMultiplayerMessage, new LogIn(Name));
+        Debug.Log("LOCAL_PLAYER::Sending login message");
+    }
+    private void LogOut(object info)
+    {
+        EventManager.Singleton.Publish(GameEventType.SendMultiplayerMessage, new LogOut(Id));
+        Debug.Log("LOCAL_PLAYER::Sending logout message");
     }
 }
