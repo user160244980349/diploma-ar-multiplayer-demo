@@ -1,6 +1,4 @@
 ﻿using Events;
-using Multiplayer;
-using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -27,7 +25,9 @@ public class ApplicationManager : MonoBehaviour
         Instantiate(_eventManager);
         Instantiate(_networkManager);
         Instantiate(_consoleManager);
+        Instantiate(_multiplayerManager);
 
+        Application.targetFrameRate = 60;
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
     private void Start()
@@ -40,7 +40,6 @@ public class ApplicationManager : MonoBehaviour
         EventManager.Singleton.Subscribe(GameEventType.LogIntoLobby, OnLogIntoLobby);
         EventManager.Singleton.Subscribe(GameEventType.LoggedIn, OnLoggedIn);
         EventManager.Singleton.Subscribe(GameEventType.SessionStarted, OnSessionStarted);
-        EventManager.Singleton.Subscribe(GameEventType.LoggedIn, OnLoggedIn);
         EventManager.Singleton.Subscribe(GameEventType.LogOutLobby, OnLogOutLobby);
         EventManager.Singleton.Subscribe(GameEventType.LoggedOut, OnLoggedOut);
         EventManager.Singleton.Subscribe(GameEventType.ExitToMainMenu, OnExitToMainMenu);
@@ -112,6 +111,7 @@ public class ApplicationManager : MonoBehaviour
     }
     private void OnExitToMainMenu(object info)
     {
+        Instantiate(_multiplayerManager);
         if (_hosting)
         {
             EventManager.Singleton.Publish(GameEventType.StopLobbyBroadcast, null);
@@ -136,6 +136,7 @@ public class ApplicationManager : MonoBehaviour
     }
     private void OnHostDestroyed(object info)
     {
+        Instantiate(_multiplayerManager);
         SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
     }
 
@@ -151,6 +152,7 @@ public class ApplicationManager : MonoBehaviour
     }
     private void OnDisconnectedFromHost(object info)
     {
+        Instantiate(_multiplayerManager);
         EventManager.Singleton.Publish(GameEventType.DestroyClient, null);
         SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
     }
@@ -165,18 +167,17 @@ public class ApplicationManager : MonoBehaviour
                 EventManager.Singleton.Publish(GameEventType.StartGame, null);
                 break;
             }
-            case "MainMenu":
+            case "WaitPlayers":
             {
-                StartCoroutine(ResetMultiplayerManager());
+                EventManager.Singleton.Publish(GameEventType.PublishPlayersList, null);
+                break;
+            }
+            case "WaitStart":
+            {
+                EventManager.Singleton.Publish(GameEventType.PublishPlayersList, null);
                 break;
             }
         }
-    }
-    private IEnumerator ResetMultiplayerManager()
-    {
-        if (MultiplayerManager.Singleton != null) Destroy(MultiplayerManager.Singleton.gameObject);
-        yield return new WaitForSeconds(1f);
-        Instantiate(_multiplayerManager);
     }
 }
 
@@ -190,10 +191,17 @@ public class ApplicationManager : MonoBehaviour
  * 
  * - Bugs:
  *     + Reset multiplayer manager
- *     - Finish players list in a lobby
+ *     + Fps unlock
+ *     - Phantom connection
+ *     - Disconnected not unregistring
+ *     + Finish players list in a lobby
+ *     + Delete singleton from multiplayer scene
  *     - Use logout on timed out players
- *     - (OPTIONAL) Replace some of classes with structs
- *     - (OPTIONAL) Add prefered channel to message types
+ *     - Player name above model
+ *     - Exit if not logged in
+ *     - (OPTIONAL) Fix structs boxing
+ *     + (OPTIONAL) Replace some of classes with structs
+ *     + (OPTIONAL) Add prefered channel to message types
  *     - (OPTIONAL) Maybe event manager rework
  *     - (OPTIONAL) Errors queue
  * 

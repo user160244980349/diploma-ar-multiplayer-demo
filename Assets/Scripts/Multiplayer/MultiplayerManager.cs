@@ -26,7 +26,11 @@ namespace Multiplayer
             name = "MultiplayerManager";
             if (Singleton == null)
                 Singleton = this;
-            else if (Singleton == this) Destroy(gameObject);
+            else
+            {
+                Destroy(Singleton.gameObject);
+                Singleton = this;
+            }
             DontDestroyOnLoad(gameObject);
         }
         private void Start()
@@ -49,6 +53,7 @@ namespace Multiplayer
             EventManager.Singleton.Subscribe(GameEventType.HostStartedInFallback, OnHostStarted);
             EventManager.Singleton.Subscribe(GameEventType.ClientStarted, OnClientStarted);
             EventManager.Singleton.Subscribe(GameEventType.StartGame, OnStartGame);
+            EventManager.Singleton.Subscribe(GameEventType.PublishPlayersList, OnPublishPlayers);
         }
         private void OnDestroy()
         {
@@ -60,6 +65,7 @@ namespace Multiplayer
             EventManager.Singleton.Unsubscribe(GameEventType.HostStartedInFallback, OnHostStarted);
             EventManager.Singleton.Unsubscribe(GameEventType.ClientStarted, OnClientStarted);
             EventManager.Singleton.Unsubscribe(GameEventType.StartGame, OnStartGame);
+            EventManager.Singleton.Unsubscribe(GameEventType.PublishPlayersList, OnPublishPlayers);
 
             Destroy(_actualPlayer);
             Destroy(_multiplayerScene);
@@ -89,14 +95,23 @@ namespace Multiplayer
                     case MultiplayerMessageType.LogIn:
                     {
                         _actualPlayer.LoggedIn(RegisterPlayer(message as LogIn));
-                        EventManager.Singleton.Publish(GameEventType.LoggedIn, null);
-                        EventManager.Singleton.Publish(GameEventType.SendNetworkMessage, new LogIn(_actualPlayer.Name));
+                        var send = new SendWrapper
+                        {
+                            message = message,
+                            channel = 0,
+                        };
+                        EventManager.Singleton.Publish(GameEventType.SendNetworkMessage, send);
                         break;
                     }
                     case MultiplayerMessageType.SessionStarted:
                     {
-                        EventManager.Singleton.Publish(GameEventType.SessionStarted, info);
-                        EventManager.Singleton.Publish(GameEventType.SendNetworkMessage, info);
+                        EventManager.Singleton.Publish(GameEventType.SessionStarted, null);
+                        var send = new SendWrapper
+                        {
+                            message = message,
+                            channel = 0,
+                        };
+                        EventManager.Singleton.Publish(GameEventType.SendNetworkMessage, send);
                         break;
                     }
                     // само-движение
@@ -107,12 +122,22 @@ namespace Multiplayer
                     }
                     case MultiplayerMessageType.RBSync:
                     {
-                        EventManager.Singleton.Publish(GameEventType.SendNetworkMessage, info);
+                        var send = new SendWrapper
+                        {
+                            message = message,
+                            channel = 2,
+                        };
+                        EventManager.Singleton.Publish(GameEventType.SendNetworkMessage, send);
                         break;
                     }
                     case MultiplayerMessageType.LogOut:
                     {
-                        EventManager.Singleton.Publish(GameEventType.SendNetworkMessage, new SessionEnded());
+                        var send = new SendWrapper
+                        {
+                            message = new SessionEnded(),
+                            channel = 0,
+                        };
+                        EventManager.Singleton.Publish(GameEventType.SendNetworkMessage, send);
                         EventManager.Singleton.Publish(GameEventType.LoggedOut, null);
                         break;
                     }
@@ -137,14 +162,19 @@ namespace Multiplayer
                 }
                 default:
                 {
-                    EventManager.Singleton.Publish(GameEventType.SendNetworkMessage, info);
+                    var send = new SendWrapper
+                    {
+                        message = message,
+                        channel = 1,
+                    };
+                    EventManager.Singleton.Publish(GameEventType.SendNetworkMessage, send);
                     break;
                 }
             }
         }
         private void OnReceiveNetworkMessage(object info)
         {
-            var wrapper = info as MessageWrapper;
+            var wrapper = (ReceiveWrapper)info;
             var message = wrapper.message as AMultiplayerMessage;
 
             if (_hosting)
@@ -156,12 +186,12 @@ namespace Multiplayer
                 {
                     case MultiplayerMessageType.LogIn:
                     {
-                        var except = new ExceptWrapper
+                        var send = new SendWrapper
                         {
                             message = wrapper.message,
-                            connection = wrapper.connection,
+                            channel = 0,
                         };
-                        EventManager.Singleton.Publish(GameEventType.SendNetworkExceptMessage, except);
+                        EventManager.Singleton.Publish(GameEventType.SendNetworkMessage, send);
 
                         foreach (var value in _playerModels.Values)
                         {
@@ -169,6 +199,7 @@ namespace Multiplayer
                             {
                                 message = new LogIn(value.playerName),
                                 connection = wrapper.connection,
+                                channel = 0,
                             };
                             EventManager.Singleton.Publish(GameEventType.SendNetworkReplyMessage, player);
                         }
@@ -177,6 +208,7 @@ namespace Multiplayer
                         {
                             message = RegisterPlayer(message as LogIn),
                             connection = wrapper.connection,
+                            channel = 0,
                         };
                         EventManager.Singleton.Publish(GameEventType.SendNetworkReplyMessage, reply);
                         break;
@@ -188,17 +220,18 @@ namespace Multiplayer
                     }
                     case MultiplayerMessageType.LogOut:
                     {
-                        var except = new ExceptWrapper
+                        var send = new SendWrapper
                         {
                             message = wrapper.message,
-                            connection = wrapper.connection,
+                            channel = 0,
                         };
-                        EventManager.Singleton.Publish(GameEventType.SendNetworkExceptMessage, except);
+                        EventManager.Singleton.Publish(GameEventType.SendNetworkMessage, send);
 
                         var reply = new ReplyWrapper
                         {
                             message = UnregisterPlayer(message as LogOut),
                             connection = wrapper.connection,
+                            channel = 0,
                         };
                         EventManager.Singleton.Publish(GameEventType.SendNetworkReplyMessage, reply);
                         break;
@@ -250,6 +283,13 @@ namespace Multiplayer
             }
         }
 
+        private void OnPublishPlayers(object info)
+        {
+            foreach (var player in _playerModels.Values)
+            {
+                EventManager.Singleton.Publish(GameEventType.PlayerRegistered, player);
+            }
+        }
         private void OnStartGame(object info)
         {
             _gameStarted = true;
@@ -262,15 +302,20 @@ namespace Multiplayer
         private LoggedIn RegisterPlayer(LogIn logIn)
         {
             var id = _playerModels.Count + 1;
-            _playerModels.Add(id, new PlayerModel {
+            var player = new PlayerModel
+            {
+                playerId = id,
                 playerName = logIn.PlayerName,
-            });
+            };
+            _playerModels.Add(id, player);
 
             if (_gameStarted)
                 _multiplayerScene.SpawnPlayer(id);
 
-            Debug.LogFormat("MULTIPLAYER::Player {0} registered as {1}", id, logIn.PlayerName);
-            return new LoggedIn(_playerModels.Count);
+            EventManager.Singleton.Publish(GameEventType.PlayerRegistered, player);
+
+            Debug.LogFormat("MULTIPLAYER_MANAGER::Player {0} registered as {1}", id, logIn.PlayerName);
+            return new LoggedIn(id);
         }
         private LoggedOut UnregisterPlayer(LogOut logOut)
         {
@@ -279,7 +324,9 @@ namespace Multiplayer
             if (_gameStarted)
                 _multiplayerScene.DespawnPlayer(logOut.PlayerId);
 
-            Debug.LogFormat("MULTIPLAYER::Player {0} unregistered", logOut.PlayerId);
+            EventManager.Singleton.Publish(GameEventType.PlayerUnregistered, logOut.PlayerId);
+
+            Debug.LogFormat("MULTIPLAYER_MANAGER::Player {0} unregistered", logOut.PlayerId);
             return new LoggedOut();
         }
     }

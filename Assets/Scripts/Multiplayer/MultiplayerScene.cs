@@ -8,19 +8,14 @@ namespace Multiplayer
 {
     class MultiplayerScene : MonoBehaviour
     {
-        static public MultiplayerScene Singleton;
-
         private GameObject _playerPrefab;
         private Dictionary<int, PlayerView> _playerViews;
         private Dictionary<int, ObjectView> _objectViews;
         private bool _freeze;
 
-        private void Awake()
-        {
-            Singleton = this;
-        }
         private void Start()
         {
+            name = "MultiplayerScene";
             Debug.Log("MULTIPLAYER_SCENE::Instantiating");
 
             _playerPrefab = Resources.Load("Game/Player") as GameObject;
@@ -30,6 +25,8 @@ namespace Multiplayer
             EventManager.Singleton.Subscribe(GameEventType.HostStarted, OnHostStarted);
             EventManager.Singleton.Subscribe(GameEventType.HostStartedInFallback, OnHostStarted);
             EventManager.Singleton.Subscribe(GameEventType.ClientStarted, OnClientStarted);
+            EventManager.Singleton.Subscribe(GameEventType.RegisterObjectView, OnRegisterObject);
+            EventManager.Singleton.Subscribe(GameEventType.UnregisterObjectView, OnUnregisterObject);
         }
         private void OnDestroy()
         {
@@ -38,23 +35,26 @@ namespace Multiplayer
             EventManager.Singleton.Unsubscribe(GameEventType.HostStarted, OnHostStarted);
             EventManager.Singleton.Unsubscribe(GameEventType.HostStartedInFallback, OnHostStarted);
             EventManager.Singleton.Unsubscribe(GameEventType.ClientStarted, OnClientStarted);
+            EventManager.Singleton.Unsubscribe(GameEventType.RegisterObjectView, OnRegisterObject);
+            EventManager.Singleton.Unsubscribe(GameEventType.UnregisterObjectView, OnUnregisterObject);
         }
 
-        public void RegisterObject(ObjectView objectRepresentation)
+        public void OnRegisterObject(object info)
         {
-            objectRepresentation.objectId = _objectViews.Count + 1;
-            _objectViews.Add(objectRepresentation.objectId, objectRepresentation);
-            objectRepresentation.Freeze(_freeze);
+            var objectView = info as ObjectView;
+            objectView.objectId = _objectViews.Count + 1;
+            _objectViews.Add(objectView.objectId, objectView);
+            objectView.Freeze(_freeze);
         }
-        public void UnregisterObject(ObjectView objectRepresentation)
+        public void OnUnregisterObject(object info)
         {
-            _objectViews.Remove(objectRepresentation.objectId);
+            _objectViews.Remove((int)info);
         }
         public void UpdateRigidbody(RBSync sync, float duration)
         {
             if (!_objectViews.ContainsKey(sync.ObjectId)) return;
             _objectViews.TryGetValue(sync.ObjectId, out ObjectView objectRepresentation);
-            objectRepresentation.RBSync(sync, duration);
+            objectRepresentation.RBSync(sync);
         }
         public void Move(Move move)
         {

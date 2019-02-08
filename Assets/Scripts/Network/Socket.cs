@@ -4,6 +4,7 @@ using Network.Messages.Wrappers;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.Networking.Types;
 
 namespace Network
 {
@@ -24,7 +25,7 @@ namespace Network
         private int _packetSize;
 
         private Formatter _formatter;
-        private Queue<MessageWrapper> _messages;
+        private Queue<ReceiveWrapper> _messages;
         private byte[] _packet;
         private byte[] _broadcastPacket;
         private Connection[] _connections;
@@ -40,7 +41,7 @@ namespace Network
             _packetSize = settings.packetSize;
 
             _formatter = new Formatter();
-            _messages = new Queue<MessageWrapper>();
+            _messages = new Queue<ReceiveWrapper>();
 
             _connectionPrefab = Resources.Load("Networking/Connection") as GameObject;
 
@@ -82,17 +83,16 @@ namespace Network
         {
             _connections[id].ReadyForSend = true;
         }
-        public bool Send(int connection, int channel, ANetworkMessage message)
+        public bool Send(int connection, SendWrapper wrapper)
         {
-            message.timeStamp = NetworkTransport.GetNetworkTimestamp();
-            var packet = _formatter.Serialize(message);
-            return _connections[connection].QueueMessage(channel, packet);
+            wrapper.message.timeStamp = NetworkTransport.GetNetworkTimestamp();
+            return _connections[connection].QueueMessage(wrapper.channel, _formatter.Serialize(wrapper.message));
         }
-        public bool PollMessage(out MessageWrapper wrapper)
+        public bool PollMessage(out ReceiveWrapper wrapper)
         {
             if (_messages.Count == 0)
             {
-                wrapper = new MessageWrapper();
+                wrapper = new ReceiveWrapper();
                 return false;
             }
             wrapper = _messages.Dequeue();
@@ -172,7 +172,7 @@ namespace Network
                         _connections[connectionId] = connectionObject.GetComponent<Connection>();
                         _connections[connectionId].ImmediateStart(Id, connectionId);
 
-                        var wrapper = new MessageWrapper
+                        var wrapper = new ReceiveWrapper
                         {
                             message = new Connect(),
                             connection = connectionId,
@@ -185,7 +185,7 @@ namespace Network
                     }
                     case NetworkEventType.DataEvent:
                     {
-                        var wrapper = new MessageWrapper
+                        var wrapper = new ReceiveWrapper
                         {
                             message = _formatter.Deserialize(_packet),
                             connection = connectionId,
@@ -201,7 +201,7 @@ namespace Network
                     {
                         NetworkTransport.GetBroadcastConnectionMessage(Id, _broadcastPacket, _packetSize, out int size, out error);
                         ParseError("Failed to get broadcast message", error);
-                        var wrapper = new MessageWrapper
+                        var wrapper = new ReceiveWrapper
                         {
                             message = _formatter.Deserialize(_broadcastPacket),
                         };
@@ -213,7 +213,7 @@ namespace Network
                     case NetworkEventType.DisconnectEvent:
                     {
                         DisconnectError = (NetworkError)error;
-                        var wrapper = new MessageWrapper
+                        var wrapper = new ReceiveWrapper
                         {
                             message = new Disconnect(),
                             connection = connectionId,

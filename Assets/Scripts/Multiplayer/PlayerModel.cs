@@ -2,6 +2,7 @@
 {
     class PlayerModel
     {
+        public int playerId;
         public string playerName;
     }
 }

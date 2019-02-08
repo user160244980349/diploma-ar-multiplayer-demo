@@ -11,10 +11,10 @@ namespace UI.LobbyDiscovery
         public Text lobbyNameText;
 
         private string _lobbyName;
-        private MessageWrapper _wrapper;
+        private ReceiveWrapper _wrapper;
         private float _destroyTimer;
 
-        public void ImmediateStart(MessageWrapper wrapper)
+        public void ImmediateStart(ReceiveWrapper wrapper)
         {
             _wrapper = wrapper;
             _lobbyName = (_wrapper.message as FoundLobby).lobbyName;

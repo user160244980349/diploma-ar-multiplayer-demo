@@ -23,7 +23,6 @@ namespace Multiplayer
         private Rigidbody _rb;
 
         private float _time;
-        private float _ping;
         private float _updatePeiod = 0.13f;
         private Coroutine _sendRBSync;
 
@@ -31,11 +30,11 @@ namespace Multiplayer
         {
             while (true)
             {
+                yield return new WaitForSeconds(_updatePeiod);
                 if (!_rb.isKinematic && !_rb.IsSleeping())
                 {
                     EventManager.Singleton.Publish(GameEventType.SendMultiplayerMessage, new RBSync(objectId, _rb));
                 }
-                yield return new WaitForSeconds(_updatePeiod);
             }
         }
         private void Start()
@@ -43,7 +42,17 @@ namespace Multiplayer
             _rb = GetComponent<Rigidbody>();
             _t = GetComponent<Transform>();
             _sendRBSync = StartCoroutine(SendRBSync());
-            MultiplayerScene.Singleton.RegisterObject(this);
+            
+            _newrbpos = _rb.position;
+            _newrbvel = _rb.velocity;
+            _newrbavel = _rb.angularVelocity;
+            _newrbrot = _rb.rotation;
+            _prevrbpos = _newrbpos;
+            _prevrbvel = _newrbvel;
+            _prevrbavel = _newrbavel;
+            _prevrbrot = _newrbrot;
+
+            EventManager.Singleton.Publish(GameEventType.RegisterObjectView, this);
         }
         private void Update()
         {
@@ -57,13 +66,13 @@ namespace Multiplayer
         }
         private void OnDestroy()
         {
+            EventManager.Singleton.Publish(GameEventType.UnregisterObjectView, objectId);
             StopCoroutine(_sendRBSync);
         }
 
-        public void RBSync(RBSync message, float ping)
+        public void RBSync(RBSync message)
         {
             _time = 0;
-            _ping = ping / 1000f;
             _prevrbpos = _newrbpos;
             _prevrbvel = _newrbvel;
             _prevrbavel = _newrbavel;

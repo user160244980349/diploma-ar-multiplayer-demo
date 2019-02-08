@@ -1,8 +1,9 @@
 ﻿namespace Network.Messages.Wrappers
 {
-    public class ExceptWrapper
+    public struct ExceptWrapper
     {
         public ANetworkMessage message;
         public int connection;
+        public int channel;
     }
 }

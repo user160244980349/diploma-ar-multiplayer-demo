@@ -1,6 +1,6 @@
 ﻿namespace Network.Messages.Wrappers
 {
-    public class MessageWrapper
+    public struct ReceiveWrapper
     {
         public ANetworkMessage message;
         public string ip;

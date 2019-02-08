@@ -1,6 +1,4 @@
-﻿using Events;
-using Network.Messages;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 namespace UI.WaitPlayers
@@ -8,7 +6,11 @@ namespace UI.WaitPlayers
     public class Player : MonoBehaviour
     {
         public Text playerNameText;
+        public string playerName;
 
-        private string _playerName;
+        private void Start()
+        {
+            playerNameText.text = playerName;
+        }
     }
 }

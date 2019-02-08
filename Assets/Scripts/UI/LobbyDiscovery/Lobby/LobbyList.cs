@@ -21,7 +21,7 @@ namespace UI.LobbyDiscovery
 
         private void OnLobbyFound(object info)
         {
-            var wrapper = info as MessageWrapper;
+            var wrapper = (ReceiveWrapper)info;
             Lobby lobbyScript;
             if (_lobbys.ContainsKey(wrapper.ip))
             {

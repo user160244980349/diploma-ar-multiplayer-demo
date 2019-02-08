@@ -11,6 +11,7 @@ public class ActualPlayer : MonoBehaviour
 
     private void Start()
     {
+        name = "ActualPlayer";
         Debug.Log("LOCAL_PLAYER::Instantiating");
 
         EventManager.Singleton.Subscribe(GameEventType.LoggingIn, LogIn);
@@ -22,34 +23,14 @@ public class ActualPlayer : MonoBehaviour
 
         Vector3 v = Vector3.zero;
 
-        if (Input.GetKey(KeyCode.W))
-        {
-            v += -Vector3.back * 100;
-        }
-        if (Input.GetKey(KeyCode.A))
-        {
-            v += -Vector3.right * 100;
-        }
-        if (Input.GetKey(KeyCode.S))
-        {
-            v += Vector3.back * 100;
-        }
-        if (Input.GetKey(KeyCode.D))
-        {
-            v += Vector3.right * 100;
-        }
-        if (Input.GetKey(KeyCode.Space))
-        {
-            v += Vector3.up * 100;
-        }
-        if (Input.GetKey(KeyCode.LeftControl))
-        {
-            v += Vector3.down * 100;
-        }
-        if (v != Vector3.zero)
-        {
-            EventManager.Singleton.Publish(GameEventType.SendMultiplayerMessage, new Move(Id, v));
-        }
+        if (Input.GetAxisRaw("Vertical") != 0) v += Input.GetAxisRaw("Vertical") * Vector3.forward * 100;
+        if (Input.GetAxisRaw("Horizontal") != 0) v += Input.GetAxisRaw("Horizontal") * Vector3.right * 100;
+        if (Input.GetKey(KeyCode.JoystickButton3)) v += Vector3.up * 100;
+        if (Input.GetKey(KeyCode.JoystickButton0)) v += Vector3.down * 100;
+        if (Input.GetKey(KeyCode.Space)) v += Vector3.up * 100;
+        if (Input.GetKey(KeyCode.LeftControl)) v += Vector3.down * 100;
+
+        if (v != Vector3.zero) EventManager.Singleton.Publish(GameEventType.SendMultiplayerMessage, new Move(Id, v));
     }
     private void OnDestroy()
     {

@@ -25,8 +25,10 @@ namespace Network
             _socket.Close();
         }
 
-        private IEnumerator StopDiscovery()
+        private IEnumerator StartDiscovery()
         {
+            _socket.StopBroadcast();
+            Debug.Log("HOST::Finished broadcasting");
             yield return new WaitForSeconds(_discoveryDuration);
             _socket.StopBroadcast();
             Debug.Log("HOST::Finished broadcasting");
@@ -41,7 +43,9 @@ namespace Network
             _socket = socketObject.GetComponent<Socket>();
             var started = _socket.ImmediateStart(new SocketSettings
             {
-                channels = new QosType[2] { QosType.Reliable, QosType.Unreliable },
+                channels = new QosType[3] { QosType.Reliable,
+                                            QosType.Reliable,
+                                            QosType.Unreliable },
                 port = 8000,
                 maxConnections = 16,
                 packetSize = 1024,
@@ -56,7 +60,6 @@ namespace Network
             if (BroadcastKey != 0)
             {
                 _socket.StartBroadcast(BroadcastKey, 8001, new FallbackHostReady());
-                StartCoroutine(StopDiscovery());
                 EventManager.Singleton.Publish(GameEventType.HostStartedInFallback, null);
                 Debug.Log("HOST::Broadcasting to 8001 port");
             }
@@ -79,7 +82,7 @@ namespace Network
                 Destroy(gameObject);
             }
 
-            while (_socket.PollMessage(out MessageWrapper wrapper))
+            while (_socket.PollMessage(out ReceiveWrapper wrapper))
             {
                 switch (wrapper.message.lowType)
                 {
@@ -92,8 +95,12 @@ namespace Network
                     {
                         Debug.Log(string.Format("HOST::Client {0}:{1} connected", wrapper.ip, wrapper.port));
                         _clients.Add(wrapper.connection);
-
-                        Send(new FallbackInfo(BroadcastKey, (_clients.Count - 1) * _switchDelay), wrapper.connection);
+                        var send = new SendWrapper
+                        {
+                            message = new FallbackInfo(BroadcastKey, (_clients.Count - 1) * _switchDelay),
+                            channel = 0,
+                        };
+                        Send(wrapper.connection, send);
                         break;
                     }
                     case NetworkMessageType.Disconnect:
@@ -104,7 +111,12 @@ namespace Network
                         if (_closing) break;
                         for (var i = disconnectedIndex; i < _clients.Count; i++)
                         {
-                            Send(new QueueShuffle(i * _switchDelay), _clients[i]);
+                            var send = new SendWrapper
+                            {
+                                message = new QueueShuffle(i * _switchDelay),
+                                channel = 0,
+                            };
+                            Send(_clients[i], send);
                         }
                         break;
                     }
@@ -122,28 +134,37 @@ namespace Network
             Debug.Log("HOST::Destroyed");
         }
 
-        private void Send(object message, int connectionId)
+        private void Send(int connectionId, object wrapper)
         {
-            // Debug.Log("HOST::Sending data");
-            _socket.Send(connectionId, 1, message as ANetworkMessage);
+            _socket.Send(connectionId, (SendWrapper)wrapper);
         }
-        private void Send(object message)
+        private void Send(object wrapper)
         {
-            // Debug.Log("HOST::Sending data");
-            for (var i = 0; i < _clients.Count; i++) _socket.Send(_clients[i], 1, message as ANetworkMessage);
+            for (var i = 0; i < _clients.Count; i++)
+                _socket.Send(_clients[i], (SendWrapper)wrapper);
         }
-        private void SendReply(object message)
+        private void SendReply(object wrapper)
         {
-            var reply = message as ReplyWrapper;
-            _socket.Send(reply.connection, 1, reply.message as ANetworkMessage);
+            var reply = (ReplyWrapper)wrapper;
+            var send = new SendWrapper
+            {
+                message = reply.message,
+                channel = reply.channel,
+            };
+            _socket.Send(reply.connection, send);
         }
-        private void SendExcept(object message)
+        private void SendExcept(object wrapper)
         {
-            var except = message as ExceptWrapper;
+            var except = (ExceptWrapper)wrapper;
+            var send = new SendWrapper
+            {
+                message = except.message,
+                channel = except.channel,
+            };
             for (var i = 0; i < _clients.Count; i++)
             {
-                if (i == except.connection) continue;
-                _socket.Send(_clients[i], 1, except.message as ANetworkMessage);
+                if (_clients[i] == except.connection) continue;
+                _socket.Send(_clients[i], send);
             }
         }
         private void OnStartLobbyBroadcast(object info)

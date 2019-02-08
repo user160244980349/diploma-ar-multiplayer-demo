@@ -1,7 +1,6 @@
 ﻿using UnityEngine.Networking;
 using UnityEngine;
 using UnityEngine.Networking.Types;
-using System.Collections;
 
 namespace Network
 {
@@ -15,8 +14,6 @@ namespace Network
         private int _socketId;
         private bool _opened;
         private int _queueLength;
-        private float _sendRate = 0.05f;
-        private Coroutine _send;
 
         public bool ImmediateStart(int socketId, int id)
         {
@@ -54,38 +51,28 @@ namespace Network
             return false;
         }
 
-        private IEnumerator Send()
-        {
-            while (true)
-            {
-                byte error;
-                if (ReadyForSend && _queueLength != 0)
-                {
-                    ReadyForSend = NetworkTransport.SendQueuedMessages(_socketId, Id, out error);
-                    ParseError("Failed to send queued messages", error);
-                    if (!ReadyForSend)
-                    {
-                        NetworkTransport.NotifyWhenConnectionReadyForSend(_socketId, Id, _queueLength, out error);
-                        ParseError("Failed to request notify", error);
-                    }
-                    else
-                        _queueLength = 0;
-                }
-                yield return new WaitForSeconds(_sendRate);
-            }
-        }
         private void Start()
         {
             name = string.Format("Connection<{0}>", Id);
-            _send = StartCoroutine(Send());
         }
         private void Update()
         {
-            
+            byte error;
+            if (ReadyForSend && _queueLength != 0)
+            {
+                ReadyForSend = NetworkTransport.SendQueuedMessages(_socketId, Id, out error);
+                ParseError("Failed to send queued messages", error);
+                if (!ReadyForSend)
+                {
+                    NetworkTransport.NotifyWhenConnectionReadyForSend(_socketId, Id, _queueLength, out error);
+                    ParseError("Failed to request notify", error);
+                }
+                else
+                    _queueLength = 0;
+            }
         }
         private void OnDestroy()
         {
-            StopCoroutine(_send);
             Debug.LogFormat("SOCKET<{0}>::CONNECTION<{1}>::Destroyed", _socketId, Id);
         }
         private void ParseError(string message, byte rawError)

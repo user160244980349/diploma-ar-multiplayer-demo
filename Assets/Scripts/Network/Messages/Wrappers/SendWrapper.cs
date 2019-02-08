@@ -1,9 +1,8 @@
 ﻿namespace Network.Messages.Wrappers
 {
-    public struct ReplyWrapper
+    public struct SendWrapper
     {
         public ANetworkMessage message;
-        public int connection;
         public int channel;
     }
 }

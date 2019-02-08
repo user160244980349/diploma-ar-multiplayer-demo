@@ -40,7 +40,9 @@ namespace Network
             _socket = socketObject.GetComponent<Socket>();
             var started = _socket.ImmediateStart(new SocketSettings
             {
-                channels = new QosType[2] { QosType.Reliable, QosType.Unreliable },
+                channels = new QosType[3] { QosType.Reliable,
+                                            QosType.Reliable,
+                                            QosType.Unreliable },
                 port = 8001,
                 maxConnections = 1,
                 packetSize = 1024,
@@ -66,7 +68,7 @@ namespace Network
                 Destroy(gameObject);
             }
 
-            while (_socket.PollMessage(out MessageWrapper wrapper))
+            while (_socket.PollMessage(out ReceiveWrapper wrapper))
             {
                 switch (wrapper.message.lowType)
                 {
@@ -141,13 +143,13 @@ namespace Network
             Debug.Log("CLIENT::Destroyed");
         }
 
-        private void Send(object message)
+        private void Send(object wrapper)
         {
-            _socket.Send(_host, 0, message as ANetworkMessage);
+            _socket.Send(_host, (SendWrapper)wrapper);
         }
         private void ConnectToHost(object info)
         {
-            var message = info as MessageWrapper;
+            var message = (ReceiveWrapper)info;
             _socket.Connect(message.ip, message.port);
         }
         private void DisconnectFromHost(object info)

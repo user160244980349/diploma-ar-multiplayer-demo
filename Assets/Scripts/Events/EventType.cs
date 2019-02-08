@@ -26,9 +26,6 @@
         DestroyClient,
         Switch,
 
-        // ApplicationManager Commands
-        ResetMultiplayerManager,
-
         // Host Commands
         StartLobbyBroadcast,
         StopLobbyBroadcast,
@@ -54,16 +51,22 @@
         SendNetworkReplyMessage,
         SendNetworkExceptMessage,
 
+        // Multiplayer scene
+        RegisterObjectView,
+        UnregisterObjectView,
+
         // Multiplayer triggers
         LoggingIn,
         LoggedIn,
         LoggingOut,
         LoggedOut,
+        PlayerRegistered,
+        PlayerUnregistered,
+        PublishPlayersList,
 
         // Scene loaded
         SessionStarted,
         SessionEnded,
         StartGame,
-        StartEnded,
     }
 }
