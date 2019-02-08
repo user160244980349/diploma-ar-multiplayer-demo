@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 
-namespace UI.WaitPlayers
+namespace UI.WaitPlayersOrStart
 {
     public class Player : MonoBehaviour
     {

@@ -3,7 +3,7 @@ using Multiplayer;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace UI.WaitPlayers
+namespace UI.WaitPlayersOrStart
 {
     public class PlayersList : MonoBehaviour
     {

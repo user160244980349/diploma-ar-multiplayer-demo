@@ -2,7 +2,7 @@
 using Multiplayer.Messages.Responses;
 using UnityEngine;
 
-namespace UI.WaitPlayers
+namespace UI.WaitPlayersOrStart
 {
     public class StartSession : MonoBehaviour
     {
