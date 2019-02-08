@@ -16,6 +16,7 @@ namespace UI.LobbyDiscovery
 
         public void ImmediateStart(ReceiveWrapper wrapper)
         {
+            _destroyTimer = 2f;
             _wrapper = wrapper;
             _lobbyName = (_wrapper.message as FoundLobby).lobbyName;
         }

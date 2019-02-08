@@ -192,13 +192,13 @@ public class ApplicationManager : MonoBehaviour
  * - Bugs:
  *     + Reset multiplayer manager
  *     + Fps unlock
- *     - Phantom connection
- *     - Disconnected not unregistring
+ *     + Phantom connection
+ *     + Disconnected not unregistring
  *     + Finish players list in a lobby
  *     + Delete singleton from multiplayer scene
  *     - Use logout on timed out players
- *     - Player name above model
- *     - Exit if not logged in
+ *     + Exit if not logged in
+ *     - (OPTIONAL) Player name above model
  *     - (OPTIONAL) Fix structs boxing
  *     + (OPTIONAL) Replace some of classes with structs
  *     + (OPTIONAL) Add prefered channel to message types

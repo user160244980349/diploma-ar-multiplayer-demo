@@ -42,7 +42,7 @@ namespace Multiplayer
             _rb = GetComponent<Rigidbody>();
             _t = GetComponent<Transform>();
             _sendRBSync = StartCoroutine(SendRBSync());
-            
+
             _newrbpos = _rb.position;
             _newrbvel = _rb.velocity;
             _newrbavel = _rb.angularVelocity;

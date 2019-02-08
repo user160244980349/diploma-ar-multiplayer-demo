@@ -12,8 +12,6 @@ public class ActualPlayer : MonoBehaviour
     private void Start()
     {
         name = "ActualPlayer";
-        Debug.Log("LOCAL_PLAYER::Instantiating");
-
         EventManager.Singleton.Subscribe(GameEventType.LoggingIn, LogIn);
         EventManager.Singleton.Subscribe(GameEventType.LoggingOut, LogOut);
     }
@@ -34,8 +32,6 @@ public class ActualPlayer : MonoBehaviour
     }
     private void OnDestroy()
     {
-        Debug.Log("LOCAL_PLAYER::Destroying");
-
         EventManager.Singleton.Unsubscribe(GameEventType.LoggingIn, LogIn);
         EventManager.Singleton.Unsubscribe(GameEventType.LoggingOut, LogOut);
     }

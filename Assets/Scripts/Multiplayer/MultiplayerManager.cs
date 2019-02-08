@@ -35,8 +35,6 @@ namespace Multiplayer
         }
         private void Start()
         {
-            Debug.Log("MULTIPLAYER_MANAGER::Instantiating");
-
             _scenePrefab = Resources.Load("Multiplayer/MultiplayerScene") as GameObject;
             var sceneObject = Instantiate(_scenePrefab, transform) as GameObject;
             _multiplayerScene = sceneObject.GetComponent<MultiplayerScene>();
@@ -57,8 +55,6 @@ namespace Multiplayer
         }
         private void OnDestroy()
         {
-            Debug.Log("MULTIPLAYER_MANAGER::Destroying");
-
             EventManager.Singleton.Unsubscribe(GameEventType.SendMultiplayerMessage, OnSendMultiplayerMessage);
             EventManager.Singleton.Unsubscribe(GameEventType.ReceiveNetworkMessage, OnReceiveNetworkMessage);
             EventManager.Singleton.Unsubscribe(GameEventType.HostStarted, OnHostStarted);
@@ -186,12 +182,20 @@ namespace Multiplayer
                 {
                     case MultiplayerMessageType.LogIn:
                     {
-                        var send = new SendWrapper
+                        var except = new ExceptWrapper
                         {
                             message = wrapper.message,
                             channel = 0,
                         };
-                        EventManager.Singleton.Publish(GameEventType.SendNetworkMessage, send);
+                        EventManager.Singleton.Publish(GameEventType.SendNetworkExceptMessage, except);
+
+                        var reply = new ReplyWrapper
+                        {
+                            message = RegisterPlayer(message as LogIn),
+                            connection = wrapper.connection,
+                            channel = 0,
+                        };
+                        EventManager.Singleton.Publish(GameEventType.SendNetworkReplyMessage, reply);
 
                         foreach (var value in _playerModels.Values)
                         {
@@ -203,14 +207,6 @@ namespace Multiplayer
                             };
                             EventManager.Singleton.Publish(GameEventType.SendNetworkReplyMessage, player);
                         }
-
-                        var reply = new ReplyWrapper
-                        {
-                            message = RegisterPlayer(message as LogIn),
-                            connection = wrapper.connection,
-                            channel = 0,
-                        };
-                        EventManager.Singleton.Publish(GameEventType.SendNetworkReplyMessage, reply);
                         break;
                     }
                     case MultiplayerMessageType.Move:
@@ -247,7 +243,8 @@ namespace Multiplayer
             {
                 case MultiplayerMessageType.LogIn:
                 {
-                    RegisterPlayer(message as LogIn);
+                    if (_actualPlayer.Logged) 
+                        RegisterPlayer(message as LogIn);
                     break;
                 }
                 case MultiplayerMessageType.LoggedIn:

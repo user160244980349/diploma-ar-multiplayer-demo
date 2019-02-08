@@ -52,8 +52,8 @@ namespace Network
 
             var connectionConfig = new ConnectionConfig
             {
-                ConnectTimeout = 100,
-                MaxConnectionAttempt = 20,
+                ConnectTimeout = 500,
+                MaxConnectionAttempt = 4,
                 DisconnectTimeout = 2000,
             };
 
@@ -106,7 +106,7 @@ namespace Network
         public bool StartBroadcast(int key, int port, ANetworkMessage message)
         {
             var packet = _formatter.Serialize(message);
-            var broabcast = NetworkTransport.StartBroadcastDiscovery(Id, port, key, 1, 0, packet, packet.Length, 10, out byte error);
+            var broabcast = NetworkTransport.StartBroadcastDiscovery(Id, port, key, 1, 0, packet, packet.Length, 500, out byte error);
             ParseError("Failed to start broadcast", error);
             return broabcast;
         }

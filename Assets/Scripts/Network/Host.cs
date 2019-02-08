@@ -27,7 +27,7 @@ namespace Network
 
         private IEnumerator StartDiscovery()
         {
-            _socket.StopBroadcast();
+            _socket.StartBroadcast(BroadcastKey, 8001, new FallbackHostReady());
             Debug.Log("HOST::Finished broadcasting");
             yield return new WaitForSeconds(_discoveryDuration);
             _socket.StopBroadcast();
@@ -59,7 +59,7 @@ namespace Network
             Debug.Log("HOST::Boot on port 8000");
             if (BroadcastKey != 0)
             {
-                _socket.StartBroadcast(BroadcastKey, 8001, new FallbackHostReady());
+                StartCoroutine(StartDiscovery());
                 EventManager.Singleton.Publish(GameEventType.HostStartedInFallback, null);
                 Debug.Log("HOST::Broadcasting to 8001 port");
             }

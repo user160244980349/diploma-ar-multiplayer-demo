@@ -16,7 +16,6 @@ namespace Multiplayer
         private void Start()
         {
             name = "MultiplayerScene";
-            Debug.Log("MULTIPLAYER_SCENE::Instantiating");
 
             _playerPrefab = Resources.Load("Game/Player") as GameObject;
             _playerViews = new Dictionary<int, PlayerView>();
@@ -30,8 +29,6 @@ namespace Multiplayer
         }
         private void OnDestroy()
         {
-            Debug.Log("MULTIPLAYER_SCENE::Destroying");
-
             EventManager.Singleton.Unsubscribe(GameEventType.HostStarted, OnHostStarted);
             EventManager.Singleton.Unsubscribe(GameEventType.HostStartedInFallback, OnHostStarted);
             EventManager.Singleton.Unsubscribe(GameEventType.ClientStarted, OnClientStarted);
