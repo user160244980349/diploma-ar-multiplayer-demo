@@ -116,7 +116,7 @@ namespace Multiplayer
                         _multiplayerScene.Move(message as Move);
                         break;
                     }
-                    case MultiplayerMessageType.RBSync:
+                    case MultiplayerMessageType.TransformSync:
                     {
                         var send = new SendWrapper
                         {
@@ -151,7 +151,7 @@ namespace Multiplayer
              */
             switch (message.highType)
             {
-                case MultiplayerMessageType.RBSync:
+                case MultiplayerMessageType.TransformSync:
                 {
                     
                     break;
@@ -257,7 +257,7 @@ namespace Multiplayer
                     EventManager.Singleton.Publish(GameEventType.SessionStarted, null);
                     break;
                 }
-                case MultiplayerMessageType.RBSync:
+                case MultiplayerMessageType.TransformSync:
                 {
                     _multiplayerScene.UpdateRigidbody(message as TransformSync, wrapper.ping);
                     break;

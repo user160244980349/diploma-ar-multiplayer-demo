@@ -41,10 +41,10 @@ namespace Multiplayer.Messages.Responses
 
         public TransformSync(int objectId, Transform t)
         {
-            highType = MultiplayerMessageType.RBSync;
+            highType = MultiplayerMessageType.TransformSync;
             ObjectId = objectId;
-            Position = t.position;
-            Rotation = t.rotation;
+            Position = t.localPosition;
+            Rotation = t.localRotation;
         }
     }
 }

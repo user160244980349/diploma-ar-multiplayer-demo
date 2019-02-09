@@ -7,7 +7,7 @@ namespace Multiplayer.Messages
         LoggedIn,
         SessionStarted,
         Move,
-        RBSync,
+        TransformSync,
         SessionEnded,
         LogOut,
         LoggedOut,

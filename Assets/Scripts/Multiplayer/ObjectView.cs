@@ -52,8 +52,8 @@ namespace Multiplayer
             {
                 _time += Time.deltaTime;
                 var percentage = _time / _updatePeiod;
-                _t.position = Vector3.Lerp(_prevrbpos, _newrbpos, percentage);
-                _t.rotation = Quaternion.Lerp(_prevrbrot, _newrbrot, percentage);
+                _t.localPosition = Vector3.Lerp(_prevrbpos, _newrbpos, percentage);
+                _t.localRotation = Quaternion.Lerp(_prevrbrot, _newrbrot, percentage);
             }
         }
         private void OnDestroy()
