@@ -1,5 +1,7 @@
 ﻿using Events;
 using Network.Messages;
+using Network.Messages.Wrappers;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -7,120 +9,78 @@ namespace Network
 {
     public class Client : MonoBehaviour
     {
-        public ClientState State { get; private set; }
         public int BroadcastKey { get; set; }
 
+        private bool _closing;
+        private bool _switching;
         private GameObject _socketPrefab;
         private Socket _socket;
         private int _host;
-        private NetworkError _disconnectError;
-        private Timer _switch;
+        private Coroutine _switch;
+        private float _switchDuration;
 
-        public void Shutdown()
+        public void Close()
         {
-            State = ClientState.ShuttingDown;
+            _closing = true;
             _socket.Close();
         }
 
+        private IEnumerator Switch()
+        {
+            _switching = true;
+            yield return new WaitForSeconds(_switchDuration);
+            EventManager.Singleton.Publish(GameEventType.Switch, BroadcastKey);
+        }
         private void Start()
         {
+            name = "NetworkClient";
             _socketPrefab = Resources.Load("Networking/Socket") as GameObject;
-
-            _switch = gameObject.AddComponent<Timer>();
 
             var socketObject = Instantiate(_socketPrefab, gameObject.transform);
             _socket = socketObject.GetComponent<Socket>();
-            _socket.Settings = new SocketSettings
+            var started = _socket.ImmediateStart(new SocketSettings
             {
-                channels = new QosType[2] { QosType.Reliable, QosType.Unreliable },
-                port = 8001/* + DateTime.Now.Second*/,
+                channels = new QosType[3] { QosType.Reliable,
+                                            QosType.Reliable,
+                                            QosType.Unreliable },
+                port = 8001,
                 maxConnections = 1,
                 packetSize = 1024,
-            };
-            Debug.LogFormat("CLIENT::Boot on port {0}", 8001);
+            });
+            if (!started)
+            {
+                Destroy(gameObject);
+                return;
+            }
 
-            gameObject.name = "NetworkClient";
-            EventManager.Singleton.RegisterListener(GameEventType.NetworkMessageSend, Send);
+            _socket.ReceiveBroadcast(1);
+            Debug.Log("CLIENT::Boot on port 8001");
+            
+            EventManager.Singleton.Subscribe(GameEventType.SendNetworkMessage, Send);
+            EventManager.Singleton.Subscribe(GameEventType.ConnectToHost, ConnectToHost);
+            EventManager.Singleton.Subscribe(GameEventType.DisconnectFromHost, DisconnectFromHost);
+            EventManager.Singleton.Publish(GameEventType.ClientStarted, null);
         }
         private void Update()
         {
-            ManageSocket();
-            ManageClient();
-        }
-        private void OnDestroy()
-        {
-            EventManager.Singleton.UnregisterListener(GameEventType.NetworkMessageSend, Send);
-        }
+            if (_closing && _socket == null)
+            {
+                Destroy(gameObject);
+            }
 
-        private void ManageSocket()
-        {
-            if (_socket == null) return;
-            switch (_socket.State)
+            while (_socket.PollMessage(out ReceiveWrapper wrapper))
             {
-                case SocketState.ReadyToOpen:
-                {
-                    _socket.Open();
-                    break;
-                }
-                case SocketState.Opened:
-                {
-                    _socket.Up();
-                    break;
-                }
-                case SocketState.Closed:
-                {
-                    if (State != ClientState.FallingBack)
-                        State = ClientState.ShuttingDown;
-                    Destroy(_socket.gameObject);
-                    break;
-                }
-            }
-        }
-        private void ManageClient()
-        {
-            switch (State)
-            {
-                case ClientState.StartingUp:
-                {
-                    if (!_socket.OpenConnection("192.168.1.2", 8000)) break;
-                    State = ClientState.Up;
-                    break;
-                }
-                case ClientState.Up:
-                {
-                    ParseMessages();
-                    SwitchManage();
-                    break;
-                }
-                case ClientState.FallingBack:
-                {
-                    if (_socket != null) break;
-                    State = ClientState.DownWithError;
-                    break;
-                }
-                case ClientState.ShuttingDown:
-                {
-                    if (_socket != null) break;
-                    State = ClientState.Down;
-                    break;
-                }
-            }
-        }
-        private void ParseMessages()
-        {
-            while (_socket.PollMessage(out MessageWrapper wrapper))
-            {
-                switch (wrapper.message.networkMessageType)
+                switch (wrapper.message.lowType)
                 {
                     case NetworkMessageType.Connect:
                     {
                         _host = wrapper.connection;
-                        if (_socket.DisconnectError == NetworkError.Timeout)
+                        if (BroadcastKey != 0)
                         {
-                            Debug.LogFormat("CLIENT::Connection recovered to {0}:{1}", wrapper.ip, wrapper.port);
+                            EventManager.Singleton.Publish(GameEventType.ConnectedToHostInFallback, null);
                             break;
                         }
-                        EventManager.Singleton.Publish(GameEventType.Connected, null);
+                        EventManager.Singleton.Publish(GameEventType.ConnectedToHost, null);
                         Debug.LogFormat("CLIENT::Connected to {0}:{1}", wrapper.ip, wrapper.port);
                         break;
                     }
@@ -128,60 +88,73 @@ namespace Network
                     {
                         var fallbackInfo = wrapper.message as FallbackInfo;
                         BroadcastKey = fallbackInfo.netKey;
-                        _switch.Duration = fallbackInfo.switchDelay;
+                        _switchDuration = fallbackInfo.switchDelay;
                         _socket.ReceiveBroadcast(BroadcastKey);
-                        Debug.LogFormat("CLIENT::Got broadcast key {0}, fallback delay {1}", BroadcastKey, _switch.Duration);
+                        Debug.LogFormat("CLIENT::Got broadcast key {0}, fallback delay {1}", BroadcastKey, _switchDuration);
                         break;
                     }
                     case NetworkMessageType.FallbackHostReady:
                     {
-                        if (!_switch.Running) break;
-                        _socket.OpenConnection(wrapper.ip, wrapper.port);
-                        _switch.Discard();
-                        _switch.Running = false;
+                        if (!_switching) break;
+                        _switching = false;
+                        _socket.Connect(wrapper.ip, wrapper.port);
+                        StopCoroutine(_switch);
                         Debug.LogFormat("CLIENT::Connecting to fallback {0}:{1} with key {2}", wrapper.ip, wrapper.port, BroadcastKey);
                         break;
                     }
                     case NetworkMessageType.QueueShuffle:
                     {
                         var fallbackInfo = wrapper.message as QueueShuffle;
-                        _switch.Duration = fallbackInfo.switchDelay;
-                        Debug.LogFormat("CLIENT::Queue shuffled, fallback delay {0}", _switch.Duration);
+                        _switchDuration = fallbackInfo.switchDelay;
+                        Debug.LogFormat("CLIENT::Queue shuffled, fallback delay {0}", _switchDuration);
+                        break;
+                    }
+                    case NetworkMessageType.FoundLobby:
+                    {
+                        EventManager.Singleton.Publish(GameEventType.FoundLobby, wrapper);
                         break;
                     }
                     case NetworkMessageType.Higher:
                     {
-                        EventManager.Singleton.Publish(GameEventType.NetworkMessageReceived, wrapper.message);
-                        // Debug.LogFormat("CLIENT::Received higher message from {0}:{1} with ping {2}", wrapper.ip, wrapper.port, wrapper.ping);
+                        EventManager.Singleton.Publish(GameEventType.ReceiveNetworkMessage, wrapper);
                         break;
                     }
                     case NetworkMessageType.Disconnect:
                     {
                         if (_socket.DisconnectError == NetworkError.Timeout && BroadcastKey != 0)
                         {
-                            Debug.LogFormat("CLIENT::Disconnected from {0}:{1} with timeout", wrapper.ip, wrapper.port);
-                            _switch.Discard();
-                            _switch.Running = true;
+                            _switch = StartCoroutine(Switch());
+                            EventManager.Singleton.Publish(GameEventType.DisconnectedFromHostInFallback, null);
                             break;
                         }
-                        Shutdown();
-                        EventManager.Singleton.Publish(GameEventType.Disconnected, null);
+                        EventManager.Singleton.Publish(GameEventType.DisconnectedFromHost, null);
                         Debug.LogFormat("CLIENT::Disconnected from {0}:{1}", wrapper.ip, wrapper.port);
                         break;
                     }
                 }
             }
         }
-        private void SwitchManage()
+        private void OnDestroy()
         {
-            if (!_switch.Elapsed) return;
-            State = ClientState.FallingBack;
-            _socket.Close();
+            EventManager.Singleton.Unsubscribe(GameEventType.SendNetworkMessage, Send);
+            EventManager.Singleton.Unsubscribe(GameEventType.ConnectToHost, ConnectToHost);
+            EventManager.Singleton.Unsubscribe(GameEventType.DisconnectFromHost, DisconnectFromHost);
+            EventManager.Singleton.Publish(GameEventType.ClientDestroyed, null);
+            Debug.Log("CLIENT::Destroyed");
         }
-        private void Send(object message)
+
+        private void Send(object wrapper)
         {
-            // Debug.Log("CLIENT::Sending data");
-            _socket.Send(_host, 0, message as ANetworkMessage);
+            _socket.Send(_host, (SendWrapper)wrapper);
+        }
+        private void ConnectToHost(object info)
+        {
+            var message = (ReceiveWrapper)info;
+            _socket.Connect(message.ip, message.port);
+        }
+        private void DisconnectFromHost(object info)
+        {
+            _socket.Disconnect(_host);
         }
     }
 }

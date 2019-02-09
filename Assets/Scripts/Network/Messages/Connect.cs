@@ -4,7 +4,7 @@
     {
         public Connect()
         {
-            networkMessageType = NetworkMessageType.Connect;
+            lowType = NetworkMessageType.Connect;
         }
     }
 }

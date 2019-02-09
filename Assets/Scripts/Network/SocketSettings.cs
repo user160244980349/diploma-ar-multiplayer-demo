@@ -2,7 +2,7 @@
 
 namespace Network
 {
-    public struct SocketSettings
+    public class SocketSettings
     {
         public QosType[] channels;
         public int port;

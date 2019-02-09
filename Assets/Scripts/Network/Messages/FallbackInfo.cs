@@ -12,7 +12,7 @@ namespace Network.Messages
         {
             netKey = key;
             switchDelay = delay;
-            networkMessageType = NetworkMessageType.FallbackInfo;
+            lowType = NetworkMessageType.FallbackInfo;
         }
     }
 }

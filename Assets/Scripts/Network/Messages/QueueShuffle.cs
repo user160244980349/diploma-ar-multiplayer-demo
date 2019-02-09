@@ -10,7 +10,7 @@ namespace Network.Messages
         public QueueShuffle(float delay)
         {
             switchDelay = delay;
-            networkMessageType = NetworkMessageType.QueueShuffle;
+            lowType = NetworkMessageType.QueueShuffle;
         }
     }
 }

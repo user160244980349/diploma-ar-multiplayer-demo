@@ -27,7 +27,7 @@ namespace Events
                 listeners[i](info);
             }
         }
-        public void RegisterListener(GameEventType type, Listener newListener)
+        public void Subscribe(GameEventType type, Listener newListener)
         {
             if (_map.ContainsKey(type))
             {
@@ -36,12 +36,14 @@ namespace Events
             }
             else
             {
-                var listeners = new List<Listener>();
-                listeners.Add(newListener);
+                var listeners = new List<Listener>
+                {
+                    newListener
+                };
                 _map.Add(type, listeners);
             }
         }
-        public void UnregisterListener(GameEventType type, Listener removingListener)
+        public void Unsubscribe(GameEventType type, Listener removingListener)
         {
             if (!_map.TryGetValue(type, out List<Listener> listeners)) return;
             listeners.Remove(removingListener);
@@ -49,12 +51,11 @@ namespace Events
 
         private void Awake()
         {
+            name = "EventManager";
             if (Singleton == null)
                 Singleton = this;
             else if (Singleton == this) Destroy(gameObject);
-
             DontDestroyOnLoad(gameObject);
-            gameObject.name = "EventManager";
 
             _map = new Dictionary<GameEventType, List<Listener>>();
             _events = new Queue<EventWrapper>();

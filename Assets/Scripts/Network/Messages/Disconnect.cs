@@ -4,7 +4,7 @@
     {
         public Disconnect()
         {
-            networkMessageType = NetworkMessageType.Disconnect;
+            lowType = NetworkMessageType.Disconnect;
         }
     }
 }
