@@ -35,6 +35,8 @@ namespace Multiplayer
         }
         private void Start()
         {
+            if (!name.Contains("Player"))
+                name = string.Format("ObjectView<{0}>", objectId);
             _rb = GetComponent<Rigidbody>();
             _t = GetComponent<Transform>();
             _sendRBSync = StartCoroutine(SendRBSync());
