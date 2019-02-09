@@ -12,7 +12,9 @@ namespace Multiplayer
         private void Start()
         {
             var spawn = GameObject.Find(string.Format("SpawnPoint<{0}>", playerId % 5));
-            transform.position = spawn.GetComponent<Transform>().position;
+            var spawnTransform = spawn.GetComponent<Transform>();
+            transform.position = spawnTransform.position;
+            transform.SetParent(spawnTransform);
             _rb = GetComponent<Rigidbody>();
         }
 

@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Multiplayer.Messages.Responses
 {
     [Serializable]
-    public class RBSync : AMultiplayerMessage
+    public class TransformSync : AMultiplayerMessage
     {
         public int ObjectId { get; private set; }
         public Vector3 Position {
@@ -13,22 +13,6 @@ namespace Multiplayer.Messages.Responses
                 _px = value.x;
                 _py = value.y;
                 _pz = value.z;
-            }
-        }
-        public Vector3 Velocity {
-            get => new Vector3(_vx, _vy, _vz);
-            private set {
-                _vx = value.x;
-                _vy = value.y;
-                _vz = value.z;
-            }
-        }
-        public Vector3 AngularVelocity {
-            get => new Vector3(_avx, _avy, _avz);
-            private set {
-                _avx = value.x;
-                _avy = value.y;
-                _avz = value.z;
             }
         }
         public Quaternion Rotation {
@@ -55,14 +39,12 @@ namespace Multiplayer.Messages.Responses
         private float _vy;
         private float _vz;
 
-        public RBSync(int objectId, Rigidbody rb)
+        public TransformSync(int objectId, Transform t)
         {
             highType = MultiplayerMessageType.RBSync;
             ObjectId = objectId;
-            Position = rb.position;
-            Velocity = rb.velocity;
-            AngularVelocity = rb.angularVelocity;
-            Rotation = rb.rotation;
+            Position = t.position;
+            Rotation = t.rotation;
         }
     }
 }

@@ -47,11 +47,11 @@ namespace Multiplayer
         {
             _objectViews.Remove((int)info);
         }
-        public void UpdateRigidbody(RBSync sync, float duration)
+        public void UpdateRigidbody(TransformSync sync, float duration)
         {
             if (!_objectViews.ContainsKey(sync.ObjectId)) return;
             _objectViews.TryGetValue(sync.ObjectId, out ObjectView objectRepresentation);
-            objectRepresentation.RBSync(sync);
+            objectRepresentation.TransformSync(sync);
         }
         public void Move(Move move)
         {

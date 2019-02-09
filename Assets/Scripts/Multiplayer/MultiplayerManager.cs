@@ -259,7 +259,7 @@ namespace Multiplayer
                 }
                 case MultiplayerMessageType.RBSync:
                 {
-                    _multiplayerScene.UpdateRigidbody(message as RBSync, wrapper.ping);
+                    _multiplayerScene.UpdateRigidbody(message as TransformSync, wrapper.ping);
                     break;
                 }
                 case MultiplayerMessageType.LogOut:
