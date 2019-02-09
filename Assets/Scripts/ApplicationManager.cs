@@ -197,7 +197,7 @@ public class ApplicationManager : MonoBehaviour
  *     + Finish players list in a lobby
  *     + Delete singleton from multiplayer scene
  *     - Use logout on timed out players
- *     + Exit if not logged in
+ *     - Exit if not logged in
  *     - (OPTIONAL) Player name above model
  *     - (OPTIONAL) Fix structs boxing
  *     + (OPTIONAL) Replace some of classes with structs
