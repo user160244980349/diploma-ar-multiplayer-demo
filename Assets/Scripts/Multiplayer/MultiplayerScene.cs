@@ -13,7 +13,7 @@ namespace Multiplayer
         private Dictionary<int, PlayerView> _playerViews;
         private Dictionary<int, ObjectView> _objectViews;
         private bool _freeze;
-        private bool _notMarked;
+        private bool _active;
 
         private void Start()
         {
@@ -22,8 +22,6 @@ namespace Multiplayer
             _playerPrefab = Resources.Load("Game/Player") as GameObject;
             _playerViews = new Dictionary<int, PlayerView>();
             _objectViews = new Dictionary<int, ObjectView>();
-
-            _notMarked = true;
 
             EventManager.Singleton.Subscribe(GameEventType.HostStarted, OnHostStarted);
             EventManager.Singleton.Subscribe(GameEventType.HostStartedInFallback, OnHostStarted);
@@ -47,7 +45,7 @@ namespace Multiplayer
             var objectView = info as ObjectView;
             objectView.objectId = _objectViews.Count + 1;
             _objectViews.Add(objectView.objectId, objectView);
-            objectView.Freeze(_freeze || _notMarked);
+            objectView.Freeze(_freeze);
         }
         public void OnUnregisterObject(object info)
         {
@@ -87,32 +85,46 @@ namespace Multiplayer
                 newStatus == TrackableBehaviour.Status.TRACKED ||
                 newStatus == TrackableBehaviour.Status.EXTENDED_TRACKED)
             {
-                _notMarked = false;
-                FreezeObjects(_freeze || _notMarked);
+                _active = true;
+                ActivateObjects(_active);
             }
             else
             {
-                _notMarked = true;
-                FreezeObjects(_freeze || _notMarked);
+                _active = false;
+                ActivateObjects(_active);
             }
         }
 
         private void OnStartGame(object info)
         {
-            var vumark = GameObject.Find("VuMark");
-            var behaviour = vumark.GetComponent<TrackableBehaviour>();
-            behaviour.RegisterTrackableEventHandler(this);
-            FreezeObjects(true);
+            if (Application.platform == RuntimePlatform.Android)
+            {
+                var vumark = GameObject.Find("VuMark");
+                var behaviour = vumark.GetComponent<TrackableBehaviour>();
+                behaviour.RegisterTrackableEventHandler(this);
+            }
+
+            if (Application.platform == RuntimePlatform.WindowsPlayer)
+            {
+                _active = true;
+            }
         }
         private void OnHostStarted(object info)
         {
             _freeze = false;
-            FreezeObjects(_freeze || _notMarked);
+            FreezeObjects(_freeze);
         }
         private void OnClientStarted(object info)
         {
             _freeze = true;
-            FreezeObjects(_freeze || _notMarked);
+            FreezeObjects(_freeze);
+        }
+        private void ActivateObjects(bool activate)
+        {
+            foreach (var objectView in _objectViews.Values)
+            {
+                objectView.Activate(activate);
+            }
         }
         private void FreezeObjects(bool freeze)
         {

@@ -39,7 +39,7 @@ namespace Multiplayer.Messages.Responses
         private float _vy;
         private float _vz;
 
-        public TransformSync(int objectId, Rigidbody t)
+        public TransformSync(int objectId, Transform t)
         {
             highType = MultiplayerMessageType.TransformSync;
             ObjectId = objectId;

@@ -33,7 +33,7 @@ namespace Multiplayer
                 yield return new WaitForSeconds(_updatePeiod);
                 if (!_rb.isKinematic && !_rb.IsSleeping())
                 {
-                    EventManager.Singleton.Publish(GameEventType.SendMultiplayerMessage, new TransformSync(objectId, _rb));
+                    EventManager.Singleton.Publish(GameEventType.SendMultiplayerMessage, new TransformSync(objectId, _t));
                 }
             }
         }
@@ -58,8 +58,8 @@ namespace Multiplayer
             {
                 _time += Time.deltaTime;
                 var percentage = _time / _updatePeiod;
-                _rb.position = Vector3.Lerp(_prevrbpos, _newrbpos, percentage);
-                _rb.rotation = Quaternion.Lerp(_prevrbrot, _newrbrot, percentage);
+                _t.position = Vector3.Lerp(_prevrbpos, _newrbpos, percentage);
+                _t.rotation = Quaternion.Lerp(_prevrbrot, _newrbrot, percentage);
             }
         }
         private void OnDestroy()
@@ -78,35 +78,19 @@ namespace Multiplayer
         }
         public void Freeze(bool freeze)
         {
-            //if (freeze)
-            //{
-            //    RememberPosition();
-            //    RememberRotation();
-            //}
-            //else
-            //{
-            //    RecoverPosition();
-            //    RecoverRotation();
-            //}
-            Debug.LogFormat("Freezing {0}", freeze);
             _rb.isKinematic = freeze;
         }
-
-        private void RecoverRotation()
+        public void Activate(bool activate)
         {
-            _rb.rotation = _freezeRotation;
-        }
-        private void RecoverPosition()
-        {
-            _rb.position = _freezePosition;
-        }
-        private void RememberRotation()
-        {
-            _freezePosition = _rb.position;
-        }
-        private void RememberPosition()
-        {
-            _freezeRotation = _rb.rotation;
+            gameObject.SetActive(activate);
+            if (activate)
+            {
+                _sendRBSync = StartCoroutine(SendRBSync());
+            }
+            else
+            {
+                StopCoroutine(SendRBSync());
+            }
         }
     }
 }
