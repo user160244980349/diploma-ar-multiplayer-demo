@@ -95,7 +95,12 @@ public class ApplicationManager : MonoBehaviour
     {
         if (_hosting)
             EventManager.Singleton.Publish(GameEventType.StopLobbyBroadcast, null);
-        SceneManager.LoadScene("Playground", LoadSceneMode.Single);
+
+        if (Application.platform == RuntimePlatform.Android)
+            SceneManager.LoadScene("PlaygroundAR", LoadSceneMode.Single);
+
+        if (Application.platform == RuntimePlatform.WindowsPlayer)
+            SceneManager.LoadScene("Playground", LoadSceneMode.Single);
     }
     private void OnLogOutLobby(object info)
     {
@@ -163,6 +168,11 @@ public class ApplicationManager : MonoBehaviour
         switch (scene.name)
         {
             case "Playground":
+            {
+                EventManager.Singleton.Publish(GameEventType.StartGame, null);
+                break;
+            }
+            case "PlaygroundAR":
             {
                 EventManager.Singleton.Publish(GameEventType.StartGame, null);
                 break;
