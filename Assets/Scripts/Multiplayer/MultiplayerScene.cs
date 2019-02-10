@@ -40,18 +40,6 @@ namespace Multiplayer
             EventManager.Singleton.Unsubscribe(GameEventType.StartGame, OnStartGame);
         }
 
-        private void OnStartGame(object info)
-        {
-            var vumark = GameObject.Find("VuMark");
-            if (vumark == null)
-            {
-                _marked = true;
-                return;
-            }
-            var behaviour = vumark.GetComponent<TrackableBehaviour>();
-            behaviour.RegisterTrackableEventHandler(this);
-        }
-
         public void OnRegisterObject(object info)
         {
             var objectView = info as ObjectView;
@@ -91,7 +79,33 @@ namespace Multiplayer
             _playerViews.Remove(id);
             Debug.LogFormat("MULTIPLAYER_SCENE::Player {0} despawned", id);
         }
+        public void OnTrackableStateChanged(TrackableBehaviour.Status previousStatus, TrackableBehaviour.Status newStatus)
+        {
+            if (newStatus == TrackableBehaviour.Status.DETECTED ||
+                newStatus == TrackableBehaviour.Status.TRACKED ||
+                newStatus == TrackableBehaviour.Status.EXTENDED_TRACKED)
+            {
+                _marked = true;
+                FreezeObjects(_freeze && _marked);
+            }
+            else
+            {
+                _marked = false;
+                FreezeObjects(_freeze && _marked);
+            }
+        }
 
+        private void OnStartGame(object info)
+        {
+            var vumark = GameObject.Find("VuMark");
+            if (vumark == null)
+            {
+                _marked = true;
+                return;
+            }
+            var behaviour = vumark.GetComponent<TrackableBehaviour>();
+            behaviour.RegisterTrackableEventHandler(this);
+        }
         private void OnHostStarted(object info)
         {
             _freeze = false;
@@ -107,22 +121,6 @@ namespace Multiplayer
             foreach (var objectView in _objectViews.Values)
             {
                 objectView.Freeze(freeze);
-            }
-        }
-
-        public void OnTrackableStateChanged(TrackableBehaviour.Status previousStatus, TrackableBehaviour.Status newStatus)
-        {
-            if (newStatus == TrackableBehaviour.Status.DETECTED ||
-                newStatus == TrackableBehaviour.Status.TRACKED ||
-                newStatus == TrackableBehaviour.Status.EXTENDED_TRACKED)
-            {
-                _marked = true;
-                FreezeObjects(_freeze && _marked);
-            }
-            else
-            {
-                _marked = false;
-                FreezeObjects(_freeze && _marked);
             }
         }
     }

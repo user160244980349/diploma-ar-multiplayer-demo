@@ -21,12 +21,12 @@ public class ActualPlayer : MonoBehaviour
 
         Vector3 v = Vector3.zero;
 
-        if (Input.GetAxisRaw("Vertical") != 0) v += Input.GetAxisRaw("Vertical") * Vector3.forward * 10;
-        if (Input.GetAxisRaw("Horizontal") != 0) v += Input.GetAxisRaw("Horizontal") * Vector3.right * 10;
-        if (Input.GetKey(KeyCode.JoystickButton3)) v += Vector3.up * 10;
-        if (Input.GetKey(KeyCode.JoystickButton0)) v += Vector3.down * 10;
-        if (Input.GetKey(KeyCode.Space)) v += Vector3.up * 10;
-        if (Input.GetKey(KeyCode.LeftControl)) v += Vector3.down * 10;
+        if (Input.GetAxisRaw("Vertical") != 0) v += Input.GetAxisRaw("Vertical") * Vector3.forward * 50;
+        if (Input.GetAxisRaw("Horizontal") != 0) v += Input.GetAxisRaw("Horizontal") * Vector3.right * 50;
+        if (Input.GetKey(KeyCode.JoystickButton3)) v += Vector3.up * 50;
+        if (Input.GetKey(KeyCode.JoystickButton0)) v += Vector3.down * 50;
+        if (Input.GetKey(KeyCode.Space)) v += Vector3.up * 50;
+        if (Input.GetKey(KeyCode.LeftControl)) v += Vector3.down * 50;
 
         if (v != Vector3.zero) EventManager.Singleton.Publish(GameEventType.SendMultiplayerMessage, new Move(Id, v));
     }
