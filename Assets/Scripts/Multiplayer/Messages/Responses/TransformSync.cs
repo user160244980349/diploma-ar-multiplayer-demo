@@ -39,12 +39,12 @@ namespace Multiplayer.Messages.Responses
         private float _vy;
         private float _vz;
 
-        public TransformSync(int objectId, Transform t)
+        public TransformSync(int objectId, Rigidbody t)
         {
             highType = MultiplayerMessageType.TransformSync;
             ObjectId = objectId;
-            Position = t.localPosition;
-            Rotation = t.localRotation;
+            Position = t.position;
+            Rotation = t.rotation;
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Events;
 using Multiplayer.Messages.Responses;
+using System;
 using System.Collections;
 using UnityEngine;
 
@@ -15,6 +16,9 @@ namespace Multiplayer
         private Vector3 _prevrbpos;
         private Quaternion _prevrbrot;
 
+        private Vector3 _freezePosition;
+        private Quaternion _freezeRotation;
+
         private Transform _t;
         private Rigidbody _rb;
 
@@ -29,7 +33,7 @@ namespace Multiplayer
                 yield return new WaitForSeconds(_updatePeiod);
                 if (!_rb.isKinematic && !_rb.IsSleeping())
                 {
-                    EventManager.Singleton.Publish(GameEventType.SendMultiplayerMessage, new TransformSync(objectId, transform));
+                    EventManager.Singleton.Publish(GameEventType.SendMultiplayerMessage, new TransformSync(objectId, _rb));
                 }
             }
         }
@@ -54,8 +58,8 @@ namespace Multiplayer
             {
                 _time += Time.deltaTime;
                 var percentage = _time / _updatePeiod;
-                _t.localPosition = Vector3.Lerp(_prevrbpos, _newrbpos, percentage);
-                _t.localRotation = Quaternion.Lerp(_prevrbrot, _newrbrot, percentage);
+                _rb.position = Vector3.Lerp(_prevrbpos, _newrbpos, percentage);
+                _rb.rotation = Quaternion.Lerp(_prevrbrot, _newrbrot, percentage);
             }
         }
         private void OnDestroy()
@@ -74,7 +78,35 @@ namespace Multiplayer
         }
         public void Freeze(bool freeze)
         {
+            //if (freeze)
+            //{
+            //    RememberPosition();
+            //    RememberRotation();
+            //}
+            //else
+            //{
+            //    RecoverPosition();
+            //    RecoverRotation();
+            //}
+            Debug.LogFormat("Freezing {0}", freeze);
             _rb.isKinematic = freeze;
+        }
+
+        private void RecoverRotation()
+        {
+            _rb.rotation = _freezeRotation;
+        }
+        private void RecoverPosition()
+        {
+            _rb.position = _freezePosition;
+        }
+        private void RememberRotation()
+        {
+            _freezePosition = _rb.position;
+        }
+        private void RememberPosition()
+        {
+            _freezeRotation = _rb.rotation;
         }
     }
 }

@@ -15,9 +15,6 @@ EditorBuildSettings:
     path: Assets/Scenes/Loading.unity
     guid: 9f777acd0486a1b469143e57e0e98212
   - enabled: 1
-    path: Assets/Scenes/Playground.unity
-    guid: 8afca3c055193314c8346aed7698bf55
-  - enabled: 1
     path: Assets/Scenes/LogIn.unity
     guid: 54b00ff0cb0047c428f5f93912640836
   - enabled: 1
@@ -32,4 +29,10 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/WaitStart.unity
     guid: dd77442fb5f84dd40a48fc131a41d251
+  - enabled: 1
+    path: Assets/Scenes/Playground.unity
+    guid: 8afca3c055193314c8346aed7698bf55
+  - enabled: 1
+    path: Assets/Scenes/PlaygroundAR.unity
+    guid: d242c84e24ddf164ea07835f4e1a7db5
   m_configObjects: {}

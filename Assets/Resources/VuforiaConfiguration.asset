@@ -16,7 +16,7 @@ MonoBehaviour:
     vuforiaLicenseKey: 
     ufoLicenseKey: QWNHbGhDYi8vLy8vQUFBQUtPZ0hjZzZTZ0VPOXNtNjFKcWVKV1l4eXZvbWw2Rk9rYXBMWXdIVG5EN2EvbHNDLzlqdU9uNXJmMnRZUUxNY2RnZndwMWsxamhxREM2aUhEbmF3MzdVUWJLbm9PdktNOUl6YlBhT3RlN2IrRXhPZ2FuWDB1UU14NEtvRXBvdkwrZG9JYVowRE13Z2VWTTgxRTVQSGl5S3BwUWxqMkp0MkdWcnFTZVhhTHkxYzBWODB5M2tFUnpXdlFOOVBzMUxMbjZVeUM2UFVnTFhsd2hIMDdJaTBvdjEwUWdZOHg1TlVXZUhpS0RNTmtGaUpTNWZOUm1uOHpTczBiRUwzeFlkTlBiLzBPZk9WOFE1OEpWUGZFRnpzT0pGN3ROYVpaeDI5c1R1UFd6Qit4cSt1UjUyNTNkOTZ3MzdXUnBTdXJ2VkdoektuRkpDZkdNelhkWHA5SHZ0UUVVeWFhSHhyTEMyY1BicjhOMkZIV2dVN1E=
     delayedInitialization: 0
-    cameraDeviceModeSetting: -1
+    cameraDeviceModeSetting: -3
     maxSimultaneousImageTargets: 1
     maxSimultaneousObjectTargets: 1
     useDelayedLoadingObjectTargets: 0

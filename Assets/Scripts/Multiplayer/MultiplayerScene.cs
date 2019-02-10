@@ -13,7 +13,7 @@ namespace Multiplayer
         private Dictionary<int, PlayerView> _playerViews;
         private Dictionary<int, ObjectView> _objectViews;
         private bool _freeze;
-        private bool _marked;
+        private bool _notMarked;
 
         private void Start()
         {
@@ -22,6 +22,8 @@ namespace Multiplayer
             _playerPrefab = Resources.Load("Game/Player") as GameObject;
             _playerViews = new Dictionary<int, PlayerView>();
             _objectViews = new Dictionary<int, ObjectView>();
+
+            _notMarked = true;
 
             EventManager.Singleton.Subscribe(GameEventType.HostStarted, OnHostStarted);
             EventManager.Singleton.Subscribe(GameEventType.HostStartedInFallback, OnHostStarted);
@@ -45,7 +47,7 @@ namespace Multiplayer
             var objectView = info as ObjectView;
             objectView.objectId = _objectViews.Count + 1;
             _objectViews.Add(objectView.objectId, objectView);
-            objectView.Freeze(_freeze);
+            objectView.Freeze(_freeze || _notMarked);
         }
         public void OnUnregisterObject(object info)
         {
@@ -85,36 +87,32 @@ namespace Multiplayer
                 newStatus == TrackableBehaviour.Status.TRACKED ||
                 newStatus == TrackableBehaviour.Status.EXTENDED_TRACKED)
             {
-                _marked = true;
-                FreezeObjects(_freeze || !_marked);
+                _notMarked = false;
+                FreezeObjects(_freeze || _notMarked);
             }
             else
             {
-                _marked = false;
-                FreezeObjects(_freeze || !_marked);
+                _notMarked = true;
+                FreezeObjects(_freeze || _notMarked);
             }
         }
 
         private void OnStartGame(object info)
         {
             var vumark = GameObject.Find("VuMark");
-            if (vumark == null)
-            {
-                _marked = true;
-                return;
-            }
             var behaviour = vumark.GetComponent<TrackableBehaviour>();
             behaviour.RegisterTrackableEventHandler(this);
+            FreezeObjects(true);
         }
         private void OnHostStarted(object info)
         {
             _freeze = false;
-            FreezeObjects(_freeze || !_marked);
+            FreezeObjects(_freeze || _notMarked);
         }
         private void OnClientStarted(object info)
         {
             _freeze = true;
-            FreezeObjects(_freeze || !_marked);
+            FreezeObjects(_freeze || _notMarked);
         }
         private void FreezeObjects(bool freeze)
         {
