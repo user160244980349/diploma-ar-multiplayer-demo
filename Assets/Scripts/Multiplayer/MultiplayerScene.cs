@@ -86,12 +86,12 @@ namespace Multiplayer
                 newStatus == TrackableBehaviour.Status.EXTENDED_TRACKED)
             {
                 _marked = true;
-                FreezeObjects(_freeze && !_marked);
+                FreezeObjects(_freeze || !_marked);
             }
             else
             {
                 _marked = false;
-                FreezeObjects(_freeze && !_marked);
+                FreezeObjects(_freeze || !_marked);
             }
         }
 
@@ -109,12 +109,12 @@ namespace Multiplayer
         private void OnHostStarted(object info)
         {
             _freeze = false;
-            FreezeObjects(_freeze && !_marked);
+            FreezeObjects(_freeze || !_marked);
         }
         private void OnClientStarted(object info)
         {
             _freeze = true;
-            FreezeObjects(_freeze && !_marked);
+            FreezeObjects(_freeze || !_marked);
         }
         private void FreezeObjects(bool freeze)
         {
