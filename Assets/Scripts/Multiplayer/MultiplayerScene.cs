@@ -3,15 +3,17 @@ using Multiplayer.Messages.Requests;
 using Multiplayer.Messages.Responses;
 using System.Collections.Generic;
 using UnityEngine;
+using Vuforia;
 
 namespace Multiplayer
 {
-    class MultiplayerScene : MonoBehaviour
+    class MultiplayerScene : MonoBehaviour, ITrackableEventHandler
     {
         private GameObject _playerPrefab;
         private Dictionary<int, PlayerView> _playerViews;
         private Dictionary<int, ObjectView> _objectViews;
         private bool _freeze;
+        private bool _marked;
 
         private void Start()
         {
@@ -26,6 +28,7 @@ namespace Multiplayer
             EventManager.Singleton.Subscribe(GameEventType.ClientStarted, OnClientStarted);
             EventManager.Singleton.Subscribe(GameEventType.RegisterObjectView, OnRegisterObject);
             EventManager.Singleton.Subscribe(GameEventType.UnregisterObjectView, OnUnregisterObject);
+            EventManager.Singleton.Subscribe(GameEventType.StartGame, OnStartGame);
         }
         private void OnDestroy()
         {
@@ -34,6 +37,19 @@ namespace Multiplayer
             EventManager.Singleton.Unsubscribe(GameEventType.ClientStarted, OnClientStarted);
             EventManager.Singleton.Unsubscribe(GameEventType.RegisterObjectView, OnRegisterObject);
             EventManager.Singleton.Unsubscribe(GameEventType.UnregisterObjectView, OnUnregisterObject);
+            EventManager.Singleton.Unsubscribe(GameEventType.StartGame, OnStartGame);
+        }
+
+        private void OnStartGame(object info)
+        {
+            var vumark = GameObject.Find("VuMark");
+            if (vumark == null)
+            {
+                _marked = true;
+                return;
+            }
+            var behaviour = vumark.GetComponent<TrackableBehaviour>();
+            behaviour.RegisterTrackableEventHandler(this);
         }
 
         public void OnRegisterObject(object info)
@@ -79,18 +95,34 @@ namespace Multiplayer
         private void OnHostStarted(object info)
         {
             _freeze = false;
-            FreezeObjects(_freeze);
+            FreezeObjects(_freeze && _marked);
         }
         private void OnClientStarted(object info)
         {
             _freeze = true;
-            FreezeObjects(_freeze);
+            FreezeObjects(_freeze && _marked);
         }
         private void FreezeObjects(bool freeze)
         {
             foreach (var objectView in _objectViews.Values)
             {
                 objectView.Freeze(freeze);
+            }
+        }
+
+        public void OnTrackableStateChanged(TrackableBehaviour.Status previousStatus, TrackableBehaviour.Status newStatus)
+        {
+            if (newStatus == TrackableBehaviour.Status.DETECTED ||
+                newStatus == TrackableBehaviour.Status.TRACKED ||
+                newStatus == TrackableBehaviour.Status.EXTENDED_TRACKED)
+            {
+                _marked = true;
+                FreezeObjects(_freeze && _marked);
+            }
+            else
+            {
+                _marked = false;
+                FreezeObjects(_freeze && _marked);
             }
         }
     }
