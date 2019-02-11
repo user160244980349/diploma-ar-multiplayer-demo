@@ -27,7 +27,7 @@ public class ApplicationManager : MonoBehaviour
         Instantiate(_consoleManager);
         Instantiate(_multiplayerManager);
 
-        Application.targetFrameRate = 60;
+        Application.targetFrameRate = 240;
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
     private void Start()
