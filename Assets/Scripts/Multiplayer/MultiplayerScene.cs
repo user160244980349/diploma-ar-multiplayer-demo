@@ -12,8 +12,9 @@ namespace Multiplayer
         private GameObject _playerPrefab;
         private Dictionary<int, PlayerView> _playerViews;
         private Dictionary<int, ObjectView> _objectViews;
+        private TrackableBehaviour _behaviour;
+        private Camera _vucamera;
         private bool _freeze;
-        private bool _active;
 
         private void Start()
         {
@@ -81,17 +82,16 @@ namespace Multiplayer
         }
         public void OnTrackableStateChanged(TrackableBehaviour.Status previousStatus, TrackableBehaviour.Status newStatus)
         {
+            int _arMask = 1 << 8;
             if (newStatus == TrackableBehaviour.Status.DETECTED ||
                 newStatus == TrackableBehaviour.Status.TRACKED ||
                 newStatus == TrackableBehaviour.Status.EXTENDED_TRACKED)
             {
-                _active = true;
-                ActivateObjects(_active);
+                _vucamera.cullingMask += _arMask;
             }
             else
             {
-                _active = false;
-                ActivateObjects(_active);
+                _vucamera.cullingMask -= _arMask;
             }
         }
 
@@ -99,14 +99,10 @@ namespace Multiplayer
         {
             if (Application.platform == RuntimePlatform.Android)
             {
-                var vumark = GameObject.Find("VuMark");
-                var behaviour = vumark.GetComponent<TrackableBehaviour>();
-                behaviour.RegisterTrackableEventHandler(this);
-            }
-
-            if (Application.platform == RuntimePlatform.WindowsPlayer)
-            {
-                _active = true;
+                _behaviour = GameObject.Find("VuMark").GetComponent<TrackableBehaviour>();
+                _vucamera = GameObject.Find("ARCamera").GetComponent<Camera>();
+                _behaviour.RegisterTrackableEventHandler(this);
+                Debug.LogFormat("VUCAMERA IS {0}; VUMARK IS {1}", _vucamera, _behaviour);
             }
         }
         private void OnHostStarted(object info)
@@ -118,13 +114,6 @@ namespace Multiplayer
         {
             _freeze = true;
             FreezeObjects(_freeze);
-        }
-        private void ActivateObjects(bool activate)
-        {
-            foreach (var objectView in _objectViews.Values)
-            {
-                objectView.Activate(activate);
-            }
         }
         private void FreezeObjects(bool freeze)
         {
