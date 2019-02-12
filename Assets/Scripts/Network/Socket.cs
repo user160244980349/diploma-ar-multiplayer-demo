@@ -83,10 +83,11 @@ namespace Network
         {
             _connections[id].ReadyForSend = true;
         }
-        public bool Send(int connection, SendWrapper wrapper)
+        public void Send(int connection, SendWrapper wrapper)
         {
             wrapper.message.timeStamp = NetworkTransport.GetNetworkTimestamp();
-            return _connections[connection].QueueMessage(wrapper.channel, _formatter.Serialize(wrapper.message));
+            _connections[connection].QueueMessage(wrapper.channel, _formatter.Serialize(wrapper.message));
+            return;
         }
         public bool PollMessage(out ReceiveWrapper wrapper)
         {

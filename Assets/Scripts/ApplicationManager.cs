@@ -206,6 +206,8 @@ public class ApplicationManager : MonoBehaviour
  *     + Disconnected not unregistring
  *     + Finish players list in a lobby
  *     + Delete singleton from multiplayer scene
+ *     - Do custom messages queue
+ *     - Do countainer packet
  *     - Use logout on timed out players
  *     - Exit if not logged in
  *     - (OPTIONAL) Player name above model
@@ -246,7 +248,7 @@ public class ApplicationManager : MonoBehaviour
  *     + Objects configs correction
  *     + Network discovery for lobby's
  *     + Falling back system
- *     - (OPTIONAL) Channel management if game will be laggy
+ *     + (OPTIONAL) Channel management if game will be laggy
  *
  * - UI:
  * 
@@ -254,14 +256,13 @@ public class ApplicationManager : MonoBehaviour
  * 
  * - AR:
  *
- *     - Plant a mark and move scene to AR
- *     - Hide visible walls on scene
+ *     + Plant a mark and move scene to AR
+ *     + Hide visible walls on scene
  *
  * - Controls:
  *
  *     - Control system for AR gaming:
  *         - Crosshair
  *         - Some other UI 
- *         - Commands
  *         
 */

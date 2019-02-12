@@ -29,8 +29,9 @@ namespace UI.WaitPlayersOrStart
             var playerModel = info as PlayerModel;
             var playerBox = Instantiate(playerPrefab, content);
             var playerScript = playerBox.GetComponent<Player>();
-            playerScript.playerName = playerModel.playerName;
             _players.Add(playerModel.playerId, playerScript);
+            playerScript.playerName = playerModel.playerName;
+            playerScript.playerId = playerModel.playerId;
         }
         private void OnPlayerUnregistered(object info)
         {

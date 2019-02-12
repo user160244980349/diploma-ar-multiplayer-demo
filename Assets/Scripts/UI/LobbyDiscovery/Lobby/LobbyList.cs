@@ -1,4 +1,5 @@
 ﻿using Events;
+using Network.Messages;
 using Network.Messages.Wrappers;
 using System.Collections.Generic;
 using UnityEngine;
@@ -36,8 +37,10 @@ namespace UI.LobbyDiscovery
             }
             var newLobby = Instantiate(lobbyPrefab, content);
             lobbyScript = newLobby.GetComponent<Lobby>();
-            lobbyScript.ImmediateStart(wrapper);
             _lobbys.Add(wrapper.ip, lobbyScript);
+            lobbyScript.lobbyId = _lobbys.Count;
+            lobbyScript.lobbyName = (wrapper.message as FoundLobby).lobbyName;
+            lobbyScript.ImmediateStart(wrapper);
         }
     }
 }

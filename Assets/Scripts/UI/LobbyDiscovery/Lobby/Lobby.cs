@@ -8,9 +8,11 @@ namespace UI.LobbyDiscovery
 {
     public class Lobby : MonoBehaviour
     {
+        public int lobbyId;
+        public string lobbyName;
+        public Text lobbyIdText;
         public Text lobbyNameText;
 
-        private string _lobbyName;
         private ReceiveWrapper _wrapper;
         private float _destroyTimer;
 
@@ -18,12 +20,13 @@ namespace UI.LobbyDiscovery
         {
             _destroyTimer = 2f;
             _wrapper = wrapper;
-            _lobbyName = (_wrapper.message as FoundLobby).lobbyName;
         }
         private void Start()
         {
-            name = string.Format("Lobby<{0}>", _lobbyName);
-            lobbyNameText.text = _lobbyName;
+            name = string.Format("Lobby<{0}>", lobbyName);
+            lobbyIdText.text = string.Format("{0}.", lobbyId);
+            if (lobbyName == "") lobbyName = string.Format("Лобби без названия");
+            lobbyNameText.text = lobbyName;
         }
         private void Update()
         {
