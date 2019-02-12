@@ -35,6 +35,7 @@ namespace UI.LobbyDiscovery
                 lobbyScript.Prolong();
                 return;
             }
+            Debug.LogFormat("NEW LOBBY {0}", wrapper.ip);
             var newLobby = Instantiate(lobbyPrefab, content);
             lobbyScript = newLobby.GetComponent<Lobby>();
             _lobbys.Add(wrapper.ip, lobbyScript);
