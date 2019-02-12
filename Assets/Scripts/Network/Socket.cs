@@ -10,20 +10,17 @@ namespace Network
 {
     public class Socket : MonoBehaviour
     {
-        public int Id { get; private set; }
-        public bool EventsReady { get; set; }
-        public NetworkError DisconnectError { get; set; }
+        public int Id;
+        public bool EventsReady;
+        public NetworkError DisconnectError;
 
         private GameObject _connectionPrefab;
-
         private bool _started;
         private bool _closing;
-
         private QosType[] _channels;
         private int _port;
         private ushort _maxConnections;
         private int _packetSize;
-
         private Formatter _formatter;
         private Queue<ReceiveWrapper> _messages;
         private byte[] _packet;

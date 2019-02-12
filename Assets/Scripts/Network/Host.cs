@@ -10,7 +10,7 @@ namespace Network
 {
     public class Host : MonoBehaviour
     {
-        public int BroadcastKey { get; set; }
+        public int BroadcastKey;
 
         private bool _closing;
         private GameObject _socketPrefab;
@@ -133,7 +133,6 @@ namespace Network
             EventManager.Singleton.Publish(GameEventType.HostDestroyed, null);
             Debug.Log("HOST::Destroyed");
         }
-
         private void Send(int connectionId, object wrapper)
         {
             _socket.Send(connectionId, (SendWrapper)wrapper);

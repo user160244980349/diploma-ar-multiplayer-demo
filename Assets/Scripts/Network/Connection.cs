@@ -6,7 +6,7 @@ namespace Network
 {
     public class Connection : MonoBehaviour
     {
-        public bool ReadyForSend { get; set; }
+        public bool ReadyForSend;
         public int Id { get; private set; }
         public string Ip { get; private set; }
         public int Port { get; private set; }

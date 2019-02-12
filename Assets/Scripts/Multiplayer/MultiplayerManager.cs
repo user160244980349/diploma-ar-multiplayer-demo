@@ -15,6 +15,7 @@ namespace Multiplayer
         private GameObject _scenePrefab;
         private GameObject _playerPrefab;
 
+        private int _lastPlayerId;
         private bool _hosting;
         private bool _gameStarted;
         private ActualPlayer _actualPlayer;
@@ -298,21 +299,20 @@ namespace Multiplayer
         }
         private LoggedIn RegisterPlayer(LogIn logIn)
         {
-            var id = _playerModels.Count + 1;
             var player = new PlayerModel
             {
-                playerId = id,
+                playerId = ++_lastPlayerId,
                 playerName = logIn.PlayerName,
             };
-            _playerModels.Add(id, player);
+            _playerModels.Add(_lastPlayerId, player);
 
             if (_gameStarted)
-                _multiplayerScene.SpawnPlayer(id);
+                _multiplayerScene.SpawnPlayer(_lastPlayerId);
 
             EventManager.Singleton.Publish(GameEventType.PlayerRegistered, player);
 
-            Debug.LogFormat("MULTIPLAYER_MANAGER::Player {0} registered as {1}", id, logIn.PlayerName);
-            return new LoggedIn(id);
+            Debug.LogFormat("MULTIPLAYER_MANAGER::Player {0} registered as {1}", _lastPlayerId, logIn.PlayerName);
+            return new LoggedIn(_lastPlayerId);
         }
         private LoggedOut UnregisterPlayer(LogOut logOut)
         {

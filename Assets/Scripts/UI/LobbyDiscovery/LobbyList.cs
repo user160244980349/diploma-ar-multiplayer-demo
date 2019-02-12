@@ -19,14 +19,12 @@ namespace UI.LobbyDiscovery
 
             EventManager.Singleton.Subscribe(GameEventType.FoundLobby, OnLobbyFound);
         }
-
         private void OnLobbyFound(object info)
         {
             var wrapper = (ReceiveWrapper)info;
-            Lobby lobbyScript;
             if (_lobbys.ContainsKey(wrapper.ip))
             {
-                _lobbys.TryGetValue(wrapper.ip, out lobbyScript);
+                _lobbys.TryGetValue(wrapper.ip, out Lobby lobbyScript);
                 if (lobbyScript == null)
                 {
                     _lobbys.Remove(wrapper.ip);
@@ -35,13 +33,25 @@ namespace UI.LobbyDiscovery
                 lobbyScript.Prolong();
                 return;
             }
-            Debug.LogFormat("NEW LOBBY {0}", wrapper.ip);
+            AddLobby(wrapper);
+        }
+        private void AddLobby(ReceiveWrapper wrapper)
+        {
             var newLobby = Instantiate(lobbyPrefab, content);
-            lobbyScript = newLobby.GetComponent<Lobby>();
+            var lobbyScript = newLobby.GetComponent<Lobby>();
+            lobbyScript.Name = (wrapper.message as FoundLobby).lobbyName;
+            lobbyScript.Wrapper = wrapper;
             _lobbys.Add(wrapper.ip, lobbyScript);
-            lobbyScript.lobbyId = _lobbys.Count;
-            lobbyScript.lobbyName = (wrapper.message as FoundLobby).lobbyName;
-            lobbyScript.ImmediateStart(wrapper);
+            UpdateIds();
+        }
+        private void UpdateIds()
+        {
+            var lobbyId = 0;
+            foreach (var lobby in _lobbys.Values)
+            {
+                lobbyId++;
+                lobby.Id = lobbyId;
+            }
         }
     }
 }

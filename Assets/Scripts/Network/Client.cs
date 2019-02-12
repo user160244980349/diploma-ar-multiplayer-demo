@@ -9,7 +9,7 @@ namespace Network
 {
     public class Client : MonoBehaviour
     {
-        public int BroadcastKey { get; set; }
+        public int BroadcastKey;
 
         private bool _closing;
         private bool _switching;
@@ -142,7 +142,6 @@ namespace Network
             EventManager.Singleton.Publish(GameEventType.ClientDestroyed, null);
             Debug.Log("CLIENT::Destroyed");
         }
-
         private void Send(object wrapper)
         {
             _socket.Send(_host, (SendWrapper)wrapper);

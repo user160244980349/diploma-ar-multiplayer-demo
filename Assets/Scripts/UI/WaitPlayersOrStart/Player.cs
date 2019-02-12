@@ -5,16 +5,30 @@ namespace UI.WaitPlayersOrStart
 {
     public class Player : MonoBehaviour
     {
-        public int playerId;
-        public string playerName;
         public Text playerIdText;
         public Text playerNameText;
 
-        private void Start()
-        {
-            playerIdText.text = string.Format("{0}.", playerId);
-            if (playerName == "") playerName = "Игрок без ника";
-            playerNameText.text = playerName;
+        public int Id {
+            get {
+                return _id;
+            }
+            set {
+                _id = value;
+                playerIdText.text = string.Format("{0}.", _id);
+            }
         }
+        public string Name {
+            get {
+                return _name;
+            }
+            set {
+                _name = value;
+                if (_name == "") _name = "Игрок без ника";
+                playerNameText.text = _name;
+            }
+        }
+
+        private int _id;
+        private string _name;
     }
 }

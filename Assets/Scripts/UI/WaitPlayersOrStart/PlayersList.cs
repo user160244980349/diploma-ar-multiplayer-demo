@@ -29,9 +29,9 @@ namespace UI.WaitPlayersOrStart
             var playerModel = info as PlayerModel;
             var playerBox = Instantiate(playerPrefab, content);
             var playerScript = playerBox.GetComponent<Player>();
+            playerScript.Name = playerModel.playerName;
             _players.Add(playerModel.playerId, playerScript);
-            playerScript.playerName = playerModel.playerName;
-            playerScript.playerId = playerModel.playerId;
+            UpdateIds();
         }
         private void OnPlayerUnregistered(object info)
         {
@@ -40,6 +40,16 @@ namespace UI.WaitPlayersOrStart
             _players.TryGetValue(id, out Player player);
             _players.Remove(id);
             Destroy(player.gameObject);
+            UpdateIds();
+        }
+        private void UpdateIds()
+        {
+            var playerId = 0;
+            foreach (var player in _players.Values)
+            {
+                playerId++;
+                player.Id = playerId;
+            }
         }
     }
 }
